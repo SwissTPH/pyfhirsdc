@@ -1,0 +1,11 @@
+{
+    "canonicalBase" : "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/",
+    "activityCodeSystem": "http://fhir.org/guides/who/anc-cds/CodeSystem/activity-codes",
+    "usageContextSystem": "http://terminology.hl7.org/CodeSystem/usage-context-type",
+    "usageContextCode": "task",
+    "usageContextDisplay": "Workflow Task",
+    "planDefinitionTypeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
+    "planDefinitionTypeCode": "eca-rule",
+    "skiprows" : 1,
+    "skipcols" : 1
+}
