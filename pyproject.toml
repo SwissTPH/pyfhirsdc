@@ -3,6 +3,8 @@ requires = [
     "setuptools>=42",
     "wheel",
     "pandas",
-    "openpyxl"
+    "openpyxl",
+    "fhir",
+    "pydantic"
 ]
 build-backend = "setuptools.build_meta"
