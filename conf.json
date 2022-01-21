@@ -2,8 +2,8 @@
     "processor":{
         "inputFile":"l2/WHO-EmCare-CoreDataElements.xlsx",
         "outputDirectory":"./output",
-        "worksheets":[
-            "survey"
+        "excudedWorksheets":[
+            "q.new-encounter"
         ],
         "skiprows" : 1,
         "skipcols" : 1,
