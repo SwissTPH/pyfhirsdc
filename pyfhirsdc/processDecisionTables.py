@@ -8,9 +8,11 @@ from fhir.resources.expression import Expression
 from fhir.resources.plandefinition import PlanDefinition
 from fhir.resources.plandefinition import PlanDefinitionAction
 from fhir.resources.plandefinition import PlanDefinitionActionCondition
+from fhir.resources.library import Library
 from fhir.resources.relatedartifact import RelatedArtifact
 from fhir.resources.identifier import Identifier
 from fhir.resources.expression import fhirtypes
+from fhir.resources.attachment import Attachment
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
 from fhir.resources.usagecontext import UsageContext
@@ -45,7 +47,7 @@ annotationColidx, actionid, currentAnnotationValue, refColidx):
 
     applicabilityCondition = ""
     if len(conditionValues) == 1:
-        applicabilityCondition + conditionValues[0]
+        applicabilityCondition += conditionValues[0]
     else:
         for value in conditionValues:
             if len(applicabilityCondition) > 0:
@@ -60,7 +62,7 @@ annotationColidx, actionid, currentAnnotationValue, refColidx):
     expression.description = applicabilityCondition
     condition.kind = "applicability"
     condition.expression = expression
-    action.condition = condition
+    action.condition = [condition]
 
     actionValues = []
 
@@ -101,16 +103,27 @@ annotationColidx, actionid, currentAnnotationValue, refColidx):
     return action
 
 def actionsEqual(currentAction, newAction):
-    if (not pd.notna(currentAction) and not pd.notnull(currentAction)):
+    if (not pd.notna(currentAction.action) and not pd.notnull(currentAction.action)):
         return False
-    
+    print("currentAction: ", currentAction)
     currentActionSubs = PlanDefinitionAction.construct()
     currentActionSubs.action = currentAction.action
     newActionSubs = PlanDefinitionAction.construct()
     newActionSubs.action = newAction.action
 
-    currentActionDescription =" AND ".join(currentActionSubs)
-    newActionDescription =" AND ".join(newActionSubs)
+    currentActionDescription = ""
+    for action in currentActionSubs:
+        if currentActionDescription !="":
+            currentActionDescription += " AND " + action.title 
+        else:
+            currentActionDescription += action.title
+
+    newActionDescription = ""
+    for action in newActionSubs:
+        if newActionDescription !="":
+            newActionDescription += " AND " + action.title 
+        else:
+            newActionDescription += action.title
 
     return ((currentAction.title == newAction.title) and 
     (currentAction.textEquivalent == newAction.textEquivalent) and
@@ -252,13 +265,14 @@ usageContextCode, usageContextDisplay, planDefinitionTypeSystem, planDefinitionT
         subAction = processAction(df.iloc[i], inputColIdx, outputColIdx, actionsColIdx,
         annotationsColIdx, actionId, currentAnnotationValue, refColIdx)
 
-        if subAction == None:
+        if subAction.action == None:
             break
 
         if not actionsEqual(currentAction, subAction):
             actionId +=1
             currentAction = subAction
             nextCounter =1 
+            print(subAction)
             actionDescription = subAction.action[0].title if len(subAction.action) > 1 else subAction.description
             if not actionDescription in expressionNameCounterMap:
                 expressionNameCounterMap[actionDescription] = 1
@@ -296,8 +310,28 @@ def getConditionFirstRep(action):
         action.condition = [action]
     return action.condition[0]
 
-def generateLibrary(plandefinition):
-    return
+def getIdentifierFirstRep(planDef):
+    if (not planDef.identifier):
+        identifier = Identifier.construct()
+        planDef.identifier = identifier
+    return planDef.identifier[0]
+
+
+def generateLibrary(planDefinition, canonicalBase):
+    id = planDefinition.id
+
+    library = Library.construct()
+    library.identifier += getIdentifierFirstRep(planDefinition)
+    library.id = id
+    library.name = planDefinition.name
+    library.url = canonicalBase + '/Library/' + id 
+    library.title = planDefinition.title
+    library.description = planDefinition.description
+    attachment = Attachment.construct()
+    attachment.id = "ig-loader-" + id + ".cql"
+    library.content = attachment
+    planDefinition.library +=
+
 
 
 def processDecisionTableSheet(inputfile, dsn, conf ,outputfile):
@@ -339,8 +373,8 @@ def processDecisionTableSheet(inputfile, dsn, conf ,outputfile):
             usageContextSystem, usageContextCode, usageContextDisplay,
             planDefinitionTypeSystem, planDefinitionTypeCode)
             if pd.notnull(planDefinition):
-                planDefinitions[planDefinition.id, planDefinition]
-                generateLibrary(planDefinition)
+                planDefinitions[planDefinition.id] =  planDefinition
+                generateLibrary(planDefinition, canonicalBase)
             break
 
 if __name__ == "__main__": 
