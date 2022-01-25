@@ -4,7 +4,7 @@ requires = [
     "wheel",
     "pandas",
     "openpyxl",
-    "fhir",
+    "fhir.resources",
     "pydantic"
 ]
 build-backend = "setuptools.build_meta"
