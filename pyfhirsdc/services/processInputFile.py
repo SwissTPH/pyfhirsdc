@@ -1,8 +1,8 @@
-from pyfhirsdc.serializers.configFile import read_config_file
+from pyfhirsdc.serializers.json import read_config_file, 
 from pyfhirsdc.serializers.inputFile import read_input_file, parse_sheets
 
 from .generateExtensions import generate_extensions
-
+from .generateQuestionnaires import generate_questionnaires
 import os
 import pandas as pd
 import re
@@ -18,8 +18,8 @@ def process_input_file(conf):
             questionnaires, decision_tables,\
                 value_set, care_plan, settings,\
                 choice_column, cql = parse_sheets(inputFile, config.processor.excudedWorksheets)        
-            # generate extension
-            extensions = generate_extensions(questionnaires)
+            # generate questionnaire
+            generate_questionnaires(config.fhir, questionnaires)
 
             # generate profiles
 
@@ -29,13 +29,12 @@ def process_input_file(conf):
 
             # generate conceptMap
 
-            # generate the questionnaire
-
             # generate the DE CQL 
 
             # generate the Concept CQL 
 
             # generate planDefinition
+            
 
             # generate carePlane
 
