@@ -10,6 +10,7 @@
         "scope":"EmCare"
     },
     "fhir":{
+        "guideBase":"http://fhir.org/guides/who/emc-cds/",
         "canonicalBase" : "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/",
         "activity":{
             "CodeSystem": "http://fhir.org/guides/who/anc-cds/CodeSystem/activity-codes"
@@ -19,9 +20,37 @@
             "Code": "task",
             "Display": "Workflow Task"
         },
-        "planDefinitionType":{
-            "CodeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
-            "Code": "eca-rule"
+        "planDefinition":{
+            "planDefinitionType":{
+                "CodeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
+                "Code": "eca-rule"
+            }
+        },"questionnaire":{
+            "addOnly":false,
+            "outputPath":"resources/questionnaire",
+            "default":{
+                "profile":"http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire",
+                "extension": [{
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "shareable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "computable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "publishable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeRepresentationLevel",
+                    "valueCode": "structured"
+                  }],
+                  "subjectType": [
+                    "Patient"
+                  ],
+                  "status": "active",
+                  "experimental": false,
+                  "resourceType": "Questionnaire"
+            }
+            
         }
     }
 
