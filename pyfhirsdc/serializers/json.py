@@ -26,11 +26,11 @@ def read_json(filepath, type = "object"):
         return None
     return json_str
 
-def read_resource(filepath, resource, type = "dict"):
-    resource=read_json(filepath, type)
-    # check if the resource has the right type
-    if resource is not None and  (resource['resourceType'] == resource ):
-        return resource
+def read_resource(filepath, resource):
+    resource_dict=read_json(filepath, 'dict')
+    # check if the resource has the right type 
+    if resource_dict is not None and  (resource_dict['resourceType'] == resource ):
+        return resource_dict
     else:
         return None
 

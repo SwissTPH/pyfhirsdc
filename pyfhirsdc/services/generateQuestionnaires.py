@@ -20,21 +20,22 @@ def generate_questionnaire( name ,df_questions):
     # path must end with /
     path = get_path_or_default(get_fhir_cfg().questionnaire.outputPath, "resource/quesitonnaire/")
     filepath =os.path.join(get_processor_cfg().outputDirectory , path , filename)
-    print('processing quesitonnaire %s and saving it there %s', name, filepath)
+    print('processing quesitonnaire ', name)
     # read file content if it exists
     questionnaire = init_questionnaire(filepath)
     # clean the data frame
-    df_questions = df_questions.dropna(axis=0, subset=['id'])
+    df_questions = df_questions.dropna(axis=0, subset=['id']).set_index('id')
+    
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
-    questionnaire = convert_df_to_questionitems(questionnaire, df_questions, strategy = 'overwrite')
+    questionnaire = convert_df_to_questionitems(questionnaire, df_questions, strategy = 'overwriteDraft')
     # write file
     with open(filepath, 'w') as json_file:
-        json_file.write(questionnaire.json())
+        json_file.write(questionnaire.json( indent=4))
 
 
 
 def init_questionnaire(filepath):
-    questionnaire_json = read_resource(filepath, "Questionnaire", "dict")
+    questionnaire_json = read_resource(filepath, "Questionnaire")
     default =get_defaut_fhir('questionnaire')
     if questionnaire_json is not None :
         questionnaire = QuestionnaireSDC.parse_raw( json.dumps(questionnaire_json))  
