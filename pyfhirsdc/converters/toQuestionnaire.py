@@ -15,14 +15,17 @@ def convert_df_to_questionitems(questionnaire, df_questions, strategy = 'overwri
         questionnaire.item =[]
 
     for id, question in dict_questions.items():
-        # look if the item exists
+        # pop the item if it exists
         existing_item = next((questionnaire.item.pop(index) for index in range(len(questionnaire.item)) if questionnaire.item[index].linkId == id), None)
         # create or update the item based on the strategy
         if existing_item is None\
-        or strategy == "overwriteDraft" and\
-            (existing_item.design_note is None or "status::draft" not in existing_item.design_note):
+        or strategy in ( "overwriteDraft", "overwriteDraftAddOnly" ) and\
+            (existing_item.design_note is not None and "status::draft"  in existing_item.design_note):
             new_question = process_quesitonnaire_line(id, question, existing_item )
             questionnaire.item.append(new_question)
+        elif existing_item is not None:
+            #put back the item if no update
+            questionnaire.item.append(existing_item)
     return questionnaire
 
 def process_quesitonnaire_line(id, question, existing_item):
