@@ -9,23 +9,24 @@ def clean_str(str):
     return tmp3
 
 
-def read_input_file(config):
+def read_input_file(input_file_path):
     try:
-        file = pd.ExcelFile(config.inputFile)
+        file = pd.ExcelFile(input_file_path)
     except Exception as e:
-        print("Error while opening the from the file %s",config.inputFile )
+        print("Error while opening the from the file %s",input_file_path )
         return None
     return file
 
-def parse_sheets(inputFile, excudedWorksheets):
-    sheets = inputFile.sheet_names
-    questionnaires = []
-    decision_tables = []
+def parse_sheets(input_file, excudedWorksheets):
+    sheets = input_file.sheet_names
+    questionnaires = {}
+    decision_tables = {}
     value_set = None
     settings = None
     for worksheet in sheets:
-        if worksheet not in excudedWorksheets:
-            df = inputFile.parse(worksheet)
+        print ("loading sheet %s", worksheet)
+        if excudedWorksheets is None or worksheet not in excudedWorksheets:
+            df = input_file.parse(worksheet)
             if worksheet.startswith('q.'):
                 if validate_questionnaire_sheet(df):
                     questionnaires[worksheet[2:]] = df
@@ -46,7 +47,7 @@ def parse_sheets(inputFile, excudedWorksheets):
                     choice_column = df
                 else:
                     break
-            elif care_plan == "carePlan":
+            elif worksheet == "carePlan":
                 if validate_value_set_sheet(df):
                     care_plan = df
                 else:

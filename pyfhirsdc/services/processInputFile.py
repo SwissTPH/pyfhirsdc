@@ -1,25 +1,27 @@
-from pyfhirsdc.serializers.json import read_config_file, 
 from pyfhirsdc.serializers.inputFile import read_input_file, parse_sheets
-
+from pyfhirsdc.serializers.json import read_json
+from pyfhirsdc.config import *
 from .generateExtensions import generate_extensions
 from .generateQuestionnaires import generate_questionnaires
 import os
 import pandas as pd
 import re
 
+
+
 def process_input_file(conf):
     # Read the config file
-    config = read_config_file(conf)
-    if config is None:
+    config_obj = read_config_file(conf)
+    if config_obj is None:
         exit()
     else:
-        inputFile = read_input_file(config.processor.InputFile)
-        if inputFile is not None:
+        input_file = read_input_file(get_processor_cfg().inputFile)
+        if input_file is not None:
             questionnaires, decision_tables,\
                 value_set, care_plan, settings,\
-                choice_column, cql = parse_sheets(inputFile, config.processor.excudedWorksheets)        
+                choice_column, cql = parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
             # generate questionnaire
-            generate_questionnaires(config.fhir, questionnaires)
+            generate_questionnaires(questionnaires)
 
             # generate profiles
 
@@ -34,7 +36,9 @@ def process_input_file(conf):
             # generate the Concept CQL 
 
             # generate planDefinition
-            
+
 
             # generate carePlane
+
+
 

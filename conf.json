@@ -1,7 +1,7 @@
 {
     "processor":{
-        "inputFile":"l2/WHO-EmCare-CoreDataElements.xlsx",
-        "outputDirectory":"./output",
+        "inputFile":"l2/xls_form.xlsx",
+        "outputDirectory":"./output/",
         "excudedWorksheets":[
             "q.new-encounter"
         ],
@@ -29,7 +29,12 @@
             "addOnly":false,
             "outputPath":"resources/questionnaire",
             "default":{
-                "profile":"http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire",
+                "status":"active",
+                "meta": {
+                    "profile":[
+                        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire"
+                    ]
+                },
                 "extension": [{
                     "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
                     "valueCode": "shareable"
@@ -46,7 +51,6 @@
                   "subjectType": [
                     "Patient"
                   ],
-                  "status": "active",
                   "experimental": false,
                   "resourceType": "Questionnaire"
             }
