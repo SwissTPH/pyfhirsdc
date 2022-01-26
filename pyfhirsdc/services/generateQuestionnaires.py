@@ -1,4 +1,5 @@
-from fhir.resources.questionnaire import Questionnaire
+
+from pyfhirsdc.models.questionnaireSDC import QuestionnaireSDC
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg, get_defaut_fhir
 from pyfhirsdc.converters.toQuestionnaire import convert_df_to_questionitems
 from pyfhirsdc.serializers.json import get_path_or_default, read_resource
@@ -33,14 +34,13 @@ def generate_questionnaire( name ,df_questions):
 
 
 def init_questionnaire(filepath):
-    questionnaire_json = read_resource(filepath, "Questionnaire", "str")
+    questionnaire_json = read_resource(filepath, "Questionnaire", "dict")
     default =get_defaut_fhir('questionnaire')
-    print (default)
     if questionnaire_json is not None :
-        questionnaire = Questionnaire.parse_raw( questionnaire_json)  
+        questionnaire = QuestionnaireSDC.parse_raw( json.dumps(questionnaire_json))  
     elif default is not None:
         # create file from default
-        questionnaire = Questionnaire.parse_raw( json.dumps(default))
+        questionnaire = QuestionnaireSDC.parse_raw( json.dumps(default))
 
     return questionnaire
     
