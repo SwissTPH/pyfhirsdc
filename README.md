@@ -12,7 +12,7 @@ the input file is an xlsx file with several mandatory sheet
 
 this sheet define the main object that contain the sdc data capture
 
-### planDefinition
+### d.<planDefinitionReference>
 
 this sheet defined how the questionnaires are sequences using multiple plan definition, in the cql-tooling it was based on Decision Tables
 

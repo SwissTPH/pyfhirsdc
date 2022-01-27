@@ -1,9 +1,9 @@
 {
     "processor":{
-        "inputFile":"l2/WHO-EmCare-CoreDataElements.xlsx",
-        "outputDirectory":"./output",
-        "worksheets":[
-            "survey"
+        "inputFile":"l2/xls_form.xlsx",
+        "outputDirectory":"./output/",
+        "excudedWorksheets":[
+            "q.new-encounter"
         ],
         "skiprows" : 1,
         "skipcols" : 1,
@@ -13,6 +13,7 @@
     "fhir":{
         "version": "4.0.1",
         "canonicalBase" : "https://fhir.dk.swisstph-mis.ch/matchbox/fhir",
+        "guideBase":"http://fhir.org/guides/who/emc-cds/",
         "activity":{
             "CodeSystem": "http://fhir.org/guides/who/anc-cds/CodeSystem/activity-codes"
         },
@@ -21,9 +22,42 @@
             "Code": "task",
             "Display": "Workflow Task"
         },
-        "planDefinitionType":{
-            "CodeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
-            "Code": "eca-rule"
+        "planDefinition":{
+            "planDefinitionType":{
+                "CodeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
+                "Code": "eca-rule"
+            }
+        },
+        "questionnaire":{
+            "addOnly":false,
+            "outputPath":"resources/questionnaire",
+            "default":{
+                "status":"active",
+                "meta": {
+                    "profile":[
+                        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire"
+                    ]
+                },
+                "extension": [{
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "shareable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "computable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "publishable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeRepresentationLevel",
+                    "valueCode": "structured"
+                  }],
+                  "subjectType": [
+                    "Patient"
+                  ],
+                  "experimental": false,
+                  "resourceType": "Questionnaire"
+            }
+            
         },
         "library":{
             "status":"active"
