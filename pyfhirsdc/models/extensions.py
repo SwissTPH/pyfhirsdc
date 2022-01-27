@@ -1,7 +1,8 @@
 from fhir.resources.extension import Extension
 from fhir.resources.codeableconcept import CodeableConcept
-from fhir.resources.fhirtypes import  ExpressionType 
+from fhir.resources.fhirtypes import  ExpressionType, QuantityType 
 from fhir.resources.coding import Coding
+from distutils.util import strtobool
 def get_dropdown_ext():
  return Extension(
     url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -38,10 +39,16 @@ def get_choice_column_ext(path, label, width, for_display):
         ])
         if width is not None:
             choice_extension.extension.append(Extension( url = "width",
-                    valueString = width))
+                    valueQuantity = QuantityType (
+                        value = width,
+                        system = "http://unitsofmeasure.org",
+                        code = "%"
+
+                    )))
         if for_display is not None:
             choice_extension.extension.append(Extension( url = "forDisplay",
-                    valueString = for_display))
+                    valueBoolean = bool(strtobool(str(for_display)) )))
         return choice_extension
     else:
         return None
+
