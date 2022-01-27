@@ -7,9 +7,10 @@ def get_dropdown_ext():
  return Extension(
     url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
     valueCodeableConcept = CodeableConcept(
-            coding = [Coding( system = "http://hl7.org/fhir/questionnaire-item-control",
-                                code = "drop-down",
-                                display = "Drop down")],
+            coding = [Coding( 
+                system = "http://hl7.org/fhir/questionnaire-item-control",
+                code = "drop-down",
+                display = "Drop down")],
             text ="Drop down")
 )
 
@@ -28,24 +29,27 @@ def get_candidate_expression_ext(desc, uri):
 def get_choice_column_ext(path, label, width, for_display):
     if path is not None and label is not None:
         choice_extension = Extension(
-        url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-choiceColumn",
-        extension = [
-            Extension( url = "path",
+            url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-choiceColumn",
+            extension = [
+                Extension( 
+                    url = "path",
                     valueString = path),
-            Extension( url = "label",
+                Extension(
+                    url = "label",
                     valueString = label)            
-        ])
+            ])
         if width is not None:
-            choice_extension.extension.append(Extension( url = "width",
-                    valueQuantity = QuantityType (
-                        value = width,
-                        system = "http://unitsofmeasure.org",
-                        code = "%"
-
-                    )))
+            choice_extension.extension.append(Extension( 
+                url = "width",
+                valueQuantity = QuantityType (
+                    value = width,
+                    system = "http://unitsofmeasure.org",
+                    code = "%"
+                )))
         if for_display is not None:
-            choice_extension.extension.append(Extension( url = "forDisplay",
-                    valueBoolean = bool(strtobool(str(for_display)) )))
+            choice_extension.extension.append(Extension( 
+                url = "forDisplay",
+                valueBoolean = bool(strtobool(str(for_display)) )))
         return choice_extension
     else:
         return None

@@ -1,13 +1,19 @@
-
+"""
+    Service to generate the questionnaires ressources
+    needs the sheet:
+        - q.X
+        - choiceColumn
+        - valueSet
+"""
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireSDC
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg, get_defaut_fhir
-from pyfhirsdc.converters.toQuestionnaire import convert_df_to_questionitems
+from pyfhirsdc.converters.questionnaireConverter import convert_df_to_questionitems
 from pyfhirsdc.serializers.json import get_path_or_default, read_resource
 import os
 import json
 
-def generate_questionnaires(questionnaires, df_value_set, df_choiceColumn):
-    for name, questions in questionnaires.items():
+def generate_questionnaires(dfs_questionnaire, df_value_set, df_choiceColumn):
+    for name, questions in dfs_questionnaire.items():
         generate_questionnaire(name ,questions, df_value_set, df_choiceColumn)
 
 # @param config object fromn json
@@ -19,6 +25,9 @@ def generate_questionnaire( name ,df_questions, df_value_set, df_choiceColumn ) 
     filename =  "questionnaire-" + name + ".json"
     # path must end with /
     path = get_path_or_default(get_fhir_cfg().questionnaire.outputPath, "resource/quesitonnaire/")
+    # create directory if not exists
+    if not os.path.exists(path):
+        os.makedirs(path)
     filepath =os.path.join(get_processor_cfg().outputDirectory , path , filename)
     print('processing quesitonnaire ', name)
     # read file content if it exists
