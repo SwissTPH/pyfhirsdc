@@ -123,10 +123,10 @@ def get_question_choice_column(extensions, candidate_expression, df_choiceColumn
 
 def get_question_definition(question):
     if  question['definition'] is not None and question['definition'] is not numpy.nan:
-        if question['definition'].lower == get_processor_cfg().scope.lower:
-            return (get_fhir_cfg().canonicalBase + "codingsystem/codesystem-"+ get_processor_cfg().scope.lower + "-custom-codes-codes.json")
+        if question['definition'].lower() == get_processor_cfg().scope.lower():
+            return (get_fhir_cfg().canonicalBase + "codingsystem/codesystem-"+ get_processor_cfg().scope.lower() + "-custom-codes-codes.json")
         elif len(question['definition'])>5:  
-            return question['definition']
+            return question['definition'].lower()
         else:
             return None
     else:

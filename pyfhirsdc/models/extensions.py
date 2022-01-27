@@ -14,8 +14,6 @@ def get_dropdown_ext():
 )
 
 
-
-
 def get_candidate_expression_ext(desc, uri):
     if desc is not None and uri is not None:
         return Extension(
