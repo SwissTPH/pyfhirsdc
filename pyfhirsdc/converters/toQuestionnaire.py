@@ -7,17 +7,17 @@
 
 
 import numpy
-from pandas import DataFrame
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC
-from fhir.resources.fhirtypes import Canonical
 from pyfhirsdc.models.extensions import get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
 
 def convert_df_to_questionitems(questionnaire, df_questions, df_value_set, df_choiceColumn, strategy = 'overwrite'):
+    # create a dict to iterate
     dict_questions = df_questions.to_dict('index')
+    # delete all item in case of overwrite strategy
     if questionnaire.item is None or strategy == "overwrite":
         questionnaire.item =[]
-
+    # recreate item if draft     
     for id, question in dict_questions.items():
         # pop the item if it exists
         existing_item = next((questionnaire.item.pop(index) for index in range(len(questionnaire.item)) if questionnaire.item[index].linkId == id), None)
@@ -35,9 +35,7 @@ def convert_df_to_questionitems(questionnaire, df_questions, df_value_set, df_ch
 
 def process_quesitonnaire_line(id, question, df_value_set, df_choiceColumn, existing_item):
     new_question = None
-    extensions = []
-
-    type = get_question_type(question)
+    type = get_question_fhir_type(question)
 
     if type is None:
         print(question['type'], " is not a valid type, see question ", id)
@@ -60,8 +58,9 @@ def process_quesitonnaire_line(id, question, df_value_set, df_choiceColumn, exis
     
     return new_question
 
-def get_question_type(question):
-    # mapping type are not
+def get_question_fhir_type(question):
+    # maps the pyfhirsdc type to real fhir type
+    # mapping type are not in questionnaire
     fhir_type = None
     type_arr = question['type'].split(" ")
     fhir_type = type_arr[0]
@@ -103,10 +102,9 @@ def get_question_valueset(question, df_value_set):
         return None
 
 def get_question_choice_column(extensions, candidate_expression, df_choiceColumn):
-    #TODO check choiceColumn if there is any candidate_expression matching
     # filter DF choice column
-    
     choice_columns = df_choiceColumn[df_choiceColumn['candidate_expression'] == candidate_expression].set_index('label').to_dict('index')
+    #create extension for each field found
     for label, choice_column in choice_columns.items():
         extension = get_choice_column_ext(choice_column["path"],
             label,choice_column["width"],choice_column["forDisplay"])
@@ -115,13 +113,8 @@ def get_question_choice_column(extensions, candidate_expression, df_choiceColumn
 
     return extensions
 
-    
-
-
-
-    pass
-
 def get_question_definition(question):
+    # if definition == scope then build def based on canonical base, if not take the def from the xls if any
     if  question['definition'] is not None and question['definition'] is not numpy.nan:
         if question['definition'].lower() == get_processor_cfg().scope.lower():
             return (get_fhir_cfg().canonicalBase + "codingsystem/codesystem-"+ get_processor_cfg().scope.lower() + "-custom-codes-codes.json")
@@ -133,8 +126,9 @@ def get_question_definition(question):
         return None
 
 def get_type_details(question):
+    # structure main_type detail_1::detail_2
     type_arr = question['type'].split(" ")
-    # split each deatil
+    # split each details
     if len(type_arr)>1:
         detail_arr = type_arr[1].split('::')
         if len(detail_arr)>1:
