@@ -7,11 +7,13 @@
         ],
         "skiprows" : 1,
         "skipcols" : 1,
-        "scope":"EmCare"
+        "scope":"EmCare",
+        "encoding":"json"
     },
     "fhir":{
+        "version": "4.0.1",
+        "canonicalBase" : "https://fhir.dk.swisstph-mis.ch/matchbox/fhir",
         "guideBase":"http://fhir.org/guides/who/emc-cds/",
-        "canonicalBase" : "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/",
         "activity":{
             "CodeSystem": "http://fhir.org/guides/who/anc-cds/CodeSystem/activity-codes"
         },
@@ -25,7 +27,8 @@
                 "CodeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
                 "Code": "eca-rule"
             }
-        },"questionnaire":{
+        },
+        "questionnaire":{
             "addOnly":false,
             "outputPath":"resources/questionnaire",
             "default":{
@@ -55,6 +58,9 @@
                   "resourceType": "Questionnaire"
             }
             
+        },
+        "library":{
+            "status":"active"
         }
     }
 
