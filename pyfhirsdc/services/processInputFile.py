@@ -21,7 +21,7 @@ def process_input_file(conf):
                 value_set, care_plan, settings,\
                 choice_column, cql = parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
             # generate questionnaire
-            generate_questionnaires(questionnaires)
+            generate_questionnaires(questionnaires, value_set, choice_column)
 
             # generate profiles
 

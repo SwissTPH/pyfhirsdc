@@ -6,14 +6,14 @@ from pyfhirsdc.serializers.json import get_path_or_default, read_resource
 import os
 import json
 
-def generate_questionnaires(questionnaires):
+def generate_questionnaires(questionnaires, df_value_set, df_choiceColumn):
     for name, questions in questionnaires.items():
-        generate_questionnaire(name ,questions)
+        generate_questionnaire(name ,questions, df_value_set, df_choiceColumn)
 
 # @param config object fromn json
 # @param name string
 # @param questions DataFrame
-def generate_questionnaire( name ,df_questions):
+def generate_questionnaire( name ,df_questions, df_value_set, df_choiceColumn ) :
     # try to load the existing questionnaire
     
     filename =  "questionnaire-" + name + ".json"
@@ -27,7 +27,7 @@ def generate_questionnaire( name ,df_questions):
     df_questions = df_questions.dropna(axis=0, subset=['id']).set_index('id')
     
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
-    questionnaire = convert_df_to_questionitems(questionnaire, df_questions, strategy = 'overwriteDraft')
+    questionnaire = convert_df_to_questionitems(questionnaire, df_questions,  df_value_set, df_choiceColumn, strategy = 'overwriteDraft')
     # write file
     with open(filepath, 'w') as json_file:
         json_file.write(questionnaire.json( indent=4))
