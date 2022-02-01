@@ -2,147 +2,60 @@
 
 The goal of the project is to have tool like pyxform but for fhir structure data capture
 
-## Principles of CPG/SDC encounter
+## input file
 
-
-## main.py option 
-
-    -c / --conf config_file_path
-    -o to generate fhir ressoruces
-    -h / --help to generate this message
-    -b to bundle the fhir ressource int the output path
-    -l to build the library with cql in base64
-    --anthro to generate the antro code system from tsv files (files can be found here https://github.com/WorldHealthOrganization/anthro/tree/master/data-raw/growthstandards)
-
-
-## Input files
-maturitiy:0
-
-- config.json file that define the configutation of the tool
-   see ./conf.json  
-
-- config/inputFile: the input xls/ods file with several mandatory shee that is use the create the contents
-  see ./input_example.ods (very early version for the EmCare Project)
-
-### config
-maturitiy:0
-
-2 sections 
-- processor
-  - inputFile : path of the input file
-  - outputPath
-  - scope
-  - encoding
-  - default_resource_path : path where the default ressource are located
-- fhir
-  - version : FHIR version
-  - canonicalBase :  base url for the definiton
-  - guideBase : base url for the IG
-  - [RessourceName] : Fhir resource configuration
-    - outputPath : where the resource output need to be saved
+the input file is an xlsx file with several mandatory sheet
 
 
 
-### Input Sheets
-maturitiy:1
+### carePlan
 
-- q.[Name] are for the questionnaire
-- pd.[Name] are for the plan definiton
-- valueSet are for the valueset and canditatesExpression
-- profile are for the profiles/structure definitions
-- cql to add cql definition to libs
-- extension to define the extension to add in the profile (when linked in a question)
-- carePlan (to be checked if useful)
-- planDefinition
+this sheet define the main object that contain the sdc data capture
 
+### pd.<planDefinitionReference>
 
+this sheet defined how the questionnaires are sequences using multiple plan definition, in the cql-tooling it was based on Decision Tables. Here each row will be, an action, that belongs to a main action with a decision ID. If an ID is provided in one row, this will be assumed as main action and the following rows will be assumed as sub actions of this action. If two following rows have the same action, they will be merged into one, joining the inputs with "OR". The delimiter to separate inputs in one action (row) is the pipe (|). 
+    
+#### id 
+    id of the main action
 
-### pd. : PlanDefinition
-maturitiy:1
-
-This sheet define the main object that contain the SDC data capture
-the idea will be to create an Encounter planDefinition that will contain standardized activities
-
-example of activities:
-  - New patient
-  - Danger Signs
-  - measure, screening and registration
-  - examination
-  - treatement
-  - conselling
-  - follow up and planification
-
-each activity is expected to be trigger by the L4 application (one the Encounter planDefinition will be loaded )
-
-several lines will be merged if they follow those conditions:
-- being one after the others (,several lines could be merged but two lines seperated by urelated line won't be merged)
-- having the same title
-- having the same canonical Definition
-  
-each line will generate a "CQL" identifer in the related library for:
-- start condition
-- stop condition
-- applicability
-
-
-inside each activity, a [SDC Modular questionnaire](ttps://build.fhir.org/ig/HL7/sdc/branches/master/StructureDefinition-sdc-questionnaire-modular.html) will be linked (using [cpg-collectWith](http://hl7.org/fhir/uv/cpg/StructureDefinition-cpg-collectWith.json.html) extension )
-
-#### add library:
-id = {{library}}
-description = [name]::[alias]::[version] e.g FHIRHelper::FHIRHelper::4.01
-#### parentActionId
-<text> identifier of the parent actions, 
-
-can also be {{snipet}} to document pure cql rule
-
-
-#### id
- <text> identifier of the actions 
-#### title
-<text> title of the actions
 #### description
-<text> to describe the actions
-#### applicabilityExpressions
-<BooleanCondition> to define when this action is applicable
-will use CQL language per default
+    - Describe the action to be taken
+##### annotation
+    - Will be mapped to the textEquivalent in the FHIR resource.  
 
+#### title
+    - The title of the action. 
 
-cql function might be required to ease the code
-
-    Patient.hasNewCondition("Nausea and vomiting")
-    Patient.hasPersistentCondition( "Nausea and vomiting")
-
-
-#### startExpressions
-<BooleanCondition> to define when this action starts
-will use CQL language per default
-
-#### stopExpressions
-<BooleanCondition> to define when this action stops
-    will use CQL language per default
+#### applicabilityCondition
+    - If this column is filled, the condition mapped with have applicability as type
+    
+#### startCondition
+    - If this column is filled, the condition mapped with have start as type
+#### stopCondition
+    - If this column is filled, the condition mapped with have stop as type
+#### conditionDescription
+    - Describes the input that is required for an action to take place
+#### conditionExpression
+    - The action that will result
 #### trigger
-list of trigger separated by  ||
-will use CQL language per default
-
-  
+    - What will trigger this decision. Must only be specified at the mainAction level
+#### triggerType
+    - Type of the trigger (named-event | periodic | data-changed | data-accessed | data-access-ended )
+#### businessRule
+    - Business Rule of the decision 
 #### reference
-References for the particular action
-  
-if the triggerType is name event then the second part is the name/url for the event (resource that implement event)
+    - Reference for the specific action
+#### output
+    - The outcome of performing such an action
 
-  -- to be checked if || can be use in CQL
-##### example
-<triggerType>::<BooleanCondition/Name>||<triggerType2>::<BooleanCondition2/Name>
--- TBC for name-event what condition  whe should have
 
-#### definitionCanonical 
-list of the definitionCanonical that need to be perfomed comma separated (canonical(ActivityDefinition | PlanDefinition | Questionnaire))
-
-### q. : Questionnaire
-maturitiy:2
+### q.<questionnaireReference>
 
 thoses sheets are containing the questionnaires, and the required information to de the fihr mapping via structureMap (to be confirmed) and the CQL to find back the answers based on their "label"
 the format is inpired by the pyxform 'survey' sheet but addapted to fhir SDC questionnaires
+
+
 
 #### id 
 Mandatory, used as linkid
@@ -316,5 +229,3 @@ this tool was started to answer WHO EmCare project needs
  
 pyxform project
 cqf-tooling project
-
-
