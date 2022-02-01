@@ -3,6 +3,8 @@ from pyfhirsdc.serializers.json import read_json
 from pyfhirsdc.config import *
 from .generateExtensions import generate_extensions
 from .generateQuestionnaires import generate_questionnaires
+from .generatePlanDefinitions import generate_plandefinitions
+
 import os
 import pandas as pd
 import re
@@ -36,9 +38,9 @@ def process_input_file(conf):
             # generate the Concept CQL 
 
             # generate planDefinition
+            generate_plandefinitions(decision_tables)
 
-
-            # generate carePlane
+            # generate carePlan
 
 
 
