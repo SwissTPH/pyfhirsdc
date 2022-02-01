@@ -15,18 +15,15 @@ def read_json(filepath, type = "object"):
             
         file.close()
     except IOError: 
-        print("Error: File %s does not appear to exist.", filepath )
-        return None
+        raise IOError("Error: File {0} does not appear to exist.".format(filepath))
     except ValueError as e:
-        print ("file %s failed to parse, please check the JSON structure", filepath)
-        file.close()
-        return None
+        raise ValueError("file {0} failed to parse, please check the JSON structure".format(filepath))
     return json_str
 
 def read_resource(filepath, resource):
-    resource_dict=read_json(filepath, 'dict')
+    resource_dict=read_json(filepath, 'dict') if os.path.exists(filepath) else None
     # check if the resource has the right type 
-    if resource_dict is not None and  (resource_dict['resourceType'] == resource ):
+    if resource_dict is not None and (resource_dict['resourceType'] == resource ):
         return resource_dict
     else:
         return None
