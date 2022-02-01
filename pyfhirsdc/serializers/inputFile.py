@@ -22,7 +22,6 @@ def parse_sheets(input_file, excudedWorksheets):
     questionnaires = {}
     decision_tables = {}
     value_set = None
-    settings = None
     for worksheet in sheets:
         print ("loading sheet %s", worksheet)
         if excudedWorksheets is None or worksheet not in excudedWorksheets:
@@ -57,7 +56,7 @@ def parse_sheets(input_file, excudedWorksheets):
                     cql = df
                 else:
                     break
-    return questionnaires, decision_tables, value_set, care_plan, settings, choice_column, cql
+    return questionnaires, decision_tables, value_set, care_plan, choice_column, cql
 
 def validate_questionnaire_sheet(df):
     return True

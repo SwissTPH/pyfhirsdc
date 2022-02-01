@@ -65,6 +65,22 @@
         },
         "library":{
             "status":"active"
+        },"codeSystem":
+        {
+            "outputPath":"vocabulary/codesystem/",
+            "default":{
+                "resourceType": "CodeSystem",
+                "id": "emc-custom-codes-codes",
+                "url": "http://fhir.org/guides/who/emc-cds/CodeSystem/emc-custom-codes-codes",
+                "name": "emc-custom-codes_codes",
+                "title": "Extended Codes CodeSystem codes",
+                "status": "draft",
+                "experimental": false,
+                "description": "Set of codes identified as being needed but not found in existing Code Systems",
+                "caseSensitive": true,
+                "content": "complete",
+                "concept": [ ]
+            }
         }
     }
 

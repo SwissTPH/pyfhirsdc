@@ -22,6 +22,26 @@ thoses sheets are containing the questionnaires, and the required information to
 the format is inpired by the pyxform 'survey' sheet but addapted to fhir SDC questionnaires
 
 
+
+#### id 
+    Mandatory, used as linkid
+
+#### type
+    - all fhir type but choice : use one of the basic type
+    - select_one option : choice when only one selection is possible
+    - select_multile option : choice when multiple selections are possible
+    - mapping : will not apprear on the questionnaire, just to document mapping information
+##### option
+        - <valueSetName> valueSet defined in the valueSet tab 
+        - url::<valueSetUrl> link to a remote value set
+        - candidateExpression::<x-fhir-query> will fetch the result via the <x-fhir-query>, then will dieplay the result based on the data attached to the <candidateExpressionName> in the choiceColum sheet
+
+#### required
+    set to True to make sure the question is required
+
+#### display
+    dropdown : only for select_one / select_multiple
+    <candidateExpressionName> : only for candidateExpression
 ### valueSet
 
 this sheet define the the valuset that need to be defined in the proejct scope

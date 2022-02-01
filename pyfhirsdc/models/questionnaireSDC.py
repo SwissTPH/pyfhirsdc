@@ -61,6 +61,7 @@ class QuestionnaireSDC(Questionnaire):
         # if property is element of this resource.
         element_property=True,
     )
+    #https://github.com/nazrulworld/fhir.resources/fhir/resources/questionnaire.py
     @root_validator(pre=True, allow_reuse=True)
     def questionnairesdc_validator( cls, values: typing.Dict[str, typing.Any]
     ) -> typing.Dict[str, typing.Any]:
@@ -118,6 +119,13 @@ class QuestionnaireSDC(Questionnaire):
             raise ValidationError(errors, cls)  # type: ignore
 
         return values
+    @classmethod
+    def elements_sequence(cls):
+        list = Questionnaire.elements_sequence()
+        
+        list.append("designNote")
+        list.append("sdc-questionnaire-preferredTerminologyServer")
+        return list
 
   
 
@@ -142,3 +150,10 @@ class QuestionnaireItemSDC(QuestionnaireItem):
         # if property is element of this resource.
         element_property=True,
     )
+    @classmethod
+    def elements_sequence(cls):
+        list = QuestionnaireItem.elements_sequence()
+        
+        list.append("designNote")
+        list.append("sdc-questionnaire-preferredTerminologyServer")
+        return list
