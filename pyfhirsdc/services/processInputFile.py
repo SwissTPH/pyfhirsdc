@@ -38,7 +38,7 @@ def process_input_file(conf):
             # generate the Concept CQL 
 
             # generate planDefinition
-            generate_plandefinitions(decision_tables)
+            generate_plandefinitions(dfs_decision_table)
 
             # generate carePlan
 
