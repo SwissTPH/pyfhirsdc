@@ -220,7 +220,6 @@ def processDecisionTableSheet(plandef, df ,outputfile):
         | Description corresponding to the <Action.Description>  |
         | annotation |
         | Title corresponding to the <Action.title> |
-        | mainAction corresponding to the Decision ID |
         | applicabilityCondition if it should be mapped as applicability |
         | startCondition if it should be mapped as start condition |
         | stopCondition if it should be mapped as stop Condition |
