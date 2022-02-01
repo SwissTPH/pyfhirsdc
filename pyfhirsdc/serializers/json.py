@@ -2,9 +2,6 @@ from types import SimpleNamespace
 import json
 import os
 
-
-
-
 def read_json(filepath, type = "object"):
     json_str = None
     try:
