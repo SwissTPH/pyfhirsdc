@@ -32,9 +32,9 @@ def parse_sheets(input_file, excudedWorksheets):
                     questionnaires[worksheet[2:]] = df
                 else:
                     break
-            elif worksheet.startswith('d.'):
+            elif worksheet.startswith('pd.'):
                 if validate_decision_tables_sheet(df):
-                    decision_tables[worksheet[2:]] = df
+                    decision_tables[worksheet[3:]] = df
                 else:
                     break
             elif worksheet == "valueSet":

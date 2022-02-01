@@ -1,12 +1,12 @@
 {
     "processor":{
         "inputFile":"l2/xls_form.xlsx",
-        "outputDirectory":"./output/",
+        "outputDirectory":"output/",
         "excudedWorksheets":[
             "q.new-encounter"
         ],
-        "skiprows" : 1,
-        "skipcols" : 1,
+        "skiprows" : 0,
+        "skipcols" : 0,
         "scope":"EmCare",
         "encoding":"json"
     },
@@ -23,9 +23,13 @@
             "Display": "Workflow Task"
         },
         "planDefinition":{
+            "outputPath":"resources/plandefinition",
             "planDefinitionType":{
                 "CodeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
                 "Code": "eca-rule"
+            },
+            "default":{
+                "status":"active"
             }
         },
         "questionnaire":{
