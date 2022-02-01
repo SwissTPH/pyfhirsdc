@@ -33,7 +33,6 @@
             }
         },
         "questionnaire":{
-            "addOnly":false,
             "outputPath":"resources/questionnaire",
             "default":{
                 "status":"active",
