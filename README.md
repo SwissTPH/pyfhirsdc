@@ -12,9 +12,43 @@ the input file is an xlsx file with several mandatory sheet
 
 this sheet define the main object that contain the sdc data capture
 
-### d.<planDefinitionReference>
+### pd.<planDefinitionReference>
 
-this sheet defined how the questionnaires are sequences using multiple plan definition, in the cql-tooling it was based on Decision Tables
+this sheet defined how the questionnaires are sequences using multiple plan definition, in the cql-tooling it was based on Decision Tables. Here each row will be, an action, that belongs to a main action with a decision ID. If an ID is provided in one row, this will be assumed as main action and the following rows will be assumed as sub actions of this action. If two following rows have the same action, they will be merged into one, joining the inputs with "OR". The delimiter to separate inputs in one action (row) is the pipe (|). 
+    
+#### id 
+    id of the main action
+
+#### description
+    - Describe the action to be taken
+##### annotation
+    - Will be mapped to the textEquivalent in the FHIR resource.  
+
+#### title
+    - The title of the action. 
+
+#### applicabilityCondition
+    - If this column is filled, the condition mapped with have applicability as type
+    
+#### startCondition
+    - If this column is filled, the condition mapped with have start as type
+#### stopCondition
+    - If this column is filled, the condition mapped with have stop as type
+#### conditionDescription
+    - Describes the input that is required for an action to take place
+#### conditionExpression
+    - The action that will result
+#### trigger
+    - What will trigger this decision. Must only be specified at the mainAction level
+#### triggerType
+    - Type of the trigger (named-event | periodic | data-changed | data-accessed | data-access-ended )
+#### businessRule
+    - Business Rule of the decision 
+#### reference
+    - Reference for the specific action
+#### output
+    - The outcome of performing such an action
+
 
 ### q.<questionnaireReference>
 
