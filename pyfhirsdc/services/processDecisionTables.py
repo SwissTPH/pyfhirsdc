@@ -3,7 +3,7 @@ import json
 from pydoc import describe
 import re
 from ..utils import mergeActions, actionsEqual
-from ..converters.to_CQL import generateLibrary
+from ..converters.CQLConverter import generateLibrary
 from ..config import get_fhir_cfg, get_processor_cfg
 from fhir.resources.expression import Expression
 from fhir.resources.plandefinition import PlanDefinition

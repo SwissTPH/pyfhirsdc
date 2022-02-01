@@ -5,7 +5,7 @@ from pyfhirsdc.serializers.json import get_path_or_default, read_resource
 from fhir.resources.plandefinition import PlanDefinition
 from pyfhirsdc.services.processDecisionTables import processDecisionTableSheet
 
-from pyfhirsdc.converters.to_CQL import write_library_CQL, write_action_condition, \
+from pyfhirsdc.converters.CQLConverter import write_library_CQL, write_action_condition, \
     write_libraries, write_plan_definitions, write_plan_definition_index,\
         writeLibraryHeader
 import os
