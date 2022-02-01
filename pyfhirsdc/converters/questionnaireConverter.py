@@ -8,7 +8,7 @@
 
 import numpy
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC
-from pyfhirsdc.models.extensions import get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext
+from pyfhirsdc.converters.extensionsConverter import get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
 
 def convert_df_to_questionitems(questionnaire, df_questions, df_value_set, df_choiceColumn, strategy = 'overwrite'):
