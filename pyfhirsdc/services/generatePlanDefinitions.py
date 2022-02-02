@@ -23,10 +23,13 @@ def generate_plandefinition( name ,df_actions):
     
     filename =  "plandefinition-" + name + ".json"
     # path must end with /
-    path = get_path_or_default(get_fhir_cfg().planDefinition.outputPath, "resource/plandefinition/")
-    filepath =os.path.join(get_processor_cfg().outputDirectory , path , filename)
-    if not os.path.exists(path):
-        os.makedirs(path)
+    path = get_path_or_default(get_fhir_cfg().codeSystem.outputPath, "resource/plandefinition/")
+    # create directory if not exists
+    fullpath = os.path.join(get_processor_cfg().outputDirectory , path )
+    if not os.path.exists(fullpath):
+        os.makedirs(fullpath)
+
+    filepath =os.path.join(fullpath , filename)
     print('processing plandefinition ', name)
     # read file content if it exists
     pd = init_pd(filepath)
