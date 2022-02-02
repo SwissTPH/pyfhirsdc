@@ -1,6 +1,7 @@
 import os
 import pandas as pd
-from ..utils import getConditionFirstRep, getIdentifierFirstRep, getActionFirstRep
+from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
+from pyfhirsdc.utils import getConditionFirstRep, getIdentifierFirstRep, getActionFirstRep
 from fhir.resources.attachment import Attachment
 from fhir.resources.fhirtypes import Canonical
 from fhir.resources.library import Library
@@ -26,7 +27,11 @@ def write_action_condition(cql, action):
 def write_plan_definitions(plandefinitions,encoding,outputpath):
     if pd.notnull(plandefinitions) and len(plandefinitions)>0:
         for key, value in plandefinitions.items():
-            output_path_file = os.path.join(outputpath,"input","resources","plandefinition")
+            output_path_file = os.path.join(
+               get_processor_cfg().outputDirectory,
+               get_fhir_cfg().planDefinition.outputPath
+            )
+    
             if (os.path.exists):
                 write_resource(output_path_file, value, encoding)
             else:
@@ -58,8 +63,10 @@ def build_plan_definition_index(planDefinitions):
 def write_library_CQL(output_path, libraryCQL):
     if (pd.notnull(libraryCQL) and len(libraryCQL) >0):
         for entry in libraryCQL:
-            output_directory_path = os.path.join(\
-                output_path, "input", "cql")
+            output_directory_path = os.path.join(
+               get_processor_cfg().outputDirectory,
+               get_fhir_cfg().library.outputPath
+            )
             output_file_path = os.path.join(output_directory_path,
             entry + ".cql")
         if not os.path.exists(output_directory_path):
@@ -68,8 +75,10 @@ def write_library_CQL(output_path, libraryCQL):
         output.write(libraryCQL[entry])
 
 def write_plan_definition_index(planDefinitions, output_path):
-    output_file_path = os.path.join(output_path, 
-    "pagecontent") 
+    output_file_path =  os.path.join(
+               get_processor_cfg().outputDirectory,
+               get_fhir_cfg().planDefinition.outputPath
+            )
     if not os.path.exists(output_file_path):
         os.makedirs(output_file_path)
     else:
@@ -77,8 +86,10 @@ def write_plan_definition_index(planDefinitions, output_path):
         output.write(build_plan_definition_index(planDefinitions))
 
 def write_libraries(output_path,libraries, encoding):
-    output_file_path = os.path.join(output_path, 
-    "input", "resources", "library") 
+    output_file_path = os.path.join(
+               get_processor_cfg().outputDirectory,
+               get_fhir_cfg().library.outputPath
+            )
     if not os.path.exists(output_file_path):
         os.makedirs(output_file_path)
     if pd.notnull(libraries) and len(libraries)>0:

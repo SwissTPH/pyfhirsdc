@@ -26,10 +26,11 @@ def generate_custom_code_system(dfs_questionnaire, df_value_set):
     # path must end with /
     path = get_path_or_default(get_fhir_cfg().codeSystem.outputPath, "vocabulary/codesystem/")
     # create directory if not exists
-    if not os.path.exists(path):
-        os.makedirs(path)
+    fullpath = os.path.join(get_processor_cfg().outputDirectory , path )
+    if not os.path.exists(fullpath):
+        os.makedirs(fullpath)
 
-    filepath =os.path.join(get_processor_cfg().outputDirectory , path , filename)
+    filepath =os.path.join(fullpath , filename)
     print('processing codeSystem ', name)
     # read file content if it exists
     code_system = init_code_system(filepath)
@@ -47,5 +48,8 @@ def init_code_system(filepath):
     elif default is not None:
         # create file from default
         code_system = CodeSystem.parse_raw( json.dumps(default))
+        CodeSystem.url = get_fhir_cfg().canonicalBase + "/CodeSystem/emc-custom-codes-codes"
+
+     
 
     return code_system    
