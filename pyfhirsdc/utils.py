@@ -5,7 +5,7 @@ def write_resource(output_file, resource, encoding):
         "-" + resource.id + "." + encoding)
     try: 
         output = open(output_file_path, 'w', encoding='utf-8')
-        output.write(resource.json()) if encoding == "json" \
+        output.write(resource.json(indent=4)) if encoding == "json" \
             else  output.write(resource.xml())
         output.close()
     except:
