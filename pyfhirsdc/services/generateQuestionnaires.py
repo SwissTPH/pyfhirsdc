@@ -26,9 +26,11 @@ def generate_questionnaire( name ,df_questions, df_value_set, df_choiceColumn ) 
     # path must end with /
     path = get_path_or_default(get_fhir_cfg().questionnaire.outputPath, "resource/quesitonnaire/")
     # create directory if not exists
-    if not os.path.exists(path):
-        os.makedirs(path)
-    filepath =os.path.join(get_processor_cfg().outputDirectory , path , filename)
+    fullpath = os.path.join(get_processor_cfg().outputDirectory , path )
+    if not os.path.exists(fullpath):
+        os.makedirs(fullpath)
+
+    filepath =os.path.join(fullpath , filename)
     print('processing quesitonnaire ', name)
     # read file content if it exists
     questionnaire = init_questionnaire(filepath)

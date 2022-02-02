@@ -23,7 +23,7 @@ def generate_plandefinition( name ,df_actions):
     
     filename =  "plandefinition-" + name + ".json"
     # path must end with /
-    path = get_path_or_default(get_fhir_cfg().codeSystem.outputPath, "resource/plandefinition/")
+    path = get_path_or_default(get_fhir_cfg().planDefinition.outputPath, "resource/planDefinition/")
     # create directory if not exists
     fullpath = os.path.join(get_processor_cfg().outputDirectory , path )
     if not os.path.exists(fullpath):
@@ -43,15 +43,27 @@ def generate_plandefinition( name ,df_actions):
     dict_questions = df_actions.to_dict('index')
 
     ## generate libraries, plandefinitions and libraries
-    plandefinitions, libraryCQL, libraries = processDecisionTableSheet(pd,dict_questions,path)
+    plandefinitions, libraryCQL, libraries = processDecisionTableSheet(pd,dict_questions,fullpath)
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
     #plan_definition = processDecisionTable(plandefinitions, dict_questions)
-    
+
     # write file
-    write_plan_definitions(plandefinitions, get_processor_cfg().encoding, path)
-    write_plan_definition_index(plandefinitions, path)
-    write_libraries(path,libraries,get_processor_cfg().encoding)
-    write_library_CQL(path, libraryCQL)
+    write_plan_definitions(plandefinitions, get_processor_cfg().encoding, fullpath)
+    root_output_path = get_processor_cfg().outputDirectory
+    if not os.path.exists(root_output_path):
+        os.makedirs(root_output_path)
+   
+    write_plan_definition_index(plandefinitions, root_output_path)
+    output_lib_path = os.path.join(
+            get_processor_cfg().outputDirectory,
+            get_fhir_cfg().library.outputPath
+        )
+    print(root_output_path)
+    if not os.path.exists(output_lib_path):
+        os.makedirs(output_lib_path)  
+    
+    write_libraries(output_lib_path,libraries,get_processor_cfg().encoding)
+    write_library_CQL(output_lib_path, libraryCQL)
     ##with open(filepath, 'w') as json_file:
     ##    json_file.write(plan_definition.json( indent=4))
 

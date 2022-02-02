@@ -64,7 +64,7 @@
         },
         "library":{
             "status":"active",
-            "outputPath":"/ressource/library/"
+            "outputPath":"resources/library/"
         },
         "pagecontent":{
             "outputPath":"/pagecontent/"

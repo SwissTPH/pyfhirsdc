@@ -27,19 +27,12 @@ def write_action_condition(cql, action):
 def write_plan_definitions(plandefinitions,encoding,outputpath):
     if pd.notnull(plandefinitions) and len(plandefinitions)>0:
         for key, value in plandefinitions.items():
-            output_path_file = os.path.join(
-               get_processor_cfg().outputDirectory,
-               get_fhir_cfg().planDefinition.outputPath
-            )
-    
-            if (os.path.exists):
-                write_resource(output_path_file, value, encoding)
+            if (os.path.exists(outputpath)):
+                write_resource(outputpath, value, encoding)
             else:
                 raise ValueError("The validity of the path could not be established")
 
 def write_resource(output_file, resource, encoding):
-    if not os.path.exists(output_file):
-            os.makedirs(output_file)
     output_file_path = os.path.join(output_file,resource.resource_type.lower()+\
         "-" + resource.id + "." + encoding)
     try: 
@@ -63,38 +56,23 @@ def build_plan_definition_index(planDefinitions):
 def write_library_CQL(output_path, libraryCQL):
     if (pd.notnull(libraryCQL) and len(libraryCQL) >0):
         for entry in libraryCQL:
-            output_directory_path = os.path.join(
-               get_processor_cfg().outputDirectory,
-               get_fhir_cfg().library.outputPath
-            )
-            output_file_path = os.path.join(output_directory_path,
+            output_file_path = os.path.join(output_path,
             entry + ".cql")
-        if not os.path.exists(output_directory_path):
-            os.makedirs(output_directory_path)
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
         output = open(output_file_path, 'w', encoding='utf-8')
         output.write(libraryCQL[entry])
 
 def write_plan_definition_index(planDefinitions, output_path):
-    output_file_path =  os.path.join(
-               get_processor_cfg().outputDirectory,
-               get_fhir_cfg().planDefinition.outputPath
-            )
-    if not os.path.exists(output_file_path):
-        os.makedirs(output_file_path)
-    else:
-        output = open(output_file_path+"PlanDefinitionIndex.md", 'w')
-        output.write(build_plan_definition_index(planDefinitions))
+    output = open(output_path+"PlanDefinitionIndex.md", 'w')
+    output.write(build_plan_definition_index(planDefinitions))
 
 def write_libraries(output_path,libraries, encoding):
-    output_file_path = os.path.join(
-               get_processor_cfg().outputDirectory,
-               get_fhir_cfg().library.outputPath
-            )
-    if not os.path.exists(output_file_path):
-        os.makedirs(output_file_path)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
     if pd.notnull(libraries) and len(libraries)>0:
         for key, library in libraries.items():
-            write_resource(output_file_path,library, encoding)
+            write_resource(output_path,library, encoding)
   
 def generateLibrary(planDefinition, canonicalBase, libraryStatus,libraryVersion,scope,libraries,libraryCQL):
   id = planDefinition.id
