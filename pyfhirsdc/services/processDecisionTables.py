@@ -1,17 +1,12 @@
 
-import json
-from pydoc import describe
-import re
-from ..utils import mergeActions, actionsEqual
-from ..converters.CQLConverter import generateLibrary
-from ..config import get_fhir_cfg, get_processor_cfg
+from pyfhirsdc.converters.planDefinitionConverter import  mergeActions, actionsEqual
+from pyfhirsdc.converters.libraryConverter import generate_plan_defnition_lib
+from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
 from fhir.resources.expression import Expression
-from fhir.resources.plandefinition import PlanDefinition
 from fhir.resources.plandefinition import PlanDefinitionAction
 from fhir.resources.plandefinition import PlanDefinitionActionCondition
 from fhir.resources.relatedartifact import RelatedArtifact
 from fhir.resources.identifier import Identifier
-from fhir.resources.expression import fhirtypes
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
 from fhir.resources.usagecontext import UsageContext
@@ -243,7 +238,7 @@ def processDecisionTableSheet(plandef, df ,outputfile):
     planDefinition=processDecisionTable(plandef,df)
     if pd.notnull(planDefinition):
         planDefinitions[planDefinition.id] =  planDefinition
-        libraries, libraryCQL = generateLibrary(planDefinition, canonicalBase, libraryStatus, libraryVersion, scope,libraries,libraryCQL)
+        libraries, libraryCQL = generate_plan_defnition_lib(planDefinition, canonicalBase, libraryStatus, libraryVersion, scope,libraries,libraryCQL)
     return planDefinitions, libraries, libraryCQL
 
 def convert_df_to_plandefinition(pd, df): 
