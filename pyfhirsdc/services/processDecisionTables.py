@@ -33,11 +33,18 @@ annotation_col, actionid, currentAnnotationValue, reference_col):
     if (input==""):
         ## No condition, no action, end of decision table
         return None
+    ## Split the whole statement to introduce the expression Patient.hasCondition()
     conditionList = input.strip().split('OR')
     applicabilityCondition = ""
     counter = 1
     for condition in conditionList:
-        newCondition = "Patient.hasCondition("+condition+")"
+        if "=" in condition:
+            condition = condition.split("=")[1]
+            newCondition = "Patient.hasCondition("+condition+")"
+        elif "≠" in condition:
+            print("inequality")
+            condition = condition.split("≠")[1]
+            newCondition = "not Patient.hasCondition("+condition+")"
         applicabilityCondition += newCondition
         if len(conditionList)!=counter:
             applicabilityCondition += " OR " 
@@ -50,6 +57,9 @@ annotation_col, actionid, currentAnnotationValue, reference_col):
     condition.kind = "applicability"
     condition.expression = expression
     action.condition = [condition]
+    #TODO add output to the action? According to the resource it should be DataRequirement
+    #output = row["output"]
+    #action.output = [output]
     if not action.action: action.action = []
     actionValues = []
 
@@ -159,7 +169,7 @@ def processDecisionTable(planDefinition, df):
     plandefAction = PlanDefinitionAction.construct()
     plandefAction.title = decisionTitle
     triggerDef = TriggerDefinition.construct()
-    triggerDef.type = "namedevent"
+    triggerDef.type = df[1]["trigger"]
     triggerDef.name = triggerName
     plandefAction.trigger = [triggerDef]
     planDefinition.action = [plandefAction]
@@ -206,7 +216,7 @@ def processDecisionTable(planDefinition, df):
                 mergeActions(currentAction, subAction)
     return planDefinition
 
-def processDecisionTableSheet(plandef, df ,outputfile):
+def processDecisionTableSheet(plandef, df):
     libraries ={}
     libraryCQL={}
     """Decision table general format:
@@ -240,8 +250,3 @@ def processDecisionTableSheet(plandef, df ,outputfile):
         planDefinitions[planDefinition.id] =  planDefinition
         libraries, libraryCQL = generate_plan_defnition_lib(planDefinition, canonicalBase, libraryStatus, libraryVersion, scope,libraries,libraryCQL)
     return planDefinitions, libraries, libraryCQL
-
-def convert_df_to_plandefinition(pd, df): 
-    libraries ={}
-    libraryCQL = {}
-

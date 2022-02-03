@@ -43,7 +43,7 @@ def generate_plandefinition( name ,df_actions):
     dict_questions = df_actions.to_dict('index')
 
     ## generate libraries, plandefinitions and libraries
-    plandefinitions, libraryCQL, libraries = processDecisionTableSheet(pd,dict_questions,fullpath)
+    plandefinitions, libraryCQL, libraries = processDecisionTableSheet(pd,dict_questions)
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
     #plan_definition = processDecisionTable(plandefinitions, dict_questions)
 
