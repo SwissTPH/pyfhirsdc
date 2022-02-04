@@ -1,7 +1,6 @@
 {
     "processor":{
-        "inputFile":"l2/xls_form.xlsx",
-        "outputDirectory":"output/",
+        "inputFile":"C:/Users/delcpa/switchdrive/DHU/Projects/WHO DAK/merged/xls_form_old.xlsx",
         "outputPath":"output/",
         "excudedWorksheets":[
             "q.new-encounter"
