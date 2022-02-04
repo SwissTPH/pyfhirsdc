@@ -161,7 +161,13 @@ def processAction(row, actionid, currentAnnotationValue):
     applicabilityCondition = ""
     counter = 1
     for condition in conditionList:
-        newCondition = "Patient.hasCondition("+condition+")"
+        if "=" in condition:
+            condition = condition.split("=")[1]
+            newCondition = "Patient.hasCondition("+condition+")"
+        elif "≠" in condition:
+            print("inequality")
+            condition = condition.split("≠")[1]
+            newCondition = "not Patient.hasCondition("+condition+")"
         applicabilityCondition += newCondition
         if len(conditionList)!=counter:
             applicabilityCondition += " OR " 
@@ -174,6 +180,9 @@ def processAction(row, actionid, currentAnnotationValue):
     condition.kind = "applicability"
     condition.expression = expression
     action.condition = [condition]
+    #TODO add output to the action? According to the resource it should be DataRequirement
+    #output = row["output"]
+    #action.output = [output]
     if not action.action: action.action = []
     actionValues = []
 
@@ -284,7 +293,7 @@ def processDecisionTable(planDefinition, df):
     plandefAction = PlanDefinitionAction.construct()
     plandefAction.title = decisionTitle
     triggerDef = TriggerDefinition.construct()
-    triggerDef.type = "namedevent"
+    triggerDef.type = df[1]["trigger"]
     triggerDef.name = triggerName
     plandefAction.trigger = [triggerDef]
     planDefinition.action = [plandefAction]

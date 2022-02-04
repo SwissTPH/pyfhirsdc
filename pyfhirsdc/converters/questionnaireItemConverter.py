@@ -14,6 +14,8 @@ from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
 def convert_df_to_questionitems(questionnaire, df_questions, df_value_set, df_choiceColumn, strategy = 'overwrite'):
     # create a dict to iterate
     dict_questions = df_questions.to_dict('index')
+    # Use first part of the id (before DE) as an ID
+    questionnaire.id = list(dict_questions.keys())[0].split(".DE")[0]
     # delete all item in case of overwrite strategy
     if questionnaire.item is None or strategy == "overwrite":
         questionnaire.item =[]
