@@ -9,8 +9,11 @@ import json
 import os
 from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.codeSystemConverter import generate_questionnaire_concept, generate_valueset_concept
-from pyfhirsdc.serializers.json import get_path_or_default, read_resource
+from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.codesystem import CodeSystem
+
+from pyfhirsdc.utils import get_resource_path
+
 
 def generate_custom_code_system(dfs_questionnaire, df_value_set):
     concept = []
@@ -22,15 +25,12 @@ def generate_custom_code_system(dfs_questionnaire, df_value_set):
     if len(valueset_concept)>0:
           concept = concept +  valueset_concept
 
-    filename =  "codesystem-" + get_processor_cfg().scope.lower() + ".json"
     # path must end with /
-    path = get_path_or_default(get_fhir_cfg().codeSystem.outputPath, "vocabulary/codesystem/")
     # create directory if not exists
-    fullpath = os.path.join(get_processor_cfg().outputDirectory , path )
-    if not os.path.exists(fullpath):
-        os.makedirs(fullpath)
 
-    filepath =os.path.join(fullpath , filename)
+    filepath = get_resource_path("CodeSystem", get_processor_cfg().scope.lower())
+
+
     print('processing codeSystem ', name)
     # read file content if it exists
     code_system = init_code_system(filepath)
@@ -42,7 +42,7 @@ def generate_custom_code_system(dfs_questionnaire, df_value_set):
 
 def init_code_system(filepath):
     code_system_json = read_resource(filepath, "CodeSystem")
-    default =get_defaut_fhir('codeSystem')
+    default =get_defaut_fhir('CodeSystem')
     if code_system_json is not None :
         code_system = CodeSystem.parse_raw( json.dumps(code_system_json))  
     elif default is not None:

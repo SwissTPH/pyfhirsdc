@@ -12,11 +12,11 @@ def read_config_file(filepath):
     obj_conf=read_json(filepath, "object")
     dict_cfg=read_json(filepath, "dict")
        # ensure the output directoy exist
-    if obj_conf.processor.outputDirectory is None:
-        obj_conf.processor.outputDirectory = "./output"
+    if obj_conf.processor.outputPath is None:
+        obj_conf.processor.outputPath = "./output"
     # check that there is worksheet defined
-    if not os.path.exists(obj_conf.processor.outputDirectory):
-        os.makedirs(obj_conf.processor.outputDirectory)
+    if not os.path.exists(obj_conf.processor.outputPath):
+        os.makedirs(obj_conf.processor.outputPath)
     if not os.path.exists(obj_conf.processor.inputFile):
         print("inputFile not found")
         return None
@@ -32,3 +32,8 @@ def get_fhir_cfg():
 
 def get_defaut_fhir(resource):
     return dict_cfg['fhir'][resource]['default']
+
+def get_defaut_path(resource, default):
+    if dict_cfg['fhir'][resource]['outputPath'] is None:
+        return get_processor_cfg().outputPath + default
+    return get_processor_cfg().outputPath + dict_cfg['fhir'][resource]['outputPath']

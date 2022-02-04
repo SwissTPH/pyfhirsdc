@@ -1,3 +1,4 @@
+from pathlib import Path
 from types import SimpleNamespace
 import json
 import os
@@ -21,18 +22,12 @@ def read_json(filepath, type = "object"):
     return json_str
 
 def read_resource(filepath, resource):
-    resource_dict=read_json(filepath, 'dict') if os.path.exists(filepath) else None
+    resource_dict = read_json(filepath, 'dict') if os.path.exists(filepath) else None
+
+
     # check if the resource has the right type 
     if resource_dict is not None and (resource_dict['resourceType'] == resource ):
         return resource_dict
     else:
         return None
 
-
-
-def get_path_or_default(path, default):
-    if len(path)>0:
-        path = path if path[:-1] == '/' else path + '/'
-    else:
-        path = default
-    return path

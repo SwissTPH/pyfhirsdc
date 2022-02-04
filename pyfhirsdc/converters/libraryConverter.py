@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.utils import write_resource
 from pyfhirsdc.converters.planDefinitionConverter import getIdentifierFirstRep,  write_action_condition, getActionFirstRep
 from fhir.resources.library import Library
@@ -16,48 +17,50 @@ def writeLibraryHeader(library,scope):
 def write_libraries(output_path,libraries, encoding):
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    if pd.notnull(libraries) and len(libraries)>0:
-        for key, library in libraries.items():
+    if libraries is not None and len(libraries)>0:
+        for library in libraries.items():
             write_resource(output_path,library, encoding)
   
-def write_library_CQL(output_path, libraryCQL):
-    if (pd.notnull(libraryCQL) and len(libraryCQL) >0):
-        for entry in libraryCQL:
-            output_file_path = os.path.join(output_path,
-            entry + ".cql")
+def write_library_CQL(output_path, name, cql):
+    if cql is not None and len(cql)>0:
+        output_file_path = os.path.join(output_path, name + ".cql")
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         output = open(output_file_path, 'w', encoding='utf-8')
-        output.write(libraryCQL[entry])
+        for entry in cql:    
+            output.write(cql[entry])
 
-def generate_plan_defnition_lib(planDefinition, canonicalBase, libraryStatus,libraryVersion,scope,libraries,libraryCQL):
-  id = planDefinition.id
-  library = Library.construct()
-  library.status = libraryStatus
-  ## The fhir classes are being initialized with value None so, if it is None we create a list
-  if not library.identifier: library.identifier = []
-  library.identifier.append(getIdentifierFirstRep(planDefinition))
-  library.id = id
-  library.name = planDefinition.name
-  print("Generating library ", library.name, ".......")
-  library.version=libraryVersion
-  library.url = canonicalBase + '/Library/' + id 
-  library.title = planDefinition.title
-  library.description = planDefinition.description
-  attachment = Attachment.construct()
-  attachment.id = "ig-loader-" + id + ".cql"
-  library.content = [attachment]
-  libraryCanonical = Canonical(library.url)
-  if not planDefinition.library:  planDefinition.library = []    
-  planDefinition.library.append(libraryCanonical)
-  print(planDefinition.library)
-  print("library: ", library.version)
-  cql = writeLibraryHeader(library,scope)
-  list_actions =getActionFirstRep(planDefinition).action
-  if list_actions:
-      for action in list_actions:
-          if (action.condition):
-              write_action_condition(cql, action)
-  libraries[id]= library
-  libraryCQL[id] = cql
-  return libraryCQL, libraries
+def generate_plan_defnition_lib(planDefinition):
+    id = planDefinition.id
+    library = Library.construct()
+    library.status = get_fhir_cfg().Library.status
+    ## The fhir classes are being initialized with value None so, if it is None we create a list
+    if not library.identifier: library.identifier = []
+    library.identifier.append(getIdentifierFirstRep(planDefinition))
+    library.id = id
+    library.name = planDefinition.name
+    print("Generating library ", library.name, ".......")
+    library.version = " " + get_fhir_cfg().version
+    library.url = get_fhir_cfg().canonicalBase + '/Library/' + id 
+    library.title = planDefinition.title
+    library.description = planDefinition.description
+    attachment = Attachment.construct()
+    attachment.id = "ig-loader-" + id + ".cql"
+    library.content = [attachment]
+    libraryCanonical = Canonical(library.url)
+    if not planDefinition.library:  planDefinition.library = []    
+    planDefinition.library.append(libraryCanonical)
+    cql = {}
+    cql['header'] = writeLibraryHeader(library, get_processor_cfg().scope)
+    i = 0
+    list_actions = getActionFirstRep(planDefinition).action
+    if list_actions:
+        for action in list_actions:
+            if (action.condition):
+                
+                action_cql = write_action_condition(action)
+                if action_cql is not None:
+                    cql[i] = action_cql
+                    i = i+1
+    
+    return cql, library

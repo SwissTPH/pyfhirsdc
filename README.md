@@ -12,9 +12,40 @@ the input file is an xlsx file with several mandatory sheet
 
 this sheet define the main object that contain the sdc data capture
 
-### d.<planDefinitionReference>
+### pd.<planDefinitionReference>
 
 this sheet defined how the questionnaires are sequences using multiple plan definition, in the cql-tooling it was based on Decision Tables
+#### parentActionId
+    <text> identifier of the parent actions 
+#### id
+    <text> identifier of the actions 
+#### title
+    <text> title of the actions
+#### description
+    <text> to describe the actions
+#### applicabilityExpressions
+    <BooleanCondition> to define when this action is applicable
+
+##### example 
+    Patient.hasNewCondition("Nausea and vomiting")
+    Patient.hasPersistentCondition( "Nausea and vomiting")
+#### startExpressions
+    <BooleanCondition> to define when this action starts
+
+#### stopExpressions
+    <BooleanCondition> to define when this action stops
+#### trigger
+  list of trigger separated by  ||
+
+  if the triggerType is name event then the second part is the name/url for the event (resource that implement event)
+
+  -- to be checked if || can be use in CQL
+##### example
+  <triggerType>::<BooleanCondition/Name>||<triggerType2>::<BooleanCondition2/Name>
+  -- TBC for name-event what condition  whe should have
+
+#### definitionCanonical 
+    list of the definitionCanonical that need to be perfomed comma separated (canonical(ActivityDefinition | PlanDefinition | Questionnaire))
 
 ### q.<questionnaireReference>
 

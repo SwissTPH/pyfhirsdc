@@ -2,6 +2,7 @@
     "processor":{
         "inputFile":"l2/xls_form.xlsx",
         "outputDirectory":"output/",
+        "outputPath":"output/",
         "excudedWorksheets":[
             "q.new-encounter"
         ],
@@ -22,7 +23,7 @@
             "Code": "task",
             "Display": "Workflow Task"
         },
-        "planDefinition":{
+        "PlanDefinition":{
             "outputPath":"resources/plandefinition",
             "planDefinitionType":{
                 "CodeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
@@ -32,7 +33,7 @@
                 "status":"active"
             }
         },
-        "questionnaire":{
+        "Questionnaire":{
             "outputPath":"resources/questionnaire",
             "default":{
                 "status":"active",
@@ -62,13 +63,13 @@
             }
             
         },
-        "library":{
+        "Library":{
             "status":"active",
             "outputPath":"resources/library/"
         },
         "pagecontent":{
             "outputPath":"/pagecontent/"
-        },"codeSystem":
+        },"CodeSystem":
         {
             "outputPath":"vocabulary/codesystem/",
             "default":{
@@ -83,6 +84,31 @@
                 "caseSensitive": true,
                 "content": "complete",
                 "concept": [ ]
+            }
+        },"StructureMap":
+        {
+            "outputPath":"resources/structuremap/",
+            "default":{
+                "resourceType": "StructureMap",
+                "id": "default",
+                "url": "http://hl7.org/fhir/StructureMap/example",
+                "name": "default",
+                "status": "draft",
+                "group": [{
+                    "name":"fake",
+                    "typeMode":"none",
+                    "input":[{
+                        "name":"fake",
+                        "mode":"source"
+                    }],
+                    "rule":[{
+                        "name":"fake",
+                         "source":[{
+                             "context":"fake"
+                         }]
+                        }]
+
+                }]
             }
         },"valueSet":
         {

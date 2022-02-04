@@ -2,6 +2,7 @@ from fhir.resources.extension import Extension
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.fhirtypes import  ExpressionType, QuantityType 
 from fhir.resources.coding import Coding
+from fhir.resources.fhirtypes import Canonical
 from distutils.util import strtobool
 def get_dropdown_ext():
  return Extension(
@@ -54,3 +55,19 @@ def get_choice_column_ext(path, label, width, for_display):
     else:
         return None
 
+def get_structure_map_extension(extentions, uri):
+    if  uri is not None:
+        sm_ext = Extension(
+        url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-targetStructureMap",
+        valueCanonical=  Canonical(uri)
+        )
+        if len(extentions) == 0:
+            return [sm_ext]
+        else:
+            nofound = True
+            for ext in extentions:
+                if ext.url == "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-targetStructureMap":
+                    nofound = False
+            if nofound:
+              return extentions.append(sm_ext)
+    return extentions
