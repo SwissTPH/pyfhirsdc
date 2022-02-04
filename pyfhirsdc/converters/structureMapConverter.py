@@ -24,13 +24,12 @@ def get_structure_maps(name, df_questions):
     structure_maps = []
     profiles = get_question_profiles(df_questions)
     for profile in profiles:
+        sm_name = profile.replace(" ","-").lower() + "-" + name
         filepath = get_resource_path(
             "StructureMap", 
-            profile.replace(" ","-").lower() + name
+            sm_name
             )
-        get_question_profiles(df_questions)
-
-        structure_map = init_structure_map(filepath, name)
+        structure_map = init_structure_map(filepath, sm_name)
         if structure_map is not None:
             structure_maps.append(structure_map)
             write_resource(filepath, structure_map, get_processor_cfg().encoding)
@@ -58,6 +57,5 @@ def init_structure_map(filepath, id):
         structure_map.name=id
         structure_map.url=get_fhir_cfg().canonicalBase\
             + "/structureMap/" \
-            + get_processor_cfg().scope\
-            + "-" + id
+            + id
     return structure_map

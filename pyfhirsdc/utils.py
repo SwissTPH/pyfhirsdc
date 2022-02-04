@@ -21,6 +21,5 @@ def get_resource_path(resource_type, name):
             os.makedirs(path) 
         filename = resource_type.lower()+ "-"+ name +  "." + get_processor_cfg().encoding
         fullpath = os.path.join(path, filename)
-        print(fullpath)
         return fullpath
 
