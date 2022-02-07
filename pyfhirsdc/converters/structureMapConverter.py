@@ -36,8 +36,6 @@ def get_structure_maps(name, df_questions):
     return structure_maps
 
 def add_structure_maps_url(resource, structure_maps):
-    if resource.extension is None:
-        resource.extension = []
     for structure_map in structure_maps:
         resource.extension = get_structure_map_extension(
             resource.extension, 

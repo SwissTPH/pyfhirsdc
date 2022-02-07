@@ -56,6 +56,8 @@ def get_choice_column_ext(path, label, width, for_display):
         return None
 
 def get_structure_map_extension(extentions, uri):
+    if extentions is None:
+        extentions = []
     if  uri is not None:
         sm_ext = Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-targetStructureMap",
