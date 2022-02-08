@@ -87,6 +87,14 @@ the format is inpired by the pyxform 'choice' sheet
 
 this sheet list the additionnal CQL required 
 
+### map_resource
+
+    'context' for the structureMap rule
+
+### map_profile
+
+    use the create custom profiles and to create the structure map Questionnaire - Profile
+
 ## output files
 
 the output file structure should follow the cqf-tooling structure
@@ -95,7 +103,6 @@ the output file structure should follow the cqf-tooling structure
 
 this tool is started to answer WHO EmCare project needs
 ## Credits
-
  
 pyxform project
 cqf-tooling project
