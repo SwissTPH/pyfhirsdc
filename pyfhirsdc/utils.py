@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from pyfhirsdc.config import get_defaut_path, get_fhir_cfg, get_processor_cfg
+from pyfhirsdc.config import get_defaut_path, get_fhir_cfg,  get_processor_cfg
 
 
 def write_resource(filepath, resource, encoding):
@@ -19,7 +19,15 @@ def get_resource_path(resource_type, name):
         path = get_defaut_path(resource_type, "resources/"+ resource_type.lower())
         if not os.path.exists(path):
             os.makedirs(path) 
-        filename = resource_type.lower()+ "-"+ name +  "." + get_processor_cfg().encoding
+        filename = get_resource_name(resource_type, name)+  "." + get_processor_cfg().encoding
         fullpath = os.path.join(path, filename)
         return fullpath
 
+def get_resource_name(resource_type, name):
+    return resource_type.lower()+ "-"+ name 
+
+def get_resource_url(resource_type, name):
+    return get_fhir_cfg().canonicalBase +  get_resource_name(resource_type, name)
+
+def clean_name(name):
+    return name.replace(" ","-").lower()

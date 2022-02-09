@@ -87,6 +87,39 @@ the format is inpired by the pyxform 'choice' sheet
 
 this sheet list the additionnal CQL required 
 
+### map_resource
+    
+    List of Map rules, value separeted by ||
+
+    will be use the generate map files
+    https://www.hl7.org/fhir/mapping-tutorial.html
+
+    the source should not be provided as the last ;
+
+    #### example
+
+    the generate
+    ```
+    src.a2 as a where a2.length <= 20 -> tgt.a2 = a; // ignore it
+    src.a2 as a check a2.length <= 20 -> tgt.a2 = a; // error if it's longer than 20 characters
+    ``` 
+    this will be needed
+    ```
+    as a where a2.length <= 20 -> tgt.a2 = a||as a check a2.length <= 20 -> tgt.a2 = a
+    ```
+
+
+
+### map_profile
+
+
+
+    use the create custom profiles and to create the structure map Questionnaire - Profile
+
+
+    
+
+
 ## output files
 
 the output file structure should follow the cqf-tooling structure
@@ -95,7 +128,6 @@ the output file structure should follow the cqf-tooling structure
 
 this tool is started to answer WHO EmCare project needs
 ## Credits
-
  
 pyxform project
 cqf-tooling project

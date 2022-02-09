@@ -63,13 +63,13 @@ def get_structure_map_extension(extentions, uri):
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-targetStructureMap",
         valueCanonical=  Canonical(uri)
         )
-        if len(extentions) == 0:
+        if extentions is None or len(extentions) == 0:
             return [sm_ext]
         else:
             nofound = True
             for ext in extentions:
-                if ext.url == "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-targetStructureMap":
+                if ext.valueCanonical == uri and ext.url == "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-targetStructureMap":
                     nofound = False
             if nofound:
-              return extentions.append(sm_ext)
+                extentions.append(sm_ext)
     return extentions
