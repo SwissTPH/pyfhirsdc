@@ -72,6 +72,7 @@ def generate_plandefinition( name ,df_actions):
 def init_pd(filepath):
     pd_json = read_resource(filepath, "PlanDefinition")
     default =get_defaut_fhir('PlanDefinition')
+    print("pd_json",pd_json)
     if pd_json is not None :
         pd = PlanDefinition.parse_raw( json.dumps(pd_json))  
     elif default is not None:
