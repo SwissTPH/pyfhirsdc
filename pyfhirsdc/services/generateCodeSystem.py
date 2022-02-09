@@ -31,7 +31,7 @@ def generate_custom_code_system(dfs_questionnaire, df_value_set):
     filepath = get_resource_path("CodeSystem", get_processor_cfg().scope.lower())
 
 
-    print('processing codeSystem ', name)
+    print('processing codeSystem ${0}'.format( name))
     # read file content if it exists
     code_system = init_code_system(filepath)
     code_system.concept = concept

@@ -32,7 +32,7 @@ def generate_plandefinition( name ,df_actions):
         # path must end with /
     filepath = get_resource_path("PlanDefinition", get_processor_cfg().scope.lower())
 
-    print('processing plandefinition ', name)
+    print('processing plandefinition ${0}'.format(name))
     # read file content if it exists
     pd_df = init_pd(filepath)
     skipcols=get_processor_cfg().skipcols

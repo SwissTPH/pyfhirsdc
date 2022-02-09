@@ -16,13 +16,11 @@ def generate_questionnaires(dfs_questionnaire, df_value_set, df_choiceColumn):
     for name, questions in dfs_questionnaire.items():
         generate_questionnaire(name ,questions, df_value_set, df_choiceColumn)
 
-# @param config object fromn json
-# @param name string
-# @param questions DataFrame
+
 def generate_questionnaire( name ,df_questions, df_value_set, df_choiceColumn ) :
     # try to load the existing questionnaire
     fullpath = get_resource_path("Questionnaire", name)
-    print('processing quesitonnaire ', name)
+    print('processing quesitonnaire ${0}'.format(name))
     # read file content if it exists
     questionnaire = init_questionnaire(fullpath, name)
     # clean the data frame

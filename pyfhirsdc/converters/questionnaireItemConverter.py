@@ -43,7 +43,7 @@ def process_quesitonnaire_line(id, question, df_value_set, df_choiceColumn, exis
     type = get_question_fhir_type(question)
 
     if type is None:
-        print(question['type'], " is not a valid type, see question ", id)
+        print("${0} is not a valid type, see question ${1}".format(question['type'], id))
         return None        
     elif type == "skipped":
         return None
@@ -93,6 +93,7 @@ def get_question_extension(question, df_choiceColumn ):
 
 def get_question_valueset(question, df_value_set):
     # split question type and details
+     
     type, detail_1, detail_2 = get_type_details(question)
     # split each deatil
     if "select_" in type:
@@ -100,7 +101,12 @@ def get_question_valueset(question, df_value_set):
             return  (detail_2)
         elif detail_2 is None  :
             # we assume it use a local valueset, TODO check if there is actual value in df_value_set
-            return  get_resource_url("ValueSet", detail_1)
+            valueset_dict = df_value_set[df_value_set['valueSet'] == detail_1 ].dropna(axis=0, subset=['id']).set_index('id').to_dict('index')
+            if isinstance(valueset_dict, dict) and len(valueset_dict)>0:
+                return  get_resource_url("ValueSet", detail_1)
+            else:
+                print("local ValueSet ${0} not defiend in the valueset tab".format(detail_1))
+                return None
     else:
         return None
 

@@ -23,7 +23,7 @@ def parse_sheets(input_file, excudedWorksheets):
     decision_tables = {}
     value_set = None
     for worksheet in sheets:
-        print ("loading sheet %s", worksheet)
+        print ("loading sheet %{0}".format( worksheet))
         if excudedWorksheets is None or worksheet not in excudedWorksheets:
             df = input_file.parse(worksheet)
             if worksheet.startswith('q.'):
