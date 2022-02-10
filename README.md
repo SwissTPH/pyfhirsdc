@@ -12,7 +12,7 @@ the input file is an xlsx file with several mandatory sheet
 
 this sheet define the main object that contain the sdc data capture
 
-### pd.<planDefinitionReference>
+### pd. : planDefinition
 
 this sheet defined how the questionnaires are sequences using multiple plan definition, in the cql-tooling it was based on Decision Tables
 #### parentActionId
@@ -47,7 +47,7 @@ this sheet defined how the questionnaires are sequences using multiple plan defi
 #### definitionCanonical 
     list of the definitionCanonical that need to be perfomed comma separated (canonical(ActivityDefinition | PlanDefinition | Questionnaire))
 
-### q.<questionnaireReference>
+### q : Questionnaire
 
 thoses sheets are containing the questionnaires, and the required information to de the fihr mapping via structureMap (to be confirmed) and the CQL to find back the answers based on their "label"
 the format is inpired by the pyxform 'survey' sheet but addapted to fhir SDC questionnaires
@@ -55,24 +55,55 @@ the format is inpired by the pyxform 'survey' sheet but addapted to fhir SDC que
 
 
 #### id 
-    Mandatory, used as linkid
+Mandatory, used as linkid
 
 #### type
-    - all fhir type but choice : use one of the basic type
-    - select_one option : choice when only one selection is possible
-    - select_multile option : choice when multiple selections are possible
-    - mapping : will not apprear on the questionnaire, just to document mapping information
+- all fhir type but choice : use one of the basic type
+- select_one option : choice when only one selection is possible
+- select_multile option : choice when multiple selections are possible
+- mapping : will not apprear on the questionnaire, just to document mapping information
 ##### option
-        - <valueSetName> valueSet defined in the valueSet tab 
-        - url::<valueSetUrl> link to a remote value set
-        - candidateExpression::<x-fhir-query> will fetch the result via the <x-fhir-query>, then will dieplay the result based on the data attached to the <candidateExpressionName> in the choiceColum sheet
+- <valueSetName> valueSet defined in the valueSet tab 
+- url::<valueSetUrl> link to a remote value set
+- candidateExpression::<x-fhir-query> will fetch the result via the <x-fhir-query>, then will dieplay the result based on the data attached to the <candidateExpressionName> in the choiceColum sheet
 
 #### required
-    set to True to make sure the question is required
+set to True to make sure the question is required
 
 #### display
-    dropdown : only for select_one / select_multiple
-    <candidateExpressionName> : only for candidateExpression
+dropdown : only for select_one / select_multiple
+<candidateExpressionName> : only for candidateExpression
+
+#### map_resource
+    
+List of Map rules, value separeted by ||
+
+will be use the generate map files
+https://www.hl7.org/fhir/mapping-tutorial.html
+
+the source should not be provided as the last ;
+
+##### example
+
+the generate
+```
+src.a2 as a where a2.length <= 20 -> tgt.a2 = a; // ignore it
+src.a2 as a check a2.length <= 20 -> tgt.a2 = a; // error if it's longer than 20 characters
+``` 
+this will be needed
+```
+as a where a2.length <= 20 -> tgt.a2 = a||as a check a2.length <= 20 -> tgt.a2 = a
+    ```
+
+
+
+### map_profile
+
+
+
+    use the create custom profiles and to create the structure map Questionnaire - Profile
+
+
 ### valueSet
 
 this sheet define the the valuset that need to be defined in the proejct scope
@@ -86,35 +117,6 @@ the format is inpired by the pyxform 'choice' sheet
 ### cql
 
 this sheet list the additionnal CQL required 
-
-### map_resource
-    
-    List of Map rules, value separeted by ||
-
-    will be use the generate map files
-    https://www.hl7.org/fhir/mapping-tutorial.html
-
-    the source should not be provided as the last ;
-
-    #### example
-
-    the generate
-    ```
-    src.a2 as a where a2.length <= 20 -> tgt.a2 = a; // ignore it
-    src.a2 as a check a2.length <= 20 -> tgt.a2 = a; // error if it's longer than 20 characters
-    ``` 
-    this will be needed
-    ```
-    as a where a2.length <= 20 -> tgt.a2 = a||as a check a2.length <= 20 -> tgt.a2 = a
-    ```
-
-
-
-### map_profile
-
-
-
-    use the create custom profiles and to create the structure map Questionnaire - Profile
 
 
     
