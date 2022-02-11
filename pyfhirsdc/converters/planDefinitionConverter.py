@@ -6,6 +6,7 @@ from fhir.resources.identifier import Identifier
 from pyfhirsdc.config import get_fhir_cfg
 from fhir.resources.expression import Expression
 from fhir.resources.plandefinition import PlanDefinitionAction
+from fhir.resources.fhirtypes import PlanDefinitionActionType
 from fhir.resources.plandefinition import PlanDefinitionActionCondition
 from fhir.resources.relatedartifact import RelatedArtifact
 from fhir.resources.codeableconcept import CodeableConcept
@@ -13,7 +14,7 @@ from fhir.resources.coding import Coding
 from fhir.resources.usagecontext import UsageContext
 from fhir.resources.triggerdefinition import TriggerDefinition
 from datetime import datetime
-
+from fhir.resources.datarequirement import DataRequirement
 
 from pyfhirsdc.utils import write_resource
 
@@ -39,7 +40,7 @@ def getConditionFirstRep(action):
 def getIdentifierFirstRep(planDef):
     if (not planDef.identifier):
         identifier = Identifier.construct()
-        planDef.identifier = identifier
+        planDef.identifier = [identifier]
     return planDef.identifier[0]
 
 def getActionFirstRep(planDef):
@@ -76,11 +77,6 @@ def actionsEqual(currentAction, newAction):
             elif  action.title is not None:
                 newActionDescription += action.title
     
-    print("currentTitle: ", currentAction.title == newAction.title)
-    print("currentText: ", currentAction.textEquivalent == newAction.textEquivalent)
-    print("currentDescription: ", currentActionDescription == newActionDescription)
-    print("currentDescription: ", currentActionDescription, "... and new description: ",newActionDescription)
-    print(subActionsEqual(currentAction.action, newAction.action))
     return ((currentAction.title == newAction.title) and 
     (currentAction.textEquivalent == newAction.textEquivalent) and
     (currentActionDescription == newActionDescription) and subActionsEqual(currentAction.action, newAction.action))
@@ -93,16 +89,10 @@ def subActionsEqual(subAction1,subAction2):
     if subAction1!=None and subAction2!=None :
         for i in range(len(subAction1)):
             if i >= len(subAction2):
-                print("Not the same size...")
                 return False
             if actionsEqual(subAction1[i], subAction2[i])==False:
-                print("Not the same action...")
-                #print("subAction 1 is : ", subAction1[i], "\n not equal to subAction2 : ", subAction2[i] )
                 return False
     return True
-
-
-
 
 def write_action_condition(action):
     condition = getConditionFirstRep(action)
@@ -114,9 +104,6 @@ def write_action_condition(action):
     return "/*\n "+getConditionFirstRep(action).expression.description+"\n */\n "+\
         "define \"{0}\":\n ".format(getConditionFirstRep(action).expression.expression)+ \
             "  false" + "\n\n "
-
-
-
 
 
 def build_plan_definition_index(planDefinitions):
@@ -138,50 +125,58 @@ def write_plan_definition_index(planDefinitions, output_path):
 activityMap = {}
 expressionNameCounterMap = {}
 
-
-
 ## Goes through a row and maps it to FHIR action 
-def processAction(row, actionid, currentAnnotationValue):
-    input= row["conditionDescription"]
-    action_col = row["conditionExpression"]
-    annotation_col = row["annotation"]
-    reference_col = row["reference"]
+def processAction(row):
     # Check if any of the rows has empty cells in the relevant columns, stop if so
-    if (not row["conditionDescription"] or not row["conditionExpression"] or
+    if (not row["inputs"] or not row["description"] or
      not row["annotation"] ):
         return None
-    
+    input= row["inputs"]
+    action_col = row["description"]
+    annotation_col = row["annotation"]
+    reference_col = row["reference"]
     action = PlanDefinitionAction.construct()
-    action.id=str(actionid)
+    action.id=row["id"]
     
     if (input==""):
-        ## No condition, no action, end of decision table
+        ## No condition, no action
         return None
+    if pd.notna(row["trigger"]):
+        trigger = TriggerDefinition.construct()
+        raw_trigger= row["trigger"].split(' ', 1)
+        trigger.type =raw_trigger[0]
+        trigger.name = raw_trigger[1]
+        action.trigger = [trigger]
+        
+    #Split the conditions with the OR statement so that we can add the cql expression around it
     conditionList = input.strip().split('OR')
-    applicabilityCondition = ""
+    applicability_condition = ""
     counter = 1
+    #TODO change the cql expresssions 
     for condition in conditionList:
         if "=" in condition:
-            condition = condition.split("=")[1]
+            condition = condition.split("=")[1].replace('\\', '' )
             newCondition = "Patient.hasCondition("+condition+")"
         elif "≠" in condition:
             print("inequality")
             condition = condition.split("≠")[1]
             newCondition = "not Patient.hasCondition("+condition+")"
-        applicabilityCondition += newCondition
+        applicability_condition += newCondition
         if len(conditionList)!=counter:
-            applicabilityCondition += " OR " 
+            applicability_condition += " OR " 
         counter+=1
-    applicabilityCondition.replace("|", "AND")
+    ## In case there are multiple conditions, join them using AND by replacing the pipe
+    applicability_condition.replace("|", "AND")
     condition = PlanDefinitionActionCondition.construct()
     expression = Expression.construct()
     expression.language = "text/cql-expression"
-    expression.description = applicabilityCondition
+    expression.description = applicability_condition
     condition.kind = "applicability"
     condition.expression = expression
     action.condition = [condition]
     #TODO add output to the action? According to the resource it should be DataRequirement
     #output = row["output"]
+    #data_req = DataRequirement.construct()
     #action.output = [output]
     if not action.action: action.action = []
     actionValues = []
@@ -191,23 +186,20 @@ def processAction(row, actionid, currentAnnotationValue):
         if (pd.notna(action) and pd.notnull(single_action) and single_action):
             actionValues.append(single_action)
 
-    actionsDescription = "AND".join(actionValues)
-    action.description = actionsDescription
-    #print("ActionValues: ....", actionValues)
+    actions_description = "AND".join(actionValues)
+    action.description = actions_description
     #FIXEME title is always None
-    if len(actionValues) == 0:
+    if len(actionValues) == 1:
         action.title=actionValues[0]
     else:
         for actionValue in actionValues:
             subAction = PlanDefinitionAction.construct()
             action.title=actionValue
             action.action.append(subAction)
-            
+
     if annotation_col!="":
         if (pd.notna(annotation_col) and pd.notnull(annotation_col) and annotation_col):
-            currentAnnotationValue = annotation_col
-
-    action.textEquivalent = currentAnnotationValue
+            action.textEquivalent = annotation_col
     
     if not action.documentation: action.documentation = []
 
@@ -217,9 +209,7 @@ def processAction(row, actionid, currentAnnotationValue):
             relatedArtifact.type = "citation"
             relatedArtifact.label = reference_col
             action.documentation.append(relatedArtifact)
-    
     return action
-
 
 def getActivityCoding(activityId, activityCodeSystem):
     global activityMap
@@ -235,107 +225,68 @@ def getActivityCoding(activityId, activityCodeSystem):
         return None
     
     activity = activityMap.get(activityCode)
+    activityCoding = None
     if (not activity):
         activityCoding = Coding.construct()
         activityCoding.code = activityCode
         activityCoding.system = activityCodeSystem
         activityCoding.display = activityDisplay
         activityMap[activityCode] = activityCoding
-    #print("current activityMap: ", activityMap)
-    
     return activityCoding
 
 def processDecisionTable(planDefinition, df):
     global expressionNameCounterMap
-    canonicalBase = get_fhir_cfg().canonicalBase
      ## fetch configuration from the json file ##
-    activityCodeSystem = get_fhir_cfg().activity.CodeSystem
-    usageContextSystem = get_fhir_cfg().usageContext.CodeSystem
-    usageContextCode = get_fhir_cfg().usageContext.Code
-    usageContextDisplay = get_fhir_cfg().usageContext.Display
     planDefinitionTypeSystem= get_fhir_cfg().PlanDefinition.planDefinitionType.CodeSystem
     planDefinitionTypeCode = get_fhir_cfg().PlanDefinition.planDefinitionType.Code
-    decisionTitle = df[0]["title"]
-
-    print("Decision Title: ", decisionTitle)
-    decisionId = df[0]["id"]
-    planDefinition.status = "active"
-    planDefinition.title = decisionTitle
-    identifier = Identifier.construct()
-    identifier.use = "oficial"
-    identifier.value = df[0]["id"]
-    planDefinition.identifier = [identifier]
-    planDefinition.name = decisionId
-    planDefinition.id = decisionId
-    planDefinition.url = canonicalBase + "/PlanDefinition/" + decisionId
-    try:
-        if (df[0]["businessRule"] != ""):
-            decisionDescription = df[0]["businessRule"]
-            planDefinition.description = decisionDescription
-    except:
-        raise ValueError("Expected Business Rule row")
-
     planDefinition.date = datetime.now()
     planDefinition.experimental = False
+    planDefinition.status = "active"
+
+    if not planDefinition.identifier : planDefinition.identifier = []
+    if not planDefinition.action : planDefinition.action = []
     coding = Coding.construct()
     coding.code = planDefinitionTypeCode
     coding.system = planDefinitionTypeSystem
     codeableConcept = CodeableConcept.construct()
     codeableConcept.coding = [coding]
     planDefinition.type = codeableConcept
-    try:
-        if (df[0]["trigger"] != ""):
-            triggerName = df[0]["trigger"]
-            planDefinition.description = decisionDescription
-    except:
-        raise ValueError("Expected Trigger and Trigger description row")
-    
-    plandefAction = PlanDefinitionAction.construct()
-    plandefAction.title = decisionTitle
-    triggerDef = TriggerDefinition.construct()
-    triggerDef.type = df[1]["trigger"]
-    triggerDef.name = triggerName
-    plandefAction.trigger = [triggerDef]
-    planDefinition.action = [plandefAction]
-
-    activityCoding = getActivityCoding(triggerName, activityCodeSystem)
-    if (activityCoding != None):
-        usageContext = UsageContext.construct()
-        usageContextCoding = Coding.construct()
-        usageContextCodeableConcept = CodeableConcept.construct()
-        usageContextCoding.code = usageContextCode
-        usageContextCoding.system = usageContextSystem
-        usageContextCoding.display = usageContextDisplay
-        usageContextCodeableConcept.coding = [activityCoding]
-        usageContext.valueCodeableConcept = usageContextCodeableConcept
-        usageContext.code = usageContextCoding
-        planDefinition.useContext = [usageContext]
-
-    actionId = 1
-    currentAction = PlanDefinitionAction.construct()
-    currentAnnotationValue =None
-    if not plandefAction.action : plandefAction.action = []
-    for i in range(0, len(df)):
-        current_main_action_id = df[i]["id"]
-        if not pd.notna(current_main_action_id):
-            subAction = processAction(df[i], actionId, currentAnnotationValue)
-            if actionsEqual(currentAction, subAction)==False:
-                actionId +=1
-                print("actionID.............", actionId)
-                currentAction = subAction
-                nextCounter =1 
-                actionDescription = subAction.action[0].title if len(subAction.action) > 1 else subAction.description
-                if not actionDescription in expressionNameCounterMap:
-                    expressionNameCounterMap[actionDescription] = 1
-
-                nextCounter = expressionNameCounterMap.get(actionDescription)
-                expressionNameCounterMap[actionDescription] = nextCounter+1
-                if actionDescription is None:
-                        actionDescription= " "
-                actionDescription = actionDescription + (" {0}".format(nextCounter) if nextCounter > 1 else "")
-                
-                currentAnnotationValue = subAction.textEquivalent
-                plandefAction.action.append(subAction)
-            else:
-                mergeActions(currentAction, subAction)
+    ## list all the actions with no parents
+    orphan_actions = df[df['parentActionId'].isna()].id.values.tolist()
+    plandefinition_actions = []
+    for orphan in orphan_actions:
+        initial_plandefinition_action = PlanDefinitionAction.construct()
+        actions = get_actions(orphan, df, initial_plandefinition_action)
+        plandefinition_actions.append(actions)
+    planDefinition.action = plandefinition_actions
     return planDefinition
+
+def get_actions(parentActionId, df, plandef_action):
+    actions = df[df['parentActionId'] == parentActionId].to_dict('index')
+    processedActions = []
+    ## fecth the parent row
+    mainActionRow = (df[df['id'] == parentActionId].to_dict('records'))
+    if plandef_action.action ==None : plandef_action.action = []
+    if pd.notna(mainActionRow):
+        mainAction = processAction(mainActionRow[0])
+        print("Processing main action: {0} and its children .........".format(mainAction.id))
+        processedActions.append(mainAction)
+        plandef_action.action.append(mainAction)
+    #planDefinition.action = get_actions(parentActionId, df)
+    current_action = PlanDefinitionAction.construct()
+    for key, action in actions.items():
+        ## if the action has both a parent ID and an ID it means it is both a parent and a child -> recursive; 
+        ## We do not add the action right here because we add it outside of this loop, as a main action
+        if not '.' in action["id"] and pd.notna(action["parentActionId"]):
+            get_actions(action["id"], df, plandef_action)
+        ## If we do have a sub id in the ID AND a parant then we are talking about a child -> attach the action
+        elif '.' in action["id"] and pd.notna(action["parentActionId"]):
+            action = processAction(action)
+            if actionsEqual(current_action, action) == False:
+                current_action = action
+                sub_plandef_action = PlanDefinitionAction.construct()
+                sub_plandef_action.action = [action]
+                plandef_action.action.append(sub_plandef_action)
+            else :
+                mergeActions(current_action, action)
+    return plandef_action
