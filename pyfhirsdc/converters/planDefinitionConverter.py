@@ -15,6 +15,7 @@ from fhir.resources.usagecontext import UsageContext
 from fhir.resources.triggerdefinition import TriggerDefinition
 from datetime import datetime
 from fhir.resources.datarequirement import DataRequirement
+from fhir.resources.fhirtypes import Canonical
 
 from pyfhirsdc.utils import write_resource
 
@@ -137,17 +138,23 @@ def processAction(row):
     reference_col = row["reference"]
     action = PlanDefinitionAction.construct()
     action.id=row["id"]
-    
+    canonical = row["definitionCanonical"]
+    raw_trigger = row["trigger"]
+
     if (input==""):
         ## No condition, no action
         return None
-    if pd.notna(row["trigger"]):
+    if pd.notna(raw_trigger):
         trigger = TriggerDefinition.construct()
-        raw_trigger= row["trigger"].split(' ', 1)
+        raw_trigger= raw_trigger.split(' ', 1)
         trigger.type =raw_trigger[0]
         trigger.name = raw_trigger[1]
         action.trigger = [trigger]
-        
+    
+    if pd.notna(canonical):
+        canonical = Canonical(canonical)
+        action.definitionCanonical = canonical
+
     #Split the conditions with the OR statement so that we can add the cql expression around it
     conditionList = input.strip().split('OR')
     applicability_condition = ""
@@ -158,7 +165,6 @@ def processAction(row):
             condition = condition.split("=")[1].replace('\\', '' )
             newCondition = "Patient.hasCondition("+condition+")"
         elif "≠" in condition:
-            print("inequality")
             condition = condition.split("≠")[1]
             newCondition = "not Patient.hasCondition("+condition+")"
         applicability_condition += newCondition
