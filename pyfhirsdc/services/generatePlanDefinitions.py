@@ -4,6 +4,7 @@ from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg, get_defaut_fhir
 from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.plandefinition import PlanDefinition
 from fhir.resources.library import Library
+from fhir.resources.identifier import Identifier
 
 from pyfhirsdc.converters.planDefinitionConverter import   \
       write_plan_definition_index, processDecisionTable
@@ -27,7 +28,7 @@ def generate_plandefinitions(decisionTable):
 # @param config object fromn json
 # @param name string
 # @param questions DataFrame
-def generate_plandefinition( name ,df_actions):
+def generate_plandefinition( name,df_actions):
     # try to load the existing questionnaire
         # path must end with /
     filepath = get_resource_path("PlanDefinition", get_processor_cfg().scope.lower())
@@ -45,8 +46,17 @@ def generate_plandefinition( name ,df_actions):
     dict_actions = df_actions.to_dict('index')
 
     ## generate libraries, plandefinitions and libraries
+    planDefinitionId = name.replace('.','')
+    pd_df.title = planDefinitionId
+    identifier = Identifier.construct()
+    identifier.use = "oficial"
+    identifier.value = planDefinitionId
+    pd_df.identifier=[identifier]
+    pd_df.id= planDefinitionId
 
-    planDefinition = processDecisionTable(pd_df, dict_actions)
+    pd_df.name = planDefinitionId
+    pd_df.url = get_fhir_cfg().canonicalBase + "/PlanDefinition/" + planDefinitionId
+    planDefinition = processDecisionTable(pd_df, df_actions)
      
     if planDefinition is not None:
         cql, pd_library = generate_plan_defnition_lib(planDefinition)
