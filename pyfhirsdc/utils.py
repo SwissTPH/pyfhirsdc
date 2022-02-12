@@ -31,3 +31,9 @@ def get_resource_url(resource_type, name):
 
 def clean_name(name):
     return name.replace(" ","-").lower()
+
+def get_custom_codesystem_url():
+    return get_resource_url (
+            'CodeSystem', 
+            get_processor_cfg().scope+"-custom-codes"
+            ) 

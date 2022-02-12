@@ -12,7 +12,7 @@ from pyfhirsdc.converters.codeSystemConverter import generate_questionnaire_conc
 from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.codesystem import CodeSystem
 
-from pyfhirsdc.utils import get_resource_path
+from pyfhirsdc.utils import get_custom_codesystem_url, get_resource_path, get_resource_url
 
 
 def generate_custom_code_system(dfs_questionnaire, df_value_set):
@@ -48,7 +48,7 @@ def init_code_system(filepath):
     elif default is not None:
         # create file from default
         code_system = CodeSystem.parse_raw( json.dumps(default))
-        CodeSystem.url = get_fhir_cfg().canonicalBase + "/CodeSystem/emc-custom-codes-codes"
+        CodeSystem.url = get_custom_codesystem_url()
 
      
 

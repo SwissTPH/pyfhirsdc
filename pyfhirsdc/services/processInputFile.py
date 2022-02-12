@@ -2,6 +2,7 @@ from pyfhirsdc.serializers.inputFile import read_input_file, parse_sheets
 from pyfhirsdc.serializers.json import read_json
 from pyfhirsdc.config import *
 from pyfhirsdc.services.generateCodeSystem import generate_custom_code_system
+from pyfhirsdc.services.generateValueSet import generate_value_sets
 from .generateQuestionnaires import generate_questionnaires
 from .generatePlanDefinitions import generate_plandefinitions
 
@@ -30,7 +31,7 @@ def process_input_file(conf):
             # generate the CodeSystem
             generate_custom_code_system(dfs_questionnaire, df_value_set)   
             # generate the valueSet
-
+            generate_value_sets(df_value_set)
             # generate conceptMap
 
             # generate the DE CQL 
@@ -41,6 +42,8 @@ def process_input_file(conf):
             generate_plandefinitions(dfs_decision_table)
 
             # generate carePlan
+
+            # Bundle https://github.com/jkiddo/ember
 
 
 

@@ -192,7 +192,6 @@ def explode_map_resource(map_resource):
     variable = resource_path[-1]
     profile = resource_path[0]
     element = '.'.join(resource_path[1:-1])
-    print(element + " :: " +variable )
     return profile, element, variable
 
 def merge_structure_map_groups(group_old, group_new):

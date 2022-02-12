@@ -1,5 +1,5 @@
 
-from pathlib import Path
+
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg, get_defaut_fhir
 from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.plandefinition import PlanDefinition
