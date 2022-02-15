@@ -73,3 +73,15 @@ def get_structure_map_extension(extentions, uri):
             if nofound:
                 extentions.append(sm_ext)
     return extentions
+
+
+def get_checkbox_ext():
+    return Extension(
+    url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+    valueCodeableConcept = CodeableConcept(
+            coding = [Coding( 
+                system = "http://hl7.org/fhir/questionnaire-item-control",
+                code = "check-box",
+                display = "Check-box")],
+            text ="Check-box")
+    )

@@ -10,7 +10,7 @@ import json
 import numpy
 from pyfhirsdc.converters.valueSetConverter import get_value_set_additional_data_keyword
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
-from pyfhirsdc.converters.extensionsConverter import get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext
+from pyfhirsdc.converters.extensionsConverter import get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext
 from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.serializers.json import read_resource
 from pyfhirsdc.utils import get_custom_codesystem_url, get_resource_url
@@ -74,17 +74,17 @@ def get_question_fhir_type(question):
         fhir_type = "choice"
     elif fhir_type == "checkbox":
         fhir_type = "boolean"
-    elif fhir_type == "checkbox":
-        fhir_type = "boolean"
     return fhir_type
 
 def get_question_extension(question, df_value_set ):
     extensions = []
     type, detail_1, detail_2 = get_type_details(question)
     # TODO support other display than drop down
-    if "select_" in type and question["display"] == "dropdown" :
+    if type.lower() == 'boolean' and isinstance(question["display"], str) and question["display"].lower() == "checkbox":
+        extensions.append(get_checkbox_ext())
+    elif "select_" in type and isinstance(question["display"], str) and question["display"].lower() == "dropdown" :
         extensions.append(get_dropdown_ext())
-    if "select_" in type and  question["display"] == "candidateExpression":
+    elif "select_" in type and  isinstance(question["display"], str) and question["display"].lower() == "candidateExpression":
         extensions = get_question_choice_column(extensions, detail_1, df_value_set)
 
     return extensions
