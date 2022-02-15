@@ -28,7 +28,6 @@ def generate_valueset_concept(df_value_set):
     value_set = df_value_set[~df_value_set['code'].isin(
         get_value_set_additional_data_keyword()
         )]
-    print(value_set)
     value_set = value_set.dropna(axis=0, subset=['code']).set_index('code').to_dict('index')
     # remove the line without id
     for code, question in value_set.items():
