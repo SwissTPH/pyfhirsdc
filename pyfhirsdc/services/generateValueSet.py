@@ -12,7 +12,7 @@ from pyfhirsdc.utils import get_resource_path, write_resource
 
 def generate_value_sets(df_value_sets):
     # cleaning the DF from VS not in scope or with missing ids
-    df_value_sets = df_value_sets.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['scope']).set_index('id')
+    df_value_sets = df_value_sets.dropna(axis=0, subset=['code']).dropna(axis=0, subset=['code'])
     # getting the name of the value sets
     value_sets_dict =  df_value_sets['valueSet'].unique()
     # looping for each value set to get the childrens

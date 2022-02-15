@@ -1,6 +1,6 @@
 {
     "processor":{
-        "inputFile":"C:/Users/delcpa/switchdrive/DHU/Projects/WHO DAK/merged/xls_form_old.xlsx",
+        "inputFile":"C:/Users/delcpa/switchdrive/DHU/Projects/WHO DAK/merged/xls_form.ods",
         "outputPath":"output/",
         "excudedWorksheets":[
             "q.new-encounter"
@@ -109,7 +109,7 @@
 
                 }]
             }
-        },"valueSet":
+        },"ValueSet":
         {
             "outputPath":"vocabulary/valueset/",
             "default":{

@@ -1,5 +1,6 @@
 
 import pandas as pd
+
 import re
 
 def clean_str(str):
@@ -13,27 +14,29 @@ def read_input_file(input_file_path):
     try:
         file = pd.ExcelFile(input_file_path)
     except Exception as e:
-        print("Error while opening the from the file %s",input_file_path )
+        print("Error while opening the from the file {0} with error {1}".format(input_file_path, e) )
         return None
     return file
 
 def parse_sheets(input_file, excudedWorksheets):
     sheets = input_file.sheet_names
-    questionnaires = {}
-    decision_tables = {}
+    dfs_questionnaire = {}
+    dfs_decision_table = {}
     value_set = None
     for worksheet in sheets:
         print ("loading sheet %{0}".format( worksheet))
         if excudedWorksheets is None or worksheet not in excudedWorksheets:
             df = input_file.parse(worksheet)
+            # strip space
+            df.applymap(lambda x: x.strip() if type(x)==str else x)
             if worksheet.startswith('q.'):
                 if validate_questionnaire_sheet(df):
-                    questionnaires[worksheet[2:]] = df
+                    dfs_questionnaire[worksheet[2:]] = df
                 else:
                     break
             elif worksheet.startswith('pd.'):
                 if validate_decision_tables_sheet(df):
-                    decision_tables[worksheet[3:]] = df
+                    dfs_decision_table[worksheet[3:]] = df
                 else:
                     break
             elif worksheet == "valueSet":
@@ -41,22 +44,27 @@ def parse_sheets(input_file, excudedWorksheets):
                     value_set = df
                 else:
                     break
-            elif worksheet == "choiceColumn":
+            elif worksheet == "profile":
                 if validate_value_set_sheet(df):
-                    choice_column = df
+                    df_profile = df
+                else:
+                    break
+            elif worksheet == "extension":
+                if validate_value_set_sheet(df):
+                    df_extension = df
                 else:
                     break
             elif worksheet == "carePlan":
                 if validate_value_set_sheet(df):
-                    care_plan = df
+                    df_care_plan = df
                 else:
                     break
             elif worksheet == "cql":
                 if validate_value_set_sheet(df):
-                    cql = df
+                    df_cql = df
                 else:
                     break
-    return questionnaires, decision_tables, value_set, care_plan, choice_column, cql
+    return dfs_questionnaire, dfs_decision_table, value_set, df_care_plan, df_profile, df_extension, df_cql
 
 def validate_questionnaire_sheet(df):
     return True

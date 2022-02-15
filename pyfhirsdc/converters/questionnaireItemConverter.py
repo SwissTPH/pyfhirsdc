@@ -8,13 +8,14 @@
 
 import json
 import numpy
+from pyfhirsdc.converters.valueSetConverter import get_value_set_additional_data_keyword
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
 from pyfhirsdc.converters.extensionsConverter import get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext
 from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.serializers.json import read_resource
-from pyfhirsdc.utils import get_resource_url
+from pyfhirsdc.utils import get_custom_codesystem_url, get_resource_url
 
-def convert_df_to_questionitems(questionnaire, df_questions, df_value_set, df_choiceColumn, strategy = 'overwrite'):
+def convert_df_to_questionitems(questionnaire, df_questions, df_value_set,  strategy = 'overwrite'):
     # create a dict to iterate
     dict_questions = df_questions.to_dict('index')
     # Use first part of the id (before DE) as an ID
@@ -30,7 +31,7 @@ def convert_df_to_questionitems(questionnaire, df_questions, df_value_set, df_ch
         if existing_item is None\
         or strategy in ( "overwriteDraft", "overwriteDraftAddOnly" ) and\
             (existing_item.design_note is not None and "status::draft"  in existing_item.design_note):
-            new_question = process_quesitonnaire_line(id, question, df_value_set, df_choiceColumn, existing_item )
+            new_question = process_quesitonnaire_line(id, question, df_value_set,  existing_item )
             if new_question is not None:
                 questionnaire.item.append(new_question)
         elif existing_item is not None:
@@ -38,7 +39,7 @@ def convert_df_to_questionitems(questionnaire, df_questions, df_value_set, df_ch
             questionnaire.item.append(existing_item)
     return questionnaire
 
-def process_quesitonnaire_line(id, question, df_value_set, df_choiceColumn, existing_item):
+def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
     new_question = None
     type = get_question_fhir_type(question)
 
@@ -54,7 +55,7 @@ def process_quesitonnaire_line(id, question, df_value_set, df_choiceColumn, exis
     new_question = QuestionnaireItemSDC(
             linkId = id,
             type = type,
-            extension = get_question_extension(question, df_choiceColumn ),
+            extension = get_question_extension(question, df_value_set ),
             answerValueSet = get_question_valueset(question, df_value_set),
             design_note = "status::draft",
             text = question['description'],
@@ -77,17 +78,14 @@ def get_question_fhir_type(question):
         fhir_type = "boolean"
     return fhir_type
 
-def get_question_extension(question, df_choiceColumn ):
+def get_question_extension(question, df_value_set ):
     extensions = []
     type, detail_1, detail_2 = get_type_details(question)
     # TODO support other display than drop down
     if "select_" in type and question["display"] == "dropdown" :
         extensions.append(get_dropdown_ext())
-    if "select_" in type and\
-        detail_2 and detail_1 == "candidateExpression"\
-            and len(question["display"])>1:
-        extensions.append(get_candidate_expression_ext(question["description"], detail_2))
-        extensions = get_question_choice_column(extensions, question["display"], df_choiceColumn)
+    if "select_" in type and  question["display"] == "candidateExpression":
+        extensions = get_question_choice_column(extensions, detail_1, df_value_set)
 
     return extensions
 
@@ -101,8 +99,8 @@ def get_question_valueset(question, df_value_set):
             return  (detail_2)
         elif detail_2 is None  :
             # we assume it use a local valueset, TODO check if there is actual value in df_value_set
-            valueset_dict = df_value_set[df_value_set['valueSet'] == detail_1 ].dropna(axis=0, subset=['id']).set_index('id').to_dict('index')
-            if isinstance(valueset_dict, dict) and len(valueset_dict)>0:
+            valueset_dict = df_value_set[df_value_set['valueSet'] == detail_1]['valueSet'].unique()
+            if isinstance(valueset_dict, numpy.ndarray) and len(valueset_dict)>0:
                 return  get_resource_url("ValueSet", detail_1)
             else:
                 print("local ValueSet ${0} not defiend in the valueset tab".format(detail_1))
@@ -110,23 +108,28 @@ def get_question_valueset(question, df_value_set):
     else:
         return None
 
-def get_question_choice_column(extensions, candidate_expression, df_choiceColumn):
+def get_question_choice_column(extensions, candidate_expression, df_value_set):
     # filter DF choice column
-    choice_columns = df_choiceColumn[df_choiceColumn['candidate_expression'] == candidate_expression].set_index('label').to_dict('index')
+    choice_columns = df_value_set[df_value_set['valueSet'] == candidate_expression].set_index('display').to_dict('index')
     #create extension for each field found
-    for label, choice_column in choice_columns.items():
-        extension = get_choice_column_ext(choice_column["path"],
-            label,choice_column["width"],choice_column["forDisplay"])
-        if extension is not None:
-            extensions.append(extension)
+    for display, choice_column in choice_columns.items():
+        if choice_column['code'] == '{{choiceColumn}}' and isinstance(choice_column['definition'], str):
+            choice_column_details = json.loads(choice_column['definition']) 
+            extension = get_choice_column_ext(choice_column_details["path"],
+                display,choice_column_details["width"],choice_column_details["forDisplay"])
+            if extension is not None:
+                extensions.append(extension)
+        elif choice_column['code'] == '{{url}}' and display is not None:
+            extensions.append(get_candidate_expression_ext(candidate_expression, display))
+
 
     return extensions
 
 def get_question_definition(question):
     # if definition == scope then build def based on canonical base, if not take the def from the xls if any
-    if  question['definition'] is not None and question['definition'] is not numpy.nan:
+    if  question['display'] is not None and question['definition'] is not numpy.nan:
         if question['definition'].lower() == get_processor_cfg().scope.lower():
-            return (get_fhir_cfg().canonicalBase + "codingsystem/codesystem-"+ get_processor_cfg().scope.lower() + "-custom-codes-codes.json")
+            return get_custom_codesystem_url()
         elif len(question['definition'])>5:  
             return question['definition'].lower()
         else:

@@ -22,9 +22,9 @@ def process_input_file(conf):
         if input_file is not None:
             dfs_questionnaire, dfs_decision_table,\
                 df_value_set, df_care_plan,\
-                df_choice_column, df_cql = parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
+                df_profile, df_extension, df_cql = parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
             # generate questionnaire
-            generate_questionnaires(dfs_questionnaire, df_value_set, df_choice_column)
+            generate_questionnaires(dfs_questionnaire, df_value_set)
 
             # generate profiles
 
