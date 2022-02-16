@@ -16,6 +16,7 @@ from pyfhirsdc.serializers.json import read_resource
 from fhir.resources.structuremap import StructureMap,\
      StructureMapStructure, StructureMapGroup, StructureMapGroupInput,\
     StructureMapGroupRule, StructureMapGroupRuleSource
+from pyfhirsdc.serializers.mappingLanguage import write_mapping_file
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
 from pyfhirsdc.converters.utils import clean_name,  get_resource_url
 
@@ -35,6 +36,8 @@ def get_structure_maps(questionnaire_name, df_questions):
             )
         structure_map = init_structure_map(filepath, profile, questionnaire_name)
         if structure_map is not None:
+            map_filepath = get_resource_path("StructureMap", sm_name, "map")
+            write_mapping_file(map_filepath, structure_map)
             structure_maps.append(structure_map)
             structure_map.group = get_structure_map_groups(structure_map.group, profile, questionnaire_name, df_questions)
             write_resource(filepath, structure_map, get_processor_cfg().encoding)

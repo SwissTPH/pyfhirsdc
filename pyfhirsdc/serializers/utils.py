@@ -11,11 +11,18 @@ def write_resource(filepath, resource, encoding = None):
         os.makedirs(Path(filepath).parent)  
     try: 
         output = open(filepath, 'w', encoding='utf-8')
-        output.write(resource.json(indent=4)) if encoding == "json" \
-            else  output.write(resource.xml())
+        if encoding == "json":
+            output.write(resource.json(indent=4))
+        elif encoding == "xml": 
+            output.write(resource.xml()) 
+        else:
+            output.write(resource)
         output.close()
     except:
-        raise ValueError("Error writing resource: "+ resource.id)
+        if hasattr(resource, 'id'):
+            raise ValueError("Error writing resource: "+ resource.id)
+        else:
+            raise ValueError("Error writing resource: "+ filepath)
 
 def get_resource_path(resource_type, name, encoding = None):
     if encoding is None:
