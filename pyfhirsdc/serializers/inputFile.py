@@ -24,7 +24,7 @@ def parse_sheets(input_file, excudedWorksheets):
     dfs_decision_table = {}
     value_set = None
     for worksheet in sheets:
-        print ("loading sheet %{0}".format( worksheet))
+        print ("loading sheet {0}".format( worksheet))
         if excudedWorksheets is None or worksheet not in excudedWorksheets:
             df = input_file.parse(worksheet)
             # strip space
