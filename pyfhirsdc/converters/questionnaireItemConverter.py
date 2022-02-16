@@ -8,10 +8,9 @@
 
 import json
 import numpy
-from pyfhirsdc.converters.valueSetConverter import get_value_set_additional_data_keyword
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
-from pyfhirsdc.converters.extensionsConverter import get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext
-from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg
+from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_initial_expression_ext
+from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
 from pyfhirsdc.serializers.json import read_resource
 from pyfhirsdc.utils import get_custom_codesystem_url, get_resource_url
 
@@ -19,7 +18,7 @@ def convert_df_to_questionitems(questionnaire, df_questions, df_value_set,  stra
     # create a dict to iterate
     dict_questions = df_questions.to_dict('index')
     # Use first part of the id (before DE) as an ID
-    questionnaire.id = list(dict_questions.keys())[0].split(".DE")[0]
+    # questionnaire.id = list(dict_questions.keys())[0].split(".DE")[0]
     # delete all item in case of overwrite strategy
     if questionnaire.item is None or strategy == "overwrite":
         questionnaire.item =[]
@@ -86,7 +85,12 @@ def get_question_extension(question, df_value_set ):
         extensions.append(get_dropdown_ext())
     elif "select_" in type and  isinstance(question["display"], str) and question["display"].lower() == "candidateExpression":
         extensions = get_question_choice_column(extensions, detail_1, df_value_set)
-
+    if "enableWhenExpression" in question and question["enableWhenExpression"] is not numpy.nan:
+        extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"]))
+    if "calculatedExpression" in question and question["enableWhenExpression"] is not numpy.nan:
+        extensions.append(get_calculated_expression_ext(question["enableWhenExpression"]))
+    if "initialExpression" in question and question["initialExpression"] is not numpy.nan:
+        extensions.append(get_initial_expression_ext(question["initialExpression"]))
     return extensions
 
 def get_question_valueset(question, df_value_set):

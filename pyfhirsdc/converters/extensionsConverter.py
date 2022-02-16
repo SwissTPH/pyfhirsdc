@@ -85,3 +85,27 @@ def get_checkbox_ext():
                 display = "Check-box")],
             text ="Check-box")
     )
+
+def get_enable_when_expression_ext(expression, desc = None ):
+    return Extension(
+        url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
+        valueExpression = ExpressionType(
+                description = desc,
+                language = "text/cql",
+                expression = expression))
+
+def get_calculated_expression_ext(expression, desc = None ):
+    return Extension(
+        url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+        valueExpression = ExpressionType(
+                description = desc,
+                language = "text/cql",
+                expression = expression))
+
+def get_initial_expression_ext(expression, desc = None ):
+    return Extension(
+        url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+        valueExpression = ExpressionType(
+                description = desc,
+                language = "text/cql",
+                expression = expression))
