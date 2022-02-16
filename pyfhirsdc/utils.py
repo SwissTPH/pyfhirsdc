@@ -30,7 +30,7 @@ def get_resource_url(resource_type, name):
     return get_fhir_cfg().canonicalBase +  get_resource_name(resource_type, name)
 
 def clean_name(name):
-    return name.replace(" ","-").lower()
+    return name.replace(" ","-").replace("_","-").lower()
 
 def get_custom_codesystem_url():
     return get_resource_url (
