@@ -20,7 +20,7 @@ def generate_questionnaires(dfs_questionnaire, df_value_set):
 def generate_questionnaire( name ,df_questions, df_value_set ) :
     # try to load the existing questionnaire
     fullpath = get_resource_path("Questionnaire", name)
-    print('processing quesitonnaire ${0}'.format(name))
+    print('processing quesitonnaire {0}'.format(name))
     # read file content if it exists
     questionnaire = init_questionnaire(fullpath, name)
     # clean the data frame
