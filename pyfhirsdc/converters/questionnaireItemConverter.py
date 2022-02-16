@@ -132,10 +132,10 @@ def get_question_choice_column(extensions, candidate_expression, df_value_set):
 def get_question_definition(question):
     # if definition == scope then build def based on canonical base, if not take the def from the xls if any
     if  question['display'] is not None and question['definition'] is not numpy.nan:
-        if question['definition'].lower() == get_processor_cfg().scope.lower():
+        if str(question['definition']).lower() == get_processor_cfg().scope.lower():
             return get_custom_codesystem_url()
-        elif len(question['definition'])>5:  
-            return question['definition'].lower()
+        elif len(str(question['definition']))>5:  
+            return str(question['definition']).lower()
         else:
             return None
     else:
