@@ -11,8 +11,8 @@ from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.codeSystemConverter import generate_questionnaire_concept, generate_valueset_concept
 from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.codesystem import CodeSystem
-
-from pyfhirsdc.utils import get_custom_codesystem_url, get_resource_path, get_resource_url
+from pyfhirsdc.serializers.utils import  get_resource_path 
+from pyfhirsdc.converters.utils import get_custom_codesystem_url
 
 
 def generate_custom_code_system(dfs_questionnaire, df_value_set):

@@ -6,9 +6,9 @@ from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.valueSetConverter  import  get_value_set_additional_data,  get_value_set_compose
 from pyfhirsdc.serializers.json import read_resource
 from fhir.resources.valueset import ValueSet
-from fhir.resources.fhirtypes import  Code
 
-from pyfhirsdc.utils import clean_name, get_custom_codesystem_url, get_resource_name, get_resource_path, get_resource_url, write_resource
+from pyfhirsdc.converters.utils import clean_name,  get_resource_name,  get_resource_url
+from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
 
 def generate_value_sets(df_value_sets):
     # cleaning the DF from VS not in scope or with missing ids

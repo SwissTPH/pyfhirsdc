@@ -7,16 +7,17 @@ Convert XLSsdc quesitonnair to structureMap
 
 
 import json
+
+import numpy
 from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import get_structure_map_extension
 from fhir.resources.fhirtypes import Canonical, Code
 from pyfhirsdc.serializers.json import read_resource
-from fhir.resources.structuremap import \
-    StructureMap, StructureMapStructure, StructureMapGroup, StructureMapGroupInput,\
-    StructureMapGroupRule, StructureMapGroupRuleSource, StructureMapGroupRuleTarget,\
-    StructureMapGroupRuleTargetParameter
-
-from pyfhirsdc.utils import clean_name, get_resource_path, get_resource_url, write_resource
+from fhir.resources.structuremap import StructureMap,\
+     StructureMapStructure, StructureMapGroup, StructureMapGroupInput,\
+    StructureMapGroupRule, StructureMapGroupRuleSource
+from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
+from pyfhirsdc.converters.utils import clean_name,  get_resource_url
 
 
 def get_question_profiles(df_questions):

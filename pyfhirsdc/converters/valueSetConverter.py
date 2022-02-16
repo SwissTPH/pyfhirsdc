@@ -5,7 +5,7 @@ from fhir.resources.valueset import  ValueSetCompose,\
 import numpy
 from pyfhirsdc.config import get_processor_cfg
 
-from pyfhirsdc.utils import get_custom_codesystem_url
+from pyfhirsdc.converters.utils import get_custom_codesystem_url
 
 
 def get_value_set_compose(compose, name, df_value_set_in):

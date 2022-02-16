@@ -12,7 +12,7 @@ from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, Questionnair
 from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_initial_expression_ext
 from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
 from pyfhirsdc.serializers.json import read_resource
-from pyfhirsdc.utils import get_custom_codesystem_url, get_resource_url
+from pyfhirsdc.converters.utils import get_custom_codesystem_url, get_resource_url
 
 def convert_df_to_questionitems(questionnaire, df_questions, df_value_set,  strategy = 'overwrite'):
     # create a dict to iterate

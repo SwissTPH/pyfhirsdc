@@ -6,18 +6,16 @@ from fhir.resources.identifier import Identifier
 from pyfhirsdc.config import get_fhir_cfg
 from fhir.resources.expression import Expression
 from fhir.resources.plandefinition import PlanDefinitionAction
-from fhir.resources.fhirtypes import PlanDefinitionActionType
 from fhir.resources.plandefinition import PlanDefinitionActionCondition
 from fhir.resources.relatedartifact import RelatedArtifact
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
-from fhir.resources.usagecontext import UsageContext
 from fhir.resources.triggerdefinition import TriggerDefinition
 from datetime import datetime
-from fhir.resources.datarequirement import DataRequirement
+f
 from fhir.resources.fhirtypes import Canonical
 
-from pyfhirsdc.utils import write_resource
+
 
 # Merge action conditions as an Or, given that the actions are equal
 def mergeActions(currentAction, newAction):

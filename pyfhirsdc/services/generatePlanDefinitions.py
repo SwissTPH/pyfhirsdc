@@ -9,11 +9,10 @@ from fhir.resources.identifier import Identifier
 from pyfhirsdc.converters.planDefinitionConverter import   \
       write_plan_definition_index, processDecisionTable
 from pyfhirsdc.converters.libraryConverter import  generate_plan_defnition_lib, write_library_CQL
-import pandas as pd
 import os
 import json
 
-from pyfhirsdc.utils import get_resource_path, write_resource
+from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
 
 def generate_plandefinitions(decisionTable):
     plandefinitions = {}

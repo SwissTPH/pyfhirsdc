@@ -8,9 +8,7 @@
 from pyfhirsdc.converters.structureMapConverter import add_structure_maps_url, get_structure_maps
 from pyfhirsdc.config import  get_processor_cfg
 from pyfhirsdc.converters.questionnaireItemConverter import convert_df_to_questionitems, init_questionnaire
-
-
-from pyfhirsdc.utils import get_resource_path, write_resource
+from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
 
 def generate_questionnaires(dfs_questionnaire, df_value_set):
     for name, questions in dfs_questionnaire.items():
