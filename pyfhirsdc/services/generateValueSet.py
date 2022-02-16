@@ -8,25 +8,27 @@ from pyfhirsdc.serializers.json import read_resource
 from fhir.resources.valueset import ValueSet
 from fhir.resources.fhirtypes import  Code
 
-from pyfhirsdc.utils import get_resource_path, write_resource
+from pyfhirsdc.utils import clean_name, get_custom_codesystem_url, get_resource_name, get_resource_path, get_resource_url, write_resource
 
 def generate_value_sets(df_value_sets):
     # cleaning the DF from VS not in scope or with missing ids
-    df_value_sets = df_value_sets.dropna(axis=0, subset=['code']).dropna(axis=0, subset=['code'])
+    df_value_sets = df_value_sets[df_value_sets['scope'] == get_processor_cfg().scope].dropna(axis=0, subset=['code'])
     # getting the name of the value sets
     value_sets_dict =  df_value_sets['valueSet'].unique()
     # looping for each value set to get the childrens
     for name in value_sets_dict:
-        df_value_set = df_value_sets[df_value_sets['valueSet'] == name]
-        generate_value_set(name, df_value_set)
+        generate_value_set(name, df_value_sets)
 
 def  generate_value_set(name, df_value_set):
     filepath = get_resource_path("ValueSet", name)
-    print('processing ValueSet ${0}'.format(name))
+    print('processing ValueSet {0}'.format(name))
     # read file content if it exists
     vs = init_vs(filepath)
+    vs.name =  get_resource_name('ValueSet',name)
+    vs.id =  clean_name(name)
+    vs.url = get_resource_url('ValueSet', name)
     vs.compose = get_value_set_compose(vs.compose, name, df_value_set)
-    vs = get_value_set_additional_data(vs,  df_value_set)
+    vs = get_value_set_additional_data(vs,  df_value_set[df_value_set['valueSet'] == name ])
     write_resource(filepath, vs, get_processor_cfg().encoding)
 
 def init_vs(filepath):
@@ -38,7 +40,7 @@ def init_vs(filepath):
         # create file from default
         vs = ValueSet.parse_raw( json.dumps(default))
     else: 
-        vs = ValueSet.construct() 
+        vs = ValueSet.construct()   
     #if get_fhir_cfg().publisher is not None:
     #    vs.publisher = str(get_fhir_cfg().publisher),
     #if get_fhir_cfg().copyright is not None:
