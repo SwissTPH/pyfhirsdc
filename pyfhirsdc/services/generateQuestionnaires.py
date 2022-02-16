@@ -26,8 +26,8 @@ def generate_questionnaire( name ,df_questions, df_value_set ) :
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
     questionnaire = convert_df_to_questionitems(questionnaire, df_questions,  df_value_set, strategy = 'overwriteDraft')
     #### StructureMap ####
-    #structure_maps = get_structure_maps(name, df_questions)
-    #questionnaire = add_structure_maps_url(questionnaire, structure_maps)  
+    structure_maps = get_structure_maps(name, df_questions)
+    questionnaire = add_structure_maps_url(questionnaire, structure_maps)  
     # write file
     write_resource(fullpath, questionnaire, get_processor_cfg().encoding)
     

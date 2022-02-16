@@ -12,7 +12,6 @@ from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
 from fhir.resources.triggerdefinition import TriggerDefinition
 from datetime import datetime
-f
 from fhir.resources.fhirtypes import Canonical
 
 

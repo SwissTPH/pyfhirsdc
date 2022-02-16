@@ -94,7 +94,7 @@ def get_structure_map_groups(groups, profile, questionnaire_name, df_questions):
     for group in groups:
         if group.name != 'fake':
             if group.name == group_tmp.name:
-                group = merge_structure_map_groups(group, group_tmp)
+                group = group_tmp
                 replaced = True
             groups.append(group)
     if replaced is False:
@@ -108,93 +108,48 @@ def get_structure_map_generated_group(profile, questionnaire_name, df_questions)
         typeMode = Code('types'),
         input = [StructureMapGroupInput(
             mode = Code( 'source'),
-            name = clean_name(questionnaire_name)
+            name = "qr",
+            type = clean_name(questionnaire_name)
         ),
         StructureMapGroupInput(
             mode = Code( 'target'),
-            name = clean_name(profile)
+            name = "tgt",
+            type = clean_name(profile)
         )],
-        rule = get_structure_map_rules(profile, questionnaire_name, df_questions)
-
+        rule = get_structure_map_rules(profile, df_questions)
     )
     return group
 
-def get_structure_map_rules(profile, questionnaire_name, df_questions):
+def get_structure_map_rules(profile, df_questions):
     rules = []
     questions = df_questions[df_questions['map_profile'] == profile ].to_dict('index')
     for question_name, question in questions.items():
-        rule = get_structure_map_rule(profile, questionnaire_name, question_name,  question)
+        rule = get_structure_map_rule(question_name,  question)
         if rule is not None:
             rules.append(rule)
-
     return rules
 
-def get_structure_map_rule(profile, questionnaire_name,question_name, question):
+def get_structure_map_rule(question_name, question):
     #TODO manage transform evaluate/create
     # item that have childer item are created then the children rule will create the children Items
     # example rule 13 and 14 http://build.fhir.org/ig/HL7/sdc/StructureMap-SDOHCC-StructureMapHungerVitalSign.json.html
-    profileType, element, valiable = explode_map_resource(question['map_resource'])
-      
-    if  valiable is not None:
+    #profileType, element, valiable = explode_map_resource(question['map_resource'])
+    rule = None
+    #print("Mapping ``{0}`` added".format(fhirmapping))
+    if  'map_resource' in question\
+        and question['map_resource'] is not numpy.nan\
+        and question['map_resource'] is not None:
         # if variable on root, element is the resource itself
-        if element is None or element == '':
-            element = 'resource'
+
+        fhirmapping = "item.answer first as a where item.linkId = '"\
+            + question_name + "' then { "\
+            + question['map_resource'] + " }"
+
         rule = StructureMapGroupRule(
             name = question_name,
             source = [StructureMapGroupRuleSource(
                 context = 'item',
-                variable = question_name
             )],
-            target = [StructureMapGroupRuleTarget(
-                context = clean_name(profile),
-                contextType = 'variable',
-                element = element,
-                transform = Code('copy'),
-                parameter= [StructureMapGroupRuleTargetParameter(
-                    valueString = valiable)]
-            )]
-    )
-
+            documentation = fhirmapping,  
+            )
     return rule
-
-
-def get_structure_map_rule_parameter(question, valiable):
-
-    
-    if question['map_resource_type'] == 'decimal':
-        return StructureMapGroupRuleTargetParameter(
-             valueDecimal = valiable
-            )
-    elif question['map_resource_type'] == 'integer':
-        return StructureMapGroupRuleTargetParameter(
-             valueInteger = valiable
-            )
-    elif question['map_resource_type'] == 'CodeableConcept' or\
-         'Reference' in question['map_resource_type'] :
-        # if 'select_' in question['type']:
-        return StructureMapGroupRuleTargetParameter(
-             valueId = valiable
-            )
-    elif question['map_resource_type'] == 'boolean':
-        return StructureMapGroupRuleTargetParameter(
-             valueBoolean = valiable
-            )
-    elif question['map_resource_type'] == 'string': 
-        return StructureMapGroupRuleTargetParameter(
-            valueString = valiable
-            )
-    else:  
-        return StructureMapGroupRuleTargetParameter(
-            valueString = valiable
-            )
-
-def explode_map_resource(map_resource):
-    resource_path = map_resource.split('.')
-    variable = resource_path[-1]
-    profile = resource_path[0]
-    element = '.'.join(resource_path[1:-1])
-    return profile, element, variable
-
-def merge_structure_map_groups(group_old, group_new):
-    # TODO: manage the merge
-    return group_new
