@@ -21,7 +21,8 @@ def read_config_file(filepath):
         print("inputFile ${0} not found".format(obj_conf.processor.inputFile))
         return None
     processor_cfg = obj_conf.processor
-    fhir_cfg = obj_conf.fhir
+
+    fhir_cfg = add_tail_slashes(obj_conf.fhir)
     return True
 
 def get_processor_cfg():
@@ -37,3 +38,14 @@ def get_defaut_path(resource, default):
     if dict_cfg['fhir'][resource]['outputPath'] is None:
         return get_processor_cfg().outputPath + default
     return get_processor_cfg().outputPath + dict_cfg['fhir'][resource]['outputPath']
+
+def add_tail_slashes(fhir):
+    if hasattr(fhir,  'canonicalBase'):
+            fhir.canonicalBase= add_tail_slash(fhir.canonicalBase)
+    return fhir
+
+
+
+def add_tail_slash(url):
+    return url if url is not None and url[-1:] == '/' else url + '/'
+    
