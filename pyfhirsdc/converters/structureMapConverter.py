@@ -18,7 +18,7 @@ from fhir.resources.structuremap import StructureMap,\
     StructureMapGroupRule, StructureMapGroupRuleSource
 from pyfhirsdc.serializers.mappingLanguage import write_mapping_file
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
-from pyfhirsdc.converters.utils import clean_name,  get_resource_url
+from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url,  get_resource_url
 
 
 def get_question_profiles(df_questions):
@@ -29,7 +29,7 @@ def get_structure_maps(questionnaire_name, df_questions):
     structure_maps = []
     profiles = get_question_profiles(df_questions)
     for profile in profiles:
-        sm_name = profile.replace(" ","-").lower() + "-" + questionnaire_name
+        sm_name = clean_name(profile) + "-" + clean_name(questionnaire_name)
         filepath = get_resource_path(
             "StructureMap", 
             sm_name
@@ -37,9 +37,9 @@ def get_structure_maps(questionnaire_name, df_questions):
         structure_map = init_structure_map(filepath, profile, questionnaire_name)
         if structure_map is not None:
             map_filepath = get_resource_path("StructureMap", sm_name, "map")
-            write_mapping_file(map_filepath, structure_map)
-            structure_maps.append(structure_map)
             structure_map.group = get_structure_map_groups(structure_map.group, profile, questionnaire_name, df_questions)
+            structure_map = write_mapping_file(map_filepath, structure_map)
+            structure_maps.append(structure_map)
             write_resource(filepath, structure_map, get_processor_cfg().encoding)
     return structure_maps
 
@@ -142,12 +142,17 @@ def get_structure_map_rule(question_name, question):
     if  'map_resource' in question\
         and question['map_resource'] is not numpy.nan\
         and question['map_resource'] is not None:
+        is_complex = str(question['map_resource']).find(',') != -1\
+            or str(question['map_resource']).find('{') != -1\
+            or str(question['map_resource'][:-1]).find(';') != -1
+        if question['map_resource'][-1:] != ";":
+            question['map_resource'] = question['map_resource'] + " '"+ question_name + "-1';"
         # if variable on root, element is the resource itself
-
-        fhirmapping = "item.answer first as a where item.linkId = '"\
-            + question_name + "' then { "\
+        fhirmapping = "item.answer first where item.linkId = '"\
+            + question_name + "' as a then { "\
             + question['map_resource'] + " }"
-
+        fhirmapping = fhirmapping.replace('{{cs_url}}',  get_custom_codesystem_url())
+        fhirmapping = fhirmapping.replace('{{canonical_base}}',  get_fhir_cfg().canonicalBase)
         rule = StructureMapGroupRule(
             name = question_name,
             source = [StructureMapGroupRuleSource(
