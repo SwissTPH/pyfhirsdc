@@ -1,0 +1,7 @@
+@host = https://test.ahdis.ch
+
+POST {{host}}/matchbox/fhir/StructureMap HTTP/1.1
+Accept: application/fhir+xml;fhirVersion=4.0
+Content-Type: text/fhir-mapping
+
+< ../../resource/structuremap/structuremap-emcare-encounter-emcarea.registration.p.map

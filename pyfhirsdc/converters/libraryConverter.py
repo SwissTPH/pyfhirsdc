@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
-from pyfhirsdc.utils import write_resource
+from pyfhirsdc.serializers.utils import write_resource
 from pyfhirsdc.converters.planDefinitionConverter import getIdentifierFirstRep,  write_action_condition, getActionFirstRep
 from fhir.resources.library import Library
 from fhir.resources.attachment import Attachment

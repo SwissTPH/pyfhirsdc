@@ -9,11 +9,10 @@ from fhir.resources.identifier import Identifier
 from pyfhirsdc.converters.planDefinitionConverter import   \
       write_plan_definition_index, processDecisionTable
 from pyfhirsdc.converters.libraryConverter import  generate_plan_defnition_lib, write_library_CQL
-import pandas as pd
 import os
 import json
 
-from pyfhirsdc.utils import get_resource_path, write_resource
+from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
 
 def generate_plandefinitions(decisionTable):
     plandefinitions = {}
@@ -33,7 +32,7 @@ def generate_plandefinition( name,df_actions):
         # path must end with /
     filepath = get_resource_path("PlanDefinition", get_processor_cfg().scope.lower())
 
-    print('processing plandefinition ${0}'.format(name))
+    print('processing plandefinition {0}'.format(name))
     # read file content if it exists
     pd_df = init_pd(filepath)
     skipcols=get_processor_cfg().skipcols

@@ -23,6 +23,7 @@ def process_input_file(conf):
             dfs_questionnaire, dfs_decision_table,\
                 df_value_set, df_care_plan,\
                 df_profile, df_extension, df_cql = parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
+            input_file.close()
             # generate questionnaire
             generate_questionnaires(dfs_questionnaire, df_value_set)
 
