@@ -68,8 +68,10 @@ will use CQL language per default
 #### trigger
 list of trigger separated by  ||
 will use CQL language per default
-
-
+  
+#### reference
+References for the particular action
+  
 if the triggerType is name event then the second part is the name/url for the event (resource that implement event)
 
   -- to be checked if || can be use in CQL
@@ -122,6 +124,19 @@ cql (or fhirpath) code that will be added on the SDC enableWhenExpression extent
 
 cql (or fhirpath) code that will be added on the SDC calculatedExpression extention
 
+#### extension 
+  
+Will be used to implicitly flag a necessary extension. Additional information will be used to create the extension structure definition that will be referenced in the resource profile. Has the format:
+  ``` 
+  Path :: min :: max 
+  ```
+  
+ - The id of the extension will be created by concatenating the path of the extension with the slice name
+ - The value type of the extension will be derived from the type of the question 
+ - The reference will be derived from the map_profile column
+ - For the slicing name, the question label will be used
+ - Min will default to 0 and max will default * unless defined otherwise
+  
 #### map_resource
     
 List of Map rules, value separeted by ||
@@ -179,7 +194,8 @@ the output file structure should follow the cqf-tooling structure
 
 ## Context
 
-this tool is started to answer WHO EmCare project needs
+this tool was started to answer WHO EmCare project needs
+  
 ## Credits
  
 pyxform project
