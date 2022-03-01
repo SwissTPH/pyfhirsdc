@@ -5,6 +5,7 @@ from pyfhirsdc.services.generateCodeSystem import generate_custom_code_system
 from pyfhirsdc.services.generateValueSet import generate_value_sets
 from .generateQuestionnaires import generate_questionnaires
 from .generatePlanDefinitions import generate_plandefinitions
+from .generateProfiles import generate_profiles
 
 import os
 import pandas as pd
@@ -28,6 +29,7 @@ def process_input_file(conf):
             generate_questionnaires(dfs_questionnaire, df_value_set)
 
             # generate profiles
+            generate_profiles(dfs_questionnaire, df_profile)
 
             # generate the CodeSystem
             generate_custom_code_system(dfs_questionnaire, df_value_set)   
