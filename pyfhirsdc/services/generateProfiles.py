@@ -18,9 +18,9 @@ import pandas as pd
 def generate_profiles(dfs_questionnaire, df_profile):
     for name, questions in dfs_questionnaire.items():
         if not questions["id"].isnull().values.all() and 'map_extension' in questions.columns:
-            generate_profile(name ,questions)
+            generate_profile(name ,questions, df_profile)
 
-def generate_profile(name, df_questions):
+def generate_profile(name, df_questions, df_profile):
     print('processing profile {0}'.format(name))
     fullpath_extensions = get_resource_path("Extensions", name)
     fullpath_profiles = get_resource_path("Profiles", name)
@@ -29,7 +29,7 @@ def generate_profile(name, df_questions):
     # Create the structure definition for the extensions 
     extensions, names = convert_df_to_extension_profiles(df_questions)
     #### Profiles for the rest of the resources ####
-    #profiles = convert_df_to_profiles(name, df_questions)
+    profiles = convert_df_to_profiles(df_questions, df_profile)
 
     # write extensions to file¨
     for i in range (len(names)):
