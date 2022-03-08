@@ -124,7 +124,7 @@ cql (or fhirpath) code that will be added on the SDC enableWhenExpression extent
 
 cql (or fhirpath) code that will be added on the SDC calculatedExpression extention
 
-#### extension 
+#### map_extension 
   
 Will be used to implicitly flag a necessary extension. Additional information will be used to create the extension structure definition that will be referenced in the resource profile. Has the format:
   ``` 
@@ -135,6 +135,18 @@ Will be used to implicitly flag a necessary extension. Additional information wi
  - The value type of the extension will be derived from the type of the question 
  - The reference will be derived from the map_profile column
  - For the slicing name, the question label will be used
+ - Min will default to 0 and max will default * unless defined otherwise
+  
+#### map_path 
+  
+THis column requires the same information that extensions need but for non extension elements. 
+  ``` 
+  Path :: min :: max 
+  ```
+  
+ - The id of the element 
+ - The value type of the element will be derived from the type of the question 
+ - The reference will be derived from the map_profile column
  - Min will default to 0 and max will default * unless defined otherwise
   
 #### map_resource
