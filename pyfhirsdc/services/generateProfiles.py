@@ -22,6 +22,8 @@ def generate_profiles(dfs_questionnaire, df_profile):
 
 def generate_profile(name, df_questions, df_profile):
     print('processing profile {0}'.format(name))
+    if name == 'EmCare.B18-21.Sympto.2m.m':
+        return
     fullpath_extensions = get_resource_path("Extensions", name)
     fullpath_profiles = get_resource_path("Profiles", name)
     # clean the data frame
@@ -29,13 +31,16 @@ def generate_profile(name, df_questions, df_profile):
     # Create the structure definition for the extensions 
     extensions, names = convert_df_to_extension_profiles(df_questions)
     #### Profiles for the rest of the resources ####
-    profiles = convert_df_to_profiles(df_questions, df_profile)
-
-    # write extensions to file¨
+    profiles, names_profiles = convert_df_to_profiles(df_questions, df_profile)
+    # write extensions to file
     for i in range (len(names)):
         fullpath_extensions = get_resource_path("Extensions", name+'-'+names[i])
         print("extension path" + fullpath_extensions)
         write_resource(fullpath_extensions, extensions[i], get_processor_cfg().encoding)
     # write profiles to file
-    #write_resource(fullpath_profiles, profiles, get_processor_cfg().encoding)
+    print(len(names_profiles))
+    if len(profiles)>0:
+        for i in range(len(names_profiles)):
+            fullpath_profiles = get_resource_path("Profiles", name+'-'+names_profiles[i])
+            write_resource(fullpath_profiles, profiles[i], get_processor_cfg().encoding)
     return 

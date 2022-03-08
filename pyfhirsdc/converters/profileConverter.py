@@ -1,5 +1,4 @@
 from importlib.resources import path
-import resource
 from pyfhirsdc.config import get_fhir_cfg
 from fhir.resources.structuredefinition import StructureDefinition
 from fhir.resources.structuredefinition import StructureDefinitionDifferential
@@ -102,10 +101,10 @@ def convert_df_to_profiles(df_questions, df_profile):
 
     for idx, row in df_profile.iterrows():
         profile, name = init_profile_def(row)
-        names.append(name)
         if name in grouped_profiles.groups:
-            profile = extend_profile(name,profile, grouped_profiles.get_group(name)) 
-        profiles.append(profile)
+            names.append(name)
+            profile = extend_profile(name,profile, grouped_profiles.get_group(name))
+            profiles.append(profile)
     return profiles, names
 
 
@@ -123,7 +122,7 @@ def init_profile_def(element):
         "status" : Code('draft'), 
         "type" : structure_def_name_list[-1],
         "baseDefinition" : Uri(path),
-        "url" : Uri(canonical+"/StructureDefinition/"+structure_def_name)
+        "url" : Uri(canonical+"/StructureDefinition/"+structure_def_name.replace(' ', '-'))
     }
     structure_def = StructureDefinition.parse_obj(structure_def_scaffold)
     structure_def.id = Id(structure_def_name.replace(' ', '-'))
@@ -132,62 +131,123 @@ def init_profile_def(element):
     structure_def.description = element['description']
     return structure_def, structure_def_name
 
-def extend_profile(name, profile, grouped_profile, canonical):
+def extend_profile(name, profile, grouped_profile):
     resource_type = name.split(' ', 1 )[-1]
     element_list = []
     element_list.append({
-        "id": name,
-        "path": name
+        "id": resource_type,
+        "path": resource_type
     })
+    print('Processing Profile: {0}'.format(name))
     for idx, row in grouped_profile.iterrows():
         # if there is a map_extension then we have to link it to the extension and 
         # add a slice name
         extension = row["map_extension"] 
-        if extension:
-            extension_details =extension.split('::') 
-            extension_name= extension_details[0].split('/')[-1]
-            extension_min =  extension_details[1]
-            extension_max =  extension_details[2]
+        if not pd.notna(row["map_profile"]) and not pd.notna(row["map_path"]):
+            continue
+        if pd.notna(extension):
+            if "::" in extension:
+                extension_details =extension.split('::')
+                extension_name= extension_details[0].split('/')[-1]
+                extension_min =  extension_details[1]
+                extension_max =  extension_details[2]
+            else: 
+                extension_min = '0'
+                extension_max = '*'
+                extension_name = (extension.split('/')[-1]).strip()
+            print('Processing extension: {0}'.format(extension_name))
+            extension_id = "{0}.extension.{1}".format(resource_type.strip(), extension_name.strip())
+            print('The id of the extension is:',(extension_id) )
             element_def = ElementDefinition.parse_obj(
             {
-                "id" : resource_type+".extension:"+extension_name,
+                "id" : extension_id,
                 "path" : resource_type+".extension",
+                "definition" : row["description"],
                 "sliceName" : extension_name,
                 "short" : row["label"],
-                "min" : extension_min,
-                "max": extension_max,
+                "min" : extension_min.strip(),
+                "max": extension_max.strip(),
                 "type": [{
                     "code": "Extension",
                     "profile": [get_fhir_cfg().canonicalBase+'StructureDefinition/'+extension_name]
                 }],
                 "mapping": [
                     {
-                        "identity": row["scope"],
+                        "identity": idx.split('.')[0],
                         "map": idx
                     }
                 ]
             })
             element_list.append(element_def)
         else:
+            path = ''
+            if pd.notna(row["map_path"]) and "::" in row["map_path"]:
+                profile_details = row["map_path"].split('::')
+                profile_min =  profile_details[1]
+                profile_max =  profile_details[2]
+                path = profile_details[0]
+            elif pd.notna(row["map_path"]): 
+                profile_min = '0'
+                profile_max = '*'
+                path = row["map_path"]
+            if not path:
+                continue
+            print('Processing extension: {0}'.format(path))
+            ## check if there is a slicing in the path looking for semicolon (:)
+            slice_name = path.split('.')[-1]
+            if slice_name.startswith(':'):
+                slice_name = slice_name.replace(':', '')
+            element_type = row['type']
+            ## mapping the element type written in the xls to a corresponding 
+            # fhir data type. Special cases with select one have to be 
+            # mapped to CodeableConcept and create a binding and valueset in the 
+            # element 
+            add_binding = False
+            if element_type.startswith('select_one'):
+                add_binding = True
+                element_valueset_name = element_type.split(' ')[-1]
+                element_type = 'CodeableConcept'
+            switcher_data_types = {
+                "checkbox" : "boolean",
+                "phone" : "string",
+                "text" : "string",
+                "mapping" : "Reference", 
+                "boolean" : "boolean",
+                "date" : "date",
+                "time" : "time",
+                "decimal" :"decimal",
+                "CodeableConcept": "CodeableConcept"
+            }
+            print("id is : ", path.strip() +'\n')
+            print(row["description"])
             element_def = ElementDefinition.parse_obj(
             {
-                "id" : resource_type+".extension:"+extension_name,
-                "path" : resource_type+".extension",
-                "sliceName" : extension_name,
+                "id" : path.strip(), 
+                "path" : path,
                 "short" : row["label"],
-                "min" : extension_min,
-                "max": extension_max,
+                "definition" : row["description"],
+                "min" : profile_min,
+                "max": profile_max,
                 "type": [{
-                    "code": "Extension",
-                    "profile": [get_fhir_cfg().canonicalBase+'StructureDefinition/'+extension_name]
+                    "code": switcher_data_types.get(element_type)
                 }],
                 "mapping": [
                     {
-                        "identity": row["scope"],
+                        "identity": idx.split('.')[0],
                         "map": idx
                     }
                 ]
             })
+            if (add_binding):
+                element_def.binding = {
+                    "extension": [{
+                        "url" : "http://hl7.org/fhir/StructureDefinition/elementdefinition-bindingName", 
+                        "valueString" : element_valueset_name
+                    }],
+                    "strength":"extensible",
+                    "valueSet" : get_fhir_cfg().canonicalBase+"/ValueSet/valueset-"+element_valueset_name
+                }
+            element_def.sliceName = slice_name 
             element_list.append(element_def)
     differential = StructureDefinitionDifferential.construct()
     differential.element = element_list
