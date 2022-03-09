@@ -159,7 +159,7 @@ def processAction(row):
     #TODO change the cql expresssions 
     for condition in conditionList:
         if "=" in condition:
-            condition = condition.split("=")[1].replace('\\', '' )
+            condition = condition.split("=")[1].replace("\\", "" )
             newCondition = "Patient.hasCondition("+condition+")"
         elif "≠" in condition:
             condition = condition.split("≠")[1]
@@ -188,16 +188,15 @@ def processAction(row):
     for single_action in actions:
         if (pd.notna(action) and pd.notnull(single_action) and single_action):
             actionValues.append(single_action)
-
+    ## Join the values that were split by the PIPE with AND
     actions_description = "AND".join(actionValues)
     action.description = actions_description
-    #FIXEME title is always None
     if len(actionValues) == 1:
         action.title=actionValues[0]
     else:
         for actionValue in actionValues:
             subAction = PlanDefinitionAction.construct()
-            action.title=actionValue
+            subAction.title=actionValue
             action.action.append(subAction)
 
     if annotation_col!="":

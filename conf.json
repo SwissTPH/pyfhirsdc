@@ -1,6 +1,6 @@
 {
     "processor":{
-        "inputFile":"C:/Users/delcpa/switchdrive/DHU/Projects/WHO DAK/merged/xls_form.ods",
+        "inputFile":"switchdrive/DHU/Projects/WHO DAK/merged/xls_form.ods",
         "outputPath":"output/",
         "excudedWorksheets":[
             "q.new-encounter"
@@ -31,6 +31,12 @@
             "default":{
                 "status":"active"
             }
+        },
+        "Extensions":{
+            "outputPath":"resources/extensions"
+        },
+        "Profiles": {
+            "outputPath":"resources/profiles"
         },
         "Questionnaire":{
             "outputPath":"resources/questionnaire",
