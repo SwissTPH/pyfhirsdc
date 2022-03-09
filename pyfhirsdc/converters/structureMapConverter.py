@@ -148,8 +148,8 @@ def get_structure_map_rule(question_name, question):
         if question['map_resource'][-1:] != ";":
             question['map_resource'] = question['map_resource'] + " '"+ question_name + "-1';"
         # if variable on root, element is the resource itself
-        fhirmapping = "item.answer first where item.linkId = '"\
-            + question_name + "' as a then { "\
+        fhirmapping = "item.answer first as a where item.linkId = '"\
+            + question_name + "'  then { "\
             + question['map_resource'] + " }"
         fhirmapping = fhirmapping.replace('{{cs_url}}',  get_custom_codesystem_url())
         fhirmapping = fhirmapping.replace('{{canonical_base}}',  get_fhir_cfg().canonicalBase)
