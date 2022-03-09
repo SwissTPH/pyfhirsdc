@@ -132,6 +132,8 @@ will follow the structure [type] [option]
 - select_one option : choice when only one selection is possible
 - select_multile option : choice when multiple selections are possible
 - mapping : will not apprear on the questionnaire, just to document mapping information
+- group start: will start a question group, an ID is mandatory, several levels are possible
+- group end: will end a question group, an ID is mandatory
 ##### option
 - [valueSetUrl] valueSet defined in the valueSet tab 
 - url::[valueSetUrl] link to a remote value set
