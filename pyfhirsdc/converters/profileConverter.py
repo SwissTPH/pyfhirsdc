@@ -56,14 +56,14 @@ def init_extension_def(element):
             "path" : "Extension",
             "short" :structure_def_slice_name,
             "definition": element['description'],
-            "min" : map_extension[1],
-            "max" : map_extension[2]
+            "min" : map_extension[1].strip(),
+            "max" : map_extension[2].strip()
         }),
         ElementDefinition.parse_obj({
             "id" : "Extension.extension",
             "path" : "Extension.extension",
-            "min" : map_extension[1],
-            "max" : map_extension[2]
+            "min" : map_extension[1].strip(),
+            "max" : map_extension[2].strip()
         }),
         ElementDefinition.parse_obj({
             "id" : "Extension.url",
@@ -75,8 +75,8 @@ def init_extension_def(element):
             "path" : "Extension.value[x]",
             "short" : structure_def_slice_name,
             "definition" : element['description'],
-            "min" : map_extension[1],
-            "max" : map_extension[2], 
+            "min" : map_extension[1].strip(),
+            "max" : map_extension[2].strip(), 
             "type" : [
                 {
                     "code" : element["type"]
