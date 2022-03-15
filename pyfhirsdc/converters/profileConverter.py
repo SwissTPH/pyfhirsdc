@@ -6,8 +6,10 @@ from fhir.resources.fhirtypes import Id
 from fhir.resources.fhirtypes import Uri
 from fhir.resources.fhirtypes import Code
 from fhir.resources.extension import Extension
+from fhir.resources.elementdefinition import ElementDefinitionType
 from fhir.resources.fhirtypes import StructureDefinitionContextType
 from fhir.resources.elementdefinition import ElementDefinition
+from pyfhirsdc.converters.questionnaireItemConverter import get_question_fhir_data_type
 import pandas as pd 
 
 def convert_df_to_extension_profiles(df):
@@ -24,7 +26,7 @@ def init_extension_def(element):
     map_extension = element['map_extension'].split('::')
     ## Check for the map resource of the extension and grab the extension URL
     ## Replace the Canonical base URL placeholder with the real url 
-    extension_path = map_extension[0].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)
+    extension_path = (map_extension[0].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)).strip()
     structure_def_slice_name =extension_path.split('/')[-1].strip()
     structure_def_id = extension_path
     # Pydantics does not allow to add a property to an object without providing all the 
@@ -36,7 +38,7 @@ def init_extension_def(element):
         "name" : structure_def_slice_name,
         "status" : Code('draft'), 
         "type" : "Extension",
-        "url" : Uri(extension_path)
+        "url" : Uri(extension_path).strip()
     }
     structure_def = StructureDefinition.parse_obj(structure_def_scaffold)
     structure_def.id = Id(structure_def_slice_name)
@@ -77,13 +79,29 @@ def init_extension_def(element):
             "short" : structure_def_slice_name,
             "definition" : element['description'],
             "min" : min_cardinality,
-            "max" : max_cardinality, 
-            "type" : [
-                {
-                    "code" : element["type"]
-                }],
+            "max" : max_cardinality
         })
     ]
+    element_type = element['type']
+    add_reference = False
+    if element_type.startswith('select_one'):
+         element_valueset_name = element_type.split(' ',1)[-1]
+         ## Check if the name after slelect_one starts with a capital or not.
+         ## if it starts with a capital it is a reference to a profile
+         print("name of the value set: ",element_type)
+         if element_valueset_name[0].isupper():
+             add_reference = True
+             element_type = 'Reference'
+         else:
+             element_type = 'CodeableConcept'
+             add_binding = True
+    element_def_type = ElementDefinitionType.construct()
+    element_def_type.code = get_question_fhir_data_type(element_type)
+    if add_reference == True : 
+        print('Writing target PROFILE')
+        element_def_type.targetProfile = [get_fhir_cfg().canonicalBase+\
+                'StructureDefinition/'+element['definition']+'-'+element_valueset_name]
+    extension_element[-1].type = [element_def_type]
     differential = StructureDefinitionDifferential.construct()
     differential.element = extension_element
     structure_def.differential = differential
@@ -93,8 +111,10 @@ def init_extension_def(element):
 def convert_df_to_profiles(df_questions, df_profile):
     profiles = []
     names = []
+    q_idx = []
+    #Grouping rows based on the profiles, so that we can go through the different groups and create
+    # the corresponding profiles with the right attributes
     grouped_profiles = df_questions.groupby('map_profile')
-    
     #for key, item in grouped_profiles:
     #    print("Profile: ", key)
     #    print(grouped_profiles.get_group(key), "\n\n")
@@ -105,7 +125,7 @@ def convert_df_to_profiles(df_questions, df_profile):
             names.append(name)
             profile = extend_profile(name,profile, grouped_profiles.get_group(name))
             profiles.append(profile)
-    return profiles, names
+    return profiles,names
 
 
 def init_profile_def(element):
@@ -122,7 +142,7 @@ def init_profile_def(element):
         "status" : Code('draft'), 
         "type" : structure_def_name_list[-1],
         "baseDefinition" : Uri(path),
-        "url" : Uri(canonical+"/StructureDefinition/"+structure_def_name.replace(' ', '-'))
+        "url" : Uri(canonical+"/StructureDefinition/"+structure_def_name.replace(' ', '-')).strip()
     }
     structure_def = StructureDefinition.parse_obj(structure_def_scaffold)
     structure_def.id = Id(structure_def_name.replace(' ', '-'))
@@ -203,21 +223,23 @@ def extend_profile(name, profile, grouped_profile):
             # mapped to CodeableConcept and create a binding and valueset in the 
             # element 
             add_binding = False
+            add_reference = False
+
             if element_type.startswith('select_one'):
-                add_binding = True
-                element_valueset_name = element_type.split(' ')[-1]
-                element_type = 'CodeableConcept'
-            switcher_data_types = {
-                "checkbox" : "boolean",
-                "phone" : "string",
-                "text" : "string",
-                "mapping" : "Reference", 
-                "boolean" : "boolean",
-                "date" : "date",
-                "time" : "time",
-                "decimal" :"decimal",
-                "CodeableConcept": "CodeableConcept"
-            }
+                element_valueset_name = element_type.split(' ',1)[-1]
+                ## Check if the name after slelect_one starts with a capital or not.
+                ## if it starts with a capital it is a reference to a profile
+                print("name of the value set: ",element_type)
+                if element_valueset_name[0].isupper():
+                    add_reference = True
+                    element_type = 'Reference'
+                else:
+                    element_type = 'CodeableConcept'
+                    add_binding = True
+                    
+            print("add reference? ", add_reference)
+            ## create function similar to get_fhir_question_type
+            
             print("id is : ", path.strip() +'\n')
             print(row["description"])
             element_def = ElementDefinition.parse_obj(
@@ -228,9 +250,6 @@ def extend_profile(name, profile, grouped_profile):
                 "definition" : row["description"],
                 "min" : profile_min,
                 "max": profile_max,
-                "type": [{
-                    "code": switcher_data_types.get(element_type)
-                }],
                 "mapping": [
                     {
                         "identity": idx.split('.')[0],
@@ -238,6 +257,12 @@ def extend_profile(name, profile, grouped_profile):
                     }
                 ]
             })
+            element_def_type = ElementDefinitionType.construct()
+            element_def_type.code = get_question_fhir_data_type(element_type)
+            if add_reference : 
+                element_def_type.targetProfile = [get_fhir_cfg().canonicalBase+\
+                    'StructureDefinition/'+row['definition']+'-'+element_valueset_name]
+            
             if (add_binding):
                 element_def.binding = {
                     "extension": [{
@@ -247,6 +272,7 @@ def extend_profile(name, profile, grouped_profile):
                     "strength":"extensible",
                     "valueSet" : get_fhir_cfg().canonicalBase+"/ValueSet/valueset-"+element_valueset_name
                 }
+            element_def.type = [element_def_type]
             element_def.sliceName = slice_name 
             element_list.append(element_def)
     differential = StructureDefinitionDifferential.construct()
