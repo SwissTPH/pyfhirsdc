@@ -13,6 +13,7 @@ from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_e
 from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
 from pyfhirsdc.serializers.json import read_resource
 from pyfhirsdc.converters.utils import get_custom_codesystem_url, get_resource_url
+import pandas as pd
 
 def convert_df_to_questionitems(questionnaire, df_questions, df_value_set,  strategy = 'overwrite'):
     # create a dict to iterate
@@ -100,13 +101,31 @@ def get_question_fhir_type(question):
     # maps the pyfhirsdc type to real fhir type
     # mapping type are not in questionnaire
     fhir_type = None
-    type_arr = question['type'].split(" ")
-    fhir_type = type_arr[0]
+    if pd.notna(question['type']):
+        type_arr = question['type'].split(" ")
+        fhir_type = type_arr[0]
     if fhir_type in ("select_one", "select_multiple"):
         fhir_type = "choice"
     elif fhir_type == "checkbox":
         fhir_type = "boolean"
     return fhir_type
+## maps the type of the question e.g. checkbox, to its respective data
+## type that FHIR understands e.g. boolean
+def get_question_fhir_data_type(question_type):
+    switcher_data_types = {
+                "checkbox" : "boolean",
+                "phone" : "string",
+                "text" : "string",
+                "mapping" : "Reference", 
+                "boolean" : "boolean",
+                "date" : "date",
+                "time" : "time",
+                "decimal" :"decimal",
+                "CodeableConcept": "CodeableConcept",
+                "Reference" : "Reference"
+            }
+    return switcher_data_types.get(question_type)
+
 
 def get_question_extension(question, df_value_set ):
     extensions = []
