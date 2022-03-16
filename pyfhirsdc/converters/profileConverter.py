@@ -23,7 +23,7 @@ def convert_df_to_extension_profiles(df):
     return extensions, names
 
 def init_extension_def(element):
-    map_extension = element['map_extension'].split('::')
+    map_extension = element['map_extension'].strip().split('::')
     ## Check for the map resource of the extension and grab the extension URL
     ## Replace the Canonical base URL placeholder with the real url 
     extension_path = (map_extension[0].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)).strip()
@@ -51,8 +51,8 @@ def init_extension_def(element):
     structure_def.type = "Extension"
     structure_def.baseDefinition = "http://hl7.org/fhir/StructureDefinition/Extension"
     structure_def.derivation = "constraint"
-    min_cardinality = map_extension[1].strip()
-    max_cardinality = map_extension[2].strip()
+    min_cardinality = map_extension[1]
+    max_cardinality = map_extension[2]
     extension_element = [ElementDefinition.parse_obj(
         {
             "id":"Extension",
@@ -152,7 +152,7 @@ def init_profile_def(element):
     return structure_def, structure_def_name
 
 def extend_profile(name, profile, grouped_profile):
-    resource_type = name.split(' ', 1 )[-1]
+    resource_type = name.split(' ', 1 )[-1].strip()
     element_list = []
     element_list.append({
         "id": resource_type,
@@ -167,16 +167,16 @@ def extend_profile(name, profile, grouped_profile):
             continue
         if pd.notna(extension):
             if "::" in extension:
-                extension_details =extension.split('::')
+                extension_details =extension.strip().split('::')
                 extension_name= extension_details[0].split('/')[-1]
                 extension_min =  extension_details[1]
                 extension_max =  extension_details[2]
             else: 
                 extension_min = '0'
                 extension_max = '*'
-                extension_name = (extension.split('/')[-1]).strip()
+                extension_name = (extension.split('/')[-1])
             print('Processing extension: {0}'.format(extension_name))
-            extension_id = "{0}.extension.{1}".format(resource_type.strip(), extension_name.strip())
+            extension_id = "{0}.extension.{1}".format(resource_type, extension_name)
             print('The id of the extension is:',(extension_id) )
             element_def = ElementDefinition.parse_obj(
             {
@@ -185,8 +185,8 @@ def extend_profile(name, profile, grouped_profile):
                 "definition" : row["description"],
                 "sliceName" : extension_name,
                 "short" : row["label"],
-                "min" : extension_min.strip(),
-                "max": extension_max.strip(),
+                "min" : extension_min,
+                "max": extension_max,
                 "type": [{
                     "code": "Extension",
                     "profile": [get_fhir_cfg().canonicalBase+'StructureDefinition/'+extension_name]
