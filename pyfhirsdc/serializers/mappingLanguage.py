@@ -27,7 +27,8 @@ def write_mapping_file(filepath, structure_map, update_map = True):
         response = requests.post(url_map, data = buffer, headers = headers_map) 
         if response.status_code == 200 or response.status_code == 201:
             obj = json.loads(response.text)
-            obj['status'] = 'draft'
+            obj['status'] = structure_map.status
+            obj['id'] = structure_map.id
             structure_map = structure_map.parse_raw( json.dumps(obj))
         else:
             print(str(response.status_code) +":"+ structure_map.id)

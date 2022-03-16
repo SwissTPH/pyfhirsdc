@@ -21,46 +21,79 @@ def convert_df_to_questionitems(questionnaire, df_questions, df_value_set,  stra
     # Use first part of the id (before DE) as an ID
     # questionnaire.id = list(dict_questions.keys())[0].split(".DE")[0]
     # delete all item in case of overwrite strategy
-    if questionnaire.item is None or strategy == "overwrite":
+   
+    if strategy == "overwrite" or questionnaire.item is None:
         questionnaire.item =[]
-    # recreate item if draft     
+    # recreate item if draft 
+    ressource = questionnaire
+
+    parent = []
     for id, question in dict_questions.items():
-        # pop the item if it exists
-        existing_item = next((questionnaire.item.pop(index) for index in range(len(questionnaire.item)) if questionnaire.item[index].linkId == id), None)
-        # create or update the item based on the strategy
-        if existing_item is None\
-        or strategy in ( "overwriteDraft", "overwriteDraftAddOnly" ) and\
-            (existing_item.design_note is not None and "status::draft"  in existing_item.design_note):
-            new_question = process_quesitonnaire_line(id, question, df_value_set,  existing_item )
-            if new_question is not None:
-                questionnaire.item.append(new_question)
-        elif existing_item is not None:
-            #put back the item if no update
-            questionnaire.item.append(existing_item)
-    return questionnaire
+        existing_item = next((ressource.item.pop(index) for index in range(len(ressource.item)) if ressource.item[index].linkId == id), None)
+         # manage group
+        type, detail_1, detail_2 = get_type_details(question)
+        if type is None:
+            print("${0} is not a valid type, see question ${1}".format(question['type'], id))       
+        elif type == "skipped":
+            pass
+        elif type == "group" and detail_1 == "start":
+            item = add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy)
+            if item is not None:
+                # we save the the questionnaire 
+                parent.append(ressource)
+                # we save the question as a new ressouce
+                ressource = item
+                if ressource.item is None:
+                    ressource.item =[]
+        elif type == "group" and detail_1 == "end":
+            if len(parent) == 0:
+                print("Question ${0} end of a group that was never opened,  group::end ignored".format( id))
+            else:
+                # we load the the group question
+                temp_ressource = parent.pop()
+                temp_ressource.item.append(ressource)
+                ressource = temp_ressource
+
+        else:
+            item = add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy)
+            if item is not None:
+                ressource.item.append(item)
+    # close all open groups
+    while len(parent) > 0:
+        temp_ressource = parent.pop()
+        print("group id ${0} is not close and the tool reached the end of the quesitonnaire, closing the group".format( ressource.id))
+        temp_ressource.item.append(ressource)
+        ressource = temp_ressource
+    return ressource
+
+def add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy):
+    # pop the item if it exists
+    
+    # create or update the item based on the strategy
+    if existing_item is None\
+    or strategy in ( "overwriteDraft", "overwriteDraftAddOnly" ) and\
+        (existing_item.design_note is not None and "status::draft"  in existing_item.design_note):
+        new_question = process_quesitonnaire_line(id, question, df_value_set,  existing_item )
+        if new_question is not None:
+            return new_question
+    elif existing_item is not None:
+        #put back the item if no update
+        return existing_item
+    return None
+
 
 def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
-    new_question = None
     type = get_question_fhir_type(question)
-
-    if type is None:
-        print("${0} is not a valid type, see question ${1}".format(question['type'], id))
-        return None        
-    elif type == "skipped":
-        return None
-    # merge extensions
-
-    #TODO manage code with custom coding system
-    #TODO manage choicecolumn
     new_question = QuestionnaireItemSDC(
-            linkId = id,
-            type = type,
-            extension = get_question_extension(question, df_value_set ),
-            answerValueSet = get_question_valueset(question, df_value_set),
-            design_note = "status::draft",
-            text = question['description'],
-            definition = get_question_definition(question)
-        )
+                linkId = id,
+                type = type,
+                extension = get_question_extension(question, df_value_set ),
+                answerValueSet = get_question_valueset(question, df_value_set),
+                design_note = "status::draft",
+                definition = get_question_definition(question)
+            )
+    if question['description'] is not numpy.nan:
+        new_question.text = question['description']
     
     return new_question
 

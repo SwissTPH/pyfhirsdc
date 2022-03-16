@@ -15,10 +15,11 @@ import json
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
 
 def generate_plandefinitions(decisionTable):
+    root_output_path = get_processor_cfg().outputPath
     plandefinitions = {}
     for name, questions in decisionTable.items():
         plandefinitions[name] = generate_plandefinition(name ,questions)
-        root_output_path = get_processor_cfg().outputPath
+        
     if not os.path.exists(root_output_path):
         os.makedirs(root_output_path)
     write_plan_definition_index(plandefinitions, root_output_path)

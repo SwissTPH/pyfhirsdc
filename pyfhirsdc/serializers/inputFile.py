@@ -28,7 +28,7 @@ def parse_sheets(input_file, excudedWorksheets):
         if excudedWorksheets is None or worksheet not in excudedWorksheets:
             df = input_file.parse(worksheet)
             # strip space
-            df.applymap(lambda x: x.strip() if type(x)==str else x)
+            df = df.applymap(lambda x: x.strip() if type(x)==str else x)
             if worksheet.startswith('q.'):
                 if validate_questionnaire_sheet(df):
                     dfs_questionnaire[worksheet[2:]] = df

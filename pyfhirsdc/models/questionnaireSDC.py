@@ -150,6 +150,17 @@ class QuestionnaireItemSDC(QuestionnaireItem):
         # if property is element of this resource.
         element_property=True,
     )
+    item: typing.List[QuestionnaireItemSDCType] = Field(
+        None,
+        alias="item",
+        title="Nested questionnaire items",
+        description=(
+            "Text, questions and other groups to be nested beneath a question or "
+            "group."
+        ),
+        # if property is element of this resource.
+        element_property=True,
+    )
     @classmethod
     def elements_sequence(cls):
         list = QuestionnaireItem.elements_sequence()
@@ -157,3 +168,5 @@ class QuestionnaireItemSDC(QuestionnaireItem):
         list.append("designNote")
         list.append("sdc-questionnaire-preferredTerminologyServer")
         return list
+
+
