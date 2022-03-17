@@ -29,7 +29,7 @@ def process_input_file(conf):
             generate_questionnaires(dfs_questionnaire, df_value_set)
 
             # generate profiles
-            generate_profiles(dfs_questionnaire, df_profile)
+            generate_profiles(dfs_questionnaire, df_profile, df_value_set)
 
             # generate the CodeSystem
             generate_custom_code_system(dfs_questionnaire, df_value_set)   

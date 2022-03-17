@@ -6,6 +6,7 @@ from fhir.resources.fhirtypes import Id
 from fhir.resources.fhirtypes import Uri
 from fhir.resources.fhirtypes import Code
 from fhir.resources.extension import Extension
+import re
 from fhir.resources.elementdefinition import ElementDefinitionType
 from fhir.resources.fhirtypes import StructureDefinitionContextType
 from fhir.resources.elementdefinition import ElementDefinition
@@ -98,7 +99,6 @@ def init_extension_def(element):
     element_def_type = ElementDefinitionType.construct()
     element_def_type.code = get_question_fhir_data_type(element_type)
     if add_reference == True : 
-        print('Writing target PROFILE')
         element_def_type.targetProfile = [get_fhir_cfg().canonicalBase+\
                 'StructureDefinition/'+element['definition']+'-'+element_valueset_name]
     extension_element[-1].type = [element_def_type]
@@ -108,7 +108,7 @@ def init_extension_def(element):
     return structure_def, structure_def_slice_name
 
 
-def convert_df_to_profiles(df_questions, df_profile):
+def convert_df_to_profiles(df_questions, df_profile, df_valueset):
     profiles = []
     names = []
     q_idx = []
@@ -123,7 +123,7 @@ def convert_df_to_profiles(df_questions, df_profile):
         profile, name = init_profile_def(row)
         if name in grouped_profiles.groups:
             names.append(name)
-            profile = extend_profile(name,profile, grouped_profiles.get_group(name))
+            profile = extend_profile(name,profile, grouped_profiles.get_group(name), df_valueset)
             profiles.append(profile)
     return profiles,names
 
@@ -151,7 +151,7 @@ def init_profile_def(element):
     structure_def.description = element['description']
     return structure_def, structure_def_name
 
-def extend_profile(name, profile, grouped_profile):
+def extend_profile(name, profile, grouped_profile, df_valueset):
     resource_type = name.split(' ', 1 )[-1].strip()
     element_list = []
     element_list.append({
@@ -162,10 +162,11 @@ def extend_profile(name, profile, grouped_profile):
     for idx, row in grouped_profile.iterrows():
         # if there is a map_extension then we have to link it to the extension and 
         # add a slice name
-        extension = row["map_extension"] 
+        extension = row["map_extension"]
+        is_profile = pd.notna(row["map_profile"])
         if not pd.notna(row["map_profile"]) and not pd.notna(row["map_path"]):
             continue
-        if pd.notna(extension):
+        if pd.notna(extension) and not is_profile:
             if "::" in extension:
                 extension_details =extension.strip().split('::')
                 extension_name= extension_details[0].split('/')[-1]
@@ -176,7 +177,7 @@ def extend_profile(name, profile, grouped_profile):
                 extension_max = '*'
                 extension_name = (extension.split('/')[-1])
             print('Processing extension: {0}'.format(extension_name))
-            extension_id = "{0}.extension.{1}".format(resource_type, extension_name)
+            extension_id = "{0}.extension.{1}".format(resource_type, extension_name).strip()
             print('The id of the extension is:',(extension_id) )
             element_def = ElementDefinition.parse_obj(
             {
@@ -213,39 +214,34 @@ def extend_profile(name, profile, grouped_profile):
             if not path:
                 continue
             print('Processing extension: {0}'.format(path))
-            ## check if there is a slicing in the path looking for semicolon (:)
-            slice_name = path.split('.')[-1]
-            if slice_name.startswith(':'):
-                slice_name = slice_name.replace(':', '')
-            element_type = row['type']
+            
             ## mapping the element type written in the xls to a corresponding 
             # fhir data type. Special cases with select one have to be 
             # mapped to CodeableConcept and create a binding and valueset in the 
             # element 
             add_binding = False
             add_reference = False
+            element_type = row['type']
 
             if element_type.startswith('select_one'):
-                element_valueset_name = element_type.split(' ',1)[-1]
+                element_valueset_name = element_type.split(' ',1)[-1].strip()
+                filtered_valueset = df_valueset.loc[(df_valueset['valueSet']==element_valueset_name) & (df_valueset['code']=='{{url}}')]
+                if(not (filtered_valueset).empty):
+                    display = filtered_valueset['display'].item()
+                    name_of_resource = re.findall('(?:\/[^\/]+)*\/([^\?]+).*',display)[0]
                 ## Check if the name after slelect_one starts with a capital or not.
-                ## if it starts with a capital it is a reference to a profile
-                print("name of the value set: ",element_type)
-                if element_valueset_name[0].isupper():
+                ## if it has candidateExpression as display we consider it a reference to a profile
+                ##Regex to get the name of the resource :(?:\/[^\/]+)*\/([^\?]+).*
+                if row['display'] =='candidateExpression':
                     add_reference = True
                     element_type = 'Reference'
                 else:
                     element_type = 'CodeableConcept'
                     add_binding = True
-                    
-            print("add reference? ", add_reference)
-            ## create function similar to get_fhir_question_type
-            
-            print("id is : ", path.strip() +'\n')
-            print(row["description"])
             element_def = ElementDefinition.parse_obj(
             {
-                "id" : path.strip(), 
-                "path" : path,
+                "id" : path.strip().replace(':','.'), 
+                "path" : path.strip().replace(':','.'),
                 "short" : row["label"],
                 "definition" : row["description"],
                 "min" : profile_min,
@@ -257,12 +253,15 @@ def extend_profile(name, profile, grouped_profile):
                     }
                 ]
             })
+            ## check if there is a slicing in the path looking for semicolon (:)
+            if ':' in path:
+                element_def.sliceName = path.split(':')[1]
+            print("id is : ", path.strip() +'\n')
             element_def_type = ElementDefinitionType.construct()
             element_def_type.code = get_question_fhir_data_type(element_type)
             if add_reference : 
                 element_def_type.targetProfile = [get_fhir_cfg().canonicalBase+\
-                    'StructureDefinition/'+row['definition']+'-'+element_valueset_name]
-            
+                    'StructureDefinition/'+row['definition']+'-'+name_of_resource]
             if (add_binding):
                 element_def.binding = {
                     "extension": [{
@@ -273,7 +272,6 @@ def extend_profile(name, profile, grouped_profile):
                     "valueSet" : get_fhir_cfg().canonicalBase+"/ValueSet/valueset-"+element_valueset_name
                 }
             element_def.type = [element_def_type]
-            element_def.sliceName = slice_name 
             element_list.append(element_def)
     differential = StructureDefinitionDifferential.construct()
     differential.element = element_list

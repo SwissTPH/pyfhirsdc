@@ -15,7 +15,7 @@ from pyfhirsdc.converters.profileConverter import convert_df_to_profiles
 import pandas as pd 
 
 
-def generate_profiles(dfs_questionnaire, df_profile):
+def generate_profiles(dfs_questionnaire, df_profile, df_valuesets):
     
     all_dataframes = []
     for name, questions in dfs_questionnaire.items():
@@ -26,7 +26,7 @@ def generate_profiles(dfs_questionnaire, df_profile):
     ## Concat all the dataframes together so that we can create the profiles based on it 
     ## instead of going through sheets one by one
     all_questionnaires = pd.concat(all_dataframes, ignore_index=True)
-    generate_profile(all_questionnaires, df_profile)
+    generate_profile(all_questionnaires, df_profile, df_valuesets)
 def generate_extension(name, df_questions, df_profile):
     print('processing profile {0}'.format(name))
     if name == 'EmCare.B18-21.Sympto.2m.m':
@@ -43,12 +43,12 @@ def generate_extension(name, df_questions, df_profile):
         write_resource(fullpath_extensions, extensions[i], get_processor_cfg().encoding)
     return 
 
-def generate_profile(df_questions, df_profile):
+def generate_profile(df_questions, df_profile, df_valuesets):
     print('processing profiles.................')
     # clean the data frame
     df_questions = df_questions.dropna(axis=0, subset=['id']).set_index('id')
     #### Profiles for the rest of the resources ####
-    profiles, names_profiles = convert_df_to_profiles(df_questions, df_profile)
+    profiles, names_profiles = convert_df_to_profiles(df_questions, df_profile, df_valuesets)
     # write profiles to file
     print(len(names_profiles))
     if len(profiles)>0:
