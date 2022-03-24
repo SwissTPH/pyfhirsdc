@@ -53,7 +53,7 @@ def init_extension_def(element):
     structure_def.baseDefinition = "http://hl7.org/fhir/StructureDefinition/Extension"
     structure_def.derivation = "constraint"
     min_cardinality = map_extension[1]
-    max_cardinality = map_extension[2]
+    max_cardinality = map_extension[2].strip()
     extension_element = [ElementDefinition.parse_obj(
         {
             "id":"Extension",
@@ -141,9 +141,11 @@ def init_profile_def(element):
         "name" : structure_def_name,
         "status" : Code('draft'), 
         "type" : structure_def_name_list[-1],
-        "baseDefinition" : Uri(path),
-        "url" : Uri(canonical+"/StructureDefinition/"+structure_def_name.replace(' ', '-')).strip()
+        "url" : Uri(canonical+"StructureDefinition/"+structure_def_name.replace(' ', '-')).strip()
     }
+    if pd.notna(path):
+        structure_def_scaffold['baseDefinition'] = Uri(path)
+        structure_def_scaffold["derivation"] = "constraint"
     structure_def = StructureDefinition.parse_obj(structure_def_scaffold)
     structure_def.id = Id(structure_def_name.replace(' ', '-'))
     structure_def.experimental = False
@@ -166,7 +168,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
         is_profile = pd.notna(row["map_profile"])
         if not pd.notna(row["map_profile"]) and not pd.notna(row["map_path"]):
             continue
-        if pd.notna(extension) and not is_profile:
+        if pd.notna(extension) and is_profile:
             if "::" in extension:
                 extension_details =extension.strip().split('::')
                 extension_name= extension_details[0].split('/')[-1]
@@ -179,8 +181,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
             print('Processing extension: {0}'.format(extension_name))
             extension_id = "{0}.extension.{1}".format(resource_type, extension_name).strip()
             print('The id of the extension is:',(extension_id) )
-            element_def = ElementDefinition.parse_obj(
-            {
+            element_def = {
                 "id" : extension_id,
                 "path" : resource_type+".extension",
                 "definition" : row["description"],
@@ -190,7 +191,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                 "max": extension_max,
                 "type": [{
                     "code": "Extension",
-                    "profile": [get_fhir_cfg().canonicalBase+'StructureDefinition/'+extension_name]
+                    "profile": [get_fhir_cfg().canonicalBase+'StructureDefinition/'+extension_name.strip()]
                 }],
                 "mapping": [
                     {
@@ -198,19 +199,19 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                         "map": idx
                     }
                 ]
-            })
+            }
             element_list.append(element_def)
         else:
             path = ''
             if pd.notna(row["map_path"]) and "::" in row["map_path"]:
-                profile_details = row["map_path"].split('::')
+                profile_details = row["map_path"].strip().split('::')
                 profile_min =  profile_details[1]
                 profile_max =  profile_details[2]
                 path = profile_details[0]
             elif pd.notna(row["map_path"]): 
                 profile_min = '0'
                 profile_max = '*'
-                path = row["map_path"]
+                path = row["map_path"].strip()
             if not path:
                 continue
             print('Processing extension: {0}'.format(path))
@@ -222,7 +223,8 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
             add_binding = False
             add_reference = False
             element_type = row['type']
-
+            id = path
+            path = path.split(':')[0]
             if element_type.startswith('select_one'):
                 element_valueset_name = element_type.split(' ',1)[-1].strip()
                 filtered_valueset = df_valueset.loc[(df_valueset['valueSet']==element_valueset_name) & (df_valueset['code']=='{{url}}')]
@@ -238,32 +240,30 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                 else:
                     element_type = 'CodeableConcept'
                     add_binding = True
-            element_def = ElementDefinition.parse_obj(
-            {
-                "id" : path.strip().replace(':','.'), 
-                "path" : path.strip().replace(':','.'),
+            element_def = {
+                "id" : id.replace(':','.').strip(), 
+                "path" : path.strip(),
                 "short" : row["label"],
                 "definition" : row["description"],
-                "min" : profile_min,
-                "max": profile_max,
+                "min" : profile_min.strip(),
+                "max": profile_max.strip(),
                 "mapping": [
                     {
                         "identity": idx.split('.')[0],
                         "map": idx
                     }
                 ]
-            })
-            ## check if there is a slicing in the path looking for semicolon (:)
-            if ':' in path:
-                element_def.sliceName = path.split(':')[1]
-            print("id is : ", path.strip() +'\n')
+            }
+            if ':' in id:
+                element_def['sliceName'] = id.split(':')[1].strip()
+            print("id is : ", path +'\n')
             element_def_type = ElementDefinitionType.construct()
             element_def_type.code = get_question_fhir_data_type(element_type)
             if add_reference : 
                 element_def_type.targetProfile = [get_fhir_cfg().canonicalBase+\
                     'StructureDefinition/'+row['definition']+'-'+name_of_resource]
             if (add_binding):
-                element_def.binding = {
+                element_def['binding'] = {
                     "extension": [{
                         "url" : "http://hl7.org/fhir/StructureDefinition/elementdefinition-bindingName", 
                         "valueString" : element_valueset_name
@@ -271,9 +271,71 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                     "strength":"extensible",
                     "valueSet" : get_fhir_cfg().canonicalBase+"/ValueSet/valueset-"+element_valueset_name
                 }
-            element_def.type = [element_def_type]
+            element_def['type'] = [element_def_type]
             element_list.append(element_def)
+    ## At this point, the list of elements should be complete. 
+    ## check if there is a slicing in the path of an element 
+    ## If there is slicing needed, we need to add the parent with a slicing object 
+    ## THis slicing object will have a descriminator with a type and value 
+    ## https://simplifier.net/guide/ProfilingAcademy/Slicing for value options
+    ## TODO allow for slicing rules? Right now defaults to closed 
+    ## TODO Support other types, right now defaulting to type
+    ## TODO Support other path, right now defaulting to resolve()
+    i = 0 
+    while (i < len(element_list)):
+        print('indexing through the list, right now at ', i)
+        current_element = element_list[i]
+        if 'sliceName' in current_element.keys():
+            parent_min = str(current_element['min']).strip()
+            parent_max = str(current_element['max']).strip()
+            parent_id = current_element['id'].rsplit('.',1)[0]
+            siblings_list = []
+            siblings, last_neighbour = check_slice_siblings(siblings_list, element_list, i+1)
+            ## checking for the smallest minimum and largest maximum for the parent slicing
+            for sibling in siblings:
+                if sibling['min'] == '*'  or parent_min=='*':
+                    parent_min = '*'
+                elif int(sibling['min'])<int(parent_min):
+                    parent_min= sibling['min']
+                elif sibling['max'] == '*'  or parent_max=='*':
+                    parent_max = '*'
+                elif int(sibling['max'])> int(parent_max):
+                    parent_max = sibling['max']
+            parent_element_def = {
+                    "id" : parent_id,
+                    "path" : parent_id,
+                    "slicing" : {
+                        "discriminator" : [{
+                            "type" : "type",
+                            "path" : "resolve()"
+                        }],
+                        "rules" : "closed"
+                    }, 
+                    "min": parent_min,
+                    "max": parent_max
+            }
+            element_list.append(parent_element_def)
+            i+=1
+        else: 
+            i+=1
     differential = StructureDefinitionDifferential.construct()
+    element_list = remove_duplicates(element_list, 'id')
+    element_list = [ElementDefinition.parse_obj(el) for el in element_list]
     differential.element = element_list
     profile.differential = differential
     return profile
+
+def check_slice_siblings(siblings_list, element_list, i):
+    if i == len(element_list):
+        return siblings_list, i
+    current_element = element_list[i]
+    if not 'sliceName' in current_element.keys():
+        return siblings_list, i
+    elif 'sliceName' in current_element.keys(): 
+        siblings_list.append(current_element)
+        return check_slice_siblings(siblings_list, element_list, i+1)
+    elif i == len(element_list):
+        return siblings_list, i
+
+def remove_duplicates(elements, unique_attribute):
+  return list({item[unique_attribute]:item for item in elements}.values())

@@ -41,7 +41,7 @@ def generate_plan_defnition_lib(planDefinition):
     library.name = planDefinition.name
     print("Generating library ", library.name, ".......")
     library.version = " " + get_fhir_cfg().version
-    library.url = get_fhir_cfg().canonicalBase + '/Library/' + id 
+    library.url = get_fhir_cfg().canonicalBase + 'Library/' + id 
     library.title = planDefinition.title
     library.description = planDefinition.description
     attachment = Attachment.construct()

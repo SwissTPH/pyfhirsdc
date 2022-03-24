@@ -44,7 +44,7 @@ def getIdentifierFirstRep(planDef):
 def getActionFirstRep(planDef):
     if (not planDef.action):
         action= PlanDefinitionAction.construct()
-        planDef.action = action
+        planDef.action = [action]
     return planDef.action[0]
 
 def actionsEqual(currentAction, newAction):

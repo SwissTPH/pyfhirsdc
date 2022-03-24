@@ -104,7 +104,11 @@ def get_question_fhir_type(question):
     if pd.notna(question['type']):
         type_arr = question['type'].split(" ")
         fhir_type = type_arr[0]
-    if fhir_type in ("select_one", "select_multiple"):
+    if fhir_type == 'phone':
+        fhir_type = 'string'
+    elif fhir_type == 'mapping':
+        fhir_type = 'reference'
+    elif fhir_type in ("select_one", "select_multiple"):
         fhir_type = "choice"
     elif fhir_type == "checkbox":
         fhir_type = "boolean"

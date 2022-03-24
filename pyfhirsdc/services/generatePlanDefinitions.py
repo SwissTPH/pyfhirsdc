@@ -49,7 +49,7 @@ def generate_plandefinition( name,df_actions):
     planDefinitionId = name.replace('.','')
     pd_df.title = planDefinitionId
     identifier = Identifier.construct()
-    identifier.use = "oficial"
+    identifier.use = "official"
     identifier.value = planDefinitionId
     pd_df.identifier=[identifier]
     pd_df.id= planDefinitionId
