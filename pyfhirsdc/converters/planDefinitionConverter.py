@@ -126,12 +126,11 @@ expressionNameCounterMap = {}
 ## Goes through a row and maps it to FHIR action 
 def processAction(row):
     # Check if any of the rows has empty cells in the relevant columns, stop if so
-    if (not row["inputs"] or not row["description"] or
-     not row["annotation"] ):
+    if (not row["inputs"] or not row["description"]):
         return None
     input= row["inputs"]
     action_col = row["description"]
-    annotation_col = row["annotation"]
+    annotation_col = row["annotation"] if row["annotation"] else ""
     reference_col = row["reference"]
     action = PlanDefinitionAction.construct()
     action.id=row["id"]
