@@ -1,6 +1,6 @@
 {
     "processor":{
-        "inputFile":"switchdrive/DHU/Projects/WHO DAK/merged/xls_form.ods",
+        "inputFile":"PLACEHOLDER",
         "outputPath":"output/",
         "excudedWorksheets":[
             "q.new-encounter"
@@ -36,7 +36,7 @@
             "outputPath":"resources/extensions"
         },
         "Profiles": {
-            "outputPath":"resources/profiles"
+            "outputPath":"profiles"
         },
         "Questionnaire":{
             "outputPath":"resources/questionnaire",
@@ -80,7 +80,7 @@
             "default":{
                 "resourceType": "CodeSystem",
                 "id": "emc-custom-codes-codes",
-                "url": "/CodeSystem/emc-custom-codes-codes",
+                "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emc-custom-codes-codes",
                 "name": "emc-custom-codes_codes",
                 "title": "Extended Codes CodeSystem codes",
                 "status": "draft",
