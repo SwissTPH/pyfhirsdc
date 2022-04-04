@@ -112,6 +112,8 @@ def get_question_fhir_type(question):
         fhir_type = "choice"
     elif fhir_type == "checkbox":
         fhir_type = "boolean"
+    elif fhir_type == "number":
+        fhir_type = "integer"
     return fhir_type
 ## maps the type of the question e.g. checkbox, to its respective data
 ## type that FHIR understands e.g. boolean
