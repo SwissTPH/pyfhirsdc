@@ -4,6 +4,7 @@ from fhir.resources.fhirtypes import  ExpressionType, QuantityType
 from fhir.resources.coding import Coding
 from fhir.resources.fhirtypes import Canonical
 from distutils.util import strtobool
+import re
 def get_dropdown_ext():
  return Extension(
     url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -87,6 +88,16 @@ def get_checkbox_ext():
     )
 
 def get_enable_when_expression_ext(expression, desc = None ):
+    ## Regex to find ${} pattern and extract the content.
+    ## TODO discuss how expression should be built 
+    enable_expression = re.split("^\${([^}]+)}(.*)", expression)
+    if len(enable_expression)>1:
+        linkid = enable_expression[1]
+        linkid_attr = enable_expression[2]
+        expression = '%/resource.repeat(item).where(linkId={0}){1}'.format(linkid,linkid_attr)
+    else: expression = '%/resource.repeat(item).where(linkId={0})'.format(enable_expression[0])
+    
+    
     return Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
         valueExpression = ExpressionType(
