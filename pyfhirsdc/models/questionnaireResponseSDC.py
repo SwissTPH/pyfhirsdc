@@ -31,15 +31,15 @@ class QuestionnaireResponseItemSDCType(fhirtypes.AbstractType):
         yield questionnaireresponseitemsdc_validator
 
 class QuestionnaireResponseSDC(QuestionnaireResponse):
-    questionnaireresponse_signature: fhirtypes.SignatureType = Field(
-        None,
-        alias="questionnaireresponse-signature",
-        title="A signature attesting to the content",
-        description="Represents a wet or electronic signature for either the form overall \
-        or for the question or item it's associated with.",
-        # if property is element of this resource.
-        element_property=True,
-    )
+    #questionnaireresponse_signature: fhirtypes.SignatureType = Field(
+    #    None,
+    #    alias="questionnaireresponse-signature",
+    #    title="A signature attesting to the content",
+    #    description="Represents a wet or electronic signature for either the form overall \
+    #    or for the question or item it's associated with.",
+    #    # if property is element of this resource.
+    #    element_property=True,
+    #)
     item: typing.List[QuestionnaireResponseItemSDCType] = Field(
         None,
         alias="item",
@@ -113,22 +113,22 @@ class QuestionnaireResponseSDC(QuestionnaireResponse):
     def elements_sequence(cls):
         list = QuestionnaireResponse.elements_sequence()
         
-        list.append("questionnaireresponse_signature")
+        #list.append("questionnaireresponse_signature")
         return list
 
   
 
 class QuestionnaireResponseItemSDC(QuestionnaireResponseItem):
     resource_type = Field("QuestionnaireResponseItemSDC", const=True)
-    questionnaireresponse_signature: fhirtypes.SignatureType = Field(
-        None,
-        alias="questionnaireresponse-signature",
-        title="A signature attesting to the content",
-        description="Represents a wet or electronic signature for either the form overall \
-        or for the question or item it's associated with.",
-        # if property is element of this resource.
-        element_property=True,
-    )
+    #questionnaireresponse_signature: fhirtypes.SignatureType = Field(
+    #    None,
+    #    alias="questionnaireresponse-signature",
+    #    title="A signature attesting to the content",
+    #    description="Represents a wet or electronic signature for either the form overall \
+    #    or for the question or item it's associated with.",
+    #    # if property is element of this resource.
+    #    element_property=True,
+    #)
     item: typing.List[QuestionnaireResponseItemSDCType] = Field(
         None,
         alias="item",
@@ -144,7 +144,7 @@ class QuestionnaireResponseItemSDC(QuestionnaireResponseItem):
     def elements_sequence(cls):
         list = QuestionnaireResponseItem.elements_sequence()
         
-        list.append("questionnaireresponse_signature")
+        #list.append("questionnaireresponse_signature")
         return list
 
 
