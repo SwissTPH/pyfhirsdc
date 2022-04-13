@@ -17,28 +17,24 @@ import pandas as pd
 
 def generate_profiles(dfs_questionnaire, df_profile, df_valuesets):
     
-    all_dataframes = []
-    for name, questions in dfs_questionnaire.items():
-        if not questions["id"].isnull().values.all() and 'map_extension' in questions.columns:
-            ## append all the questionnaires in a list
-            all_dataframes.append(questions)
-            generate_extension(name ,questions, df_profile)
+    all_dataframes = pd.concat(dfs_questionnaire).dropna(axis=0, subset=['map_extension'])
+    
+    generate_extension(all_dataframes, df_profile)
     ## Concat all the dataframes together so that we can create the profiles based on it 
     ## instead of going through sheets one by one
-    all_questionnaires = pd.concat(all_dataframes, ignore_index=True)
-    generate_profile(all_questionnaires, df_profile, df_valuesets)
-def generate_extension(name, df_questions, df_profile):
-    print('processing profile {0}'.format(name))
-    if name == 'EmCare.B18-21.Sympto.2m.m':
-        return
-    fullpath_extensions = get_resource_path("Extensions", name)
+    #all_questionnaires = pd.concat(all_dataframes, ignore_index=True)
+    generate_profile(all_dataframes, df_profile, df_valuesets)
+    
+def generate_extension(df_questions, df_profile):
+    print('processing extenstions ')
+
     # clean the data frame
     df_questions = df_questions.dropna(axis=0, subset=['id']).set_index('id')
     # Create the structure definition for the extensions 
     extensions, names = convert_df_to_extension_profiles(df_questions)
     # write extensions to file
     for i in range (len(names)):
-        fullpath_extensions = get_resource_path("Extensions", name+'-'+names[i])
+        fullpath_extensions = get_resource_path("Extensions", names[i])
         print("extension path" + fullpath_extensions)
         write_resource(fullpath_extensions, extensions[i], get_processor_cfg().encoding)
     return 
