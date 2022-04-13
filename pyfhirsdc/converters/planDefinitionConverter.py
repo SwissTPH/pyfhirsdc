@@ -12,6 +12,7 @@ from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
 from fhir.resources.triggerdefinition import TriggerDefinition
 from datetime import datetime
+from datetime import timezone
 from fhir.resources.fhirtypes import Canonical
 
 
@@ -23,15 +24,21 @@ def mergeActions(currentAction, newAction):
     if not pd.notnull(currentCondition):
         currentAction.condition += newCondition
     elif pd.notnull(newCondition):
-        currentCondition.expression.description = "({0})\n  OR ({1})".format(currentCondition.expression.description, newCondition.expression.description)
+        expression = Expression.construct()
+        expression.language = "text/cql-expression"
+        expression.description = "({0})\n  OR ({1})".format(currentCondition.expression.description, newCondition.expression.description)
+        currentCondition.expression = expression
 ## function definition from 
 # https://hapifhir.io/hapi-fhir//apidocs/hapi-fhir-structures-r4/src-html/org/hl7/fhir/r4/model/PlanDefinition.html#line.4284
 ## missing in the python library
 
 
 def getConditionFirstRep(action):
-    if (not action.condition):
+    if (not pd.notna(action.condition)):
         condition = PlanDefinitionActionCondition.construct()
+        expression = Expression.construct()
+        #condition.kind = 'applicability'
+        #condition.expression = expression
         action.condition = [condition]
     return action.condition[0]
 
@@ -42,9 +49,9 @@ def getIdentifierFirstRep(planDef):
     return planDef.identifier[0]
 
 def getActionFirstRep(planDef):
-    if (not planDef.action):
+    if (not planDef.action and pd.notna(planDef.action) and pd.notnull(planDef.action)):
         action= PlanDefinitionAction.construct()
-        planDef.action = action
+        planDef.action = [action]
     return planDef.action[0]
 
 def actionsEqual(currentAction, newAction):
@@ -93,14 +100,19 @@ def subActionsEqual(subAction1,subAction2):
     return True
 
 def write_action_condition(action):
-    condition = getConditionFirstRep(action)
-    if (not pd.isnull(condition.expression.expression)):
-        condition.expression.expression = "Should {0}".format(action.description.replace("\"", "\\\"") \
+    condition = getConditionFirstRep(action.action[0])
+    if (pd.isna(condition.expression) or condition.expression ==None):
+        expression = Expression.construct()
+        expression.language =  "text/cql-expression"
+        expression.expression = "Should {0}".format(action.description.replace("\"", "\\\"") \
             if action.description else "perform action")
-    
+        condition.kind = 'applicability'
+        condition.expression = expression
+        
+    print(condition.expression.description)
     ## Output false, manual process to convert the pseudo-code to CQL
-    return "/*\n "+getConditionFirstRep(action).expression.description+"\n */\n "+\
-        "define \"{0}\":\n ".format(getConditionFirstRep(action).expression.expression)+ \
+    return "/*\n "+condition.expression.description+"\n */\n "+\
+        "define \"{0}\":\n ".format(condition.expression.expression)+ \
             "  false" + "\n\n "
 
 
@@ -126,8 +138,8 @@ expressionNameCounterMap = {}
 ## Goes through a row and maps it to FHIR action 
 def processAction(row):
     # Check if any of the rows has empty cells in the relevant columns, stop if so
-    if (not row["inputs"] or not row["description"]):
-        return None
+    if (not pd.notna(row["inputs"]) or not pd.notna(row["description"])):
+        return
     input= row["inputs"]
     action_col = row["description"]
     annotation_col = row["annotation"] if row["annotation"] else ""
@@ -139,7 +151,7 @@ def processAction(row):
 
     if (input==""):
         ## No condition, no action
-        return None
+        return 
     if pd.notna(raw_trigger):
         trigger = TriggerDefinition.construct()
         raw_trigger= raw_trigger.split(' ', 1)
@@ -156,12 +168,15 @@ def processAction(row):
     applicability_condition = ""
     counter = 1
     #TODO change the cql expresssions 
+    ## The Conditions are being extracted by splitting 
+    ## the expression using the = and taking the first part
+    ## of it
     for condition in conditionList:
         if "=" in condition:
-            condition = condition.split("=")[1].replace("\\", "" )
+            condition = condition.split("=")[0].replace("\\", "").strip()
             newCondition = "Patient.hasCondition("+condition+")"
         elif "≠" in condition:
-            condition = condition.split("≠")[1]
+            condition = condition.split("≠")[0].strip()
             newCondition = "not Patient.hasCondition("+condition+")"
         applicability_condition += newCondition
         if len(conditionList)!=counter:
@@ -240,7 +255,7 @@ def processDecisionTable(planDefinition, df):
      ## fetch configuration from the json file ##
     planDefinitionTypeSystem= get_fhir_cfg().PlanDefinition.planDefinitionType.CodeSystem
     planDefinitionTypeCode = get_fhir_cfg().PlanDefinition.planDefinitionType.Code
-    planDefinition.date = datetime.now()
+    planDefinition.date = datetime.now(timezone.utc).isoformat('T', 'seconds')
     planDefinition.experimental = False
     planDefinition.status = "active"
 
@@ -268,9 +283,10 @@ def get_actions(parentActionId, df, plandef_action):
     ## fecth the parent row
     mainActionRow = (df[df['id'] == parentActionId].to_dict('records'))
     if plandef_action.action ==None : plandef_action.action = []
-    if pd.notna(mainActionRow):
+    if pd.notna(mainActionRow) and pd.notnull(mainActionRow):
         mainAction = processAction(mainActionRow[0])
-        print("Processing main action: {0} and its children .........".format(mainAction.id))
+        print("main Action Row is ", mainAction)
+
         processedActions.append(mainAction)
         plandef_action.action.append(mainAction)
     #planDefinition.action = get_actions(parentActionId, df)

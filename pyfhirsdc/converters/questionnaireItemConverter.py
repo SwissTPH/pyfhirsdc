@@ -9,40 +9,47 @@
 import json
 import numpy
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
+from pyfhirsdc.models.questionnaireResponseSDC import QuestionnaireResponseItemSDC, QuestionnaireResponseSDC
 from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_initial_expression_ext
 from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
 from pyfhirsdc.serializers.json import read_resource
 from pyfhirsdc.converters.utils import get_custom_codesystem_url, get_resource_url
 import pandas as pd
 
-def convert_df_to_questionitems(questionnaire, df_questions, df_value_set,  strategy = 'overwrite'):
+def convert_df_to_questionitems(questionnaire, questionnaire_response,df_questions, df_value_set, strategy = 'overwrite'):
     # create a dict to iterate
     dict_questions = df_questions.to_dict('index')
     # Use first part of the id (before DE) as an ID
     # questionnaire.id = list(dict_questions.keys())[0].split(".DE")[0]
     # delete all item in case of overwrite strategy
-   
-    if strategy == "overwrite" or questionnaire.item is None:
+    
+    if strategy == "overwrite" or questionnaire.item or questionnaire_response.item is None:
         questionnaire.item =[]
+        questionnaire_response.item = []
     # recreate item if draft 
     ressource = questionnaire
-
+    response = questionnaire_response
     parent = []
+    parent_response =[]
     for id, question in dict_questions.items():
         existing_item = next((ressource.item.pop(index) for index in range(len(ressource.item)) if ressource.item[index].linkId == id), None)
-         # manage group
+        existing_item_response = next((response.item.pop(index) for index in range(len(response.item)) if response.item[index].linkId == id), None)
+        # manage group
         type, detail_1, detail_2 = get_type_details(question)
         if type is None:
             print("${0} is not a valid type, see question ${1}".format(question['type'], id))       
         elif type == "skipped":
             pass
         elif type == "group" and detail_1 == "start":
-            item = add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy)
+            item, item_response = add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy)
+            item_response, item_response = add_questionnaire_response_item_line(existing_item, id, question, df_value_set, strategy)
             if item is not None:
                 # we save the the questionnaire 
                 parent.append(ressource)
+                parent_response.append(ressource)
                 # we save the question as a new ressouce
                 ressource = item
+                response = item 
                 if ressource.item is None:
                     ressource.item =[]
         elif type == "group" and detail_1 == "end":
@@ -51,20 +58,28 @@ def convert_df_to_questionitems(questionnaire, df_questions, df_value_set,  stra
             else:
                 # we load the the group question
                 temp_ressource = parent.pop()
+                temp_ressource_response = parent_response.pop()
                 temp_ressource.item.append(ressource)
+                temp_ressource_response.item.append(response)
                 ressource = temp_ressource
+                response = temp_ressource_response
 
         else:
             item = add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy)
+            item_response = add_questionnaire_response_item_line(existing_item, id, question, df_value_set, strategy)
             if item is not None:
                 ressource.item.append(item)
+                response.item.append(item_response)
     # close all open groups
     while len(parent) > 0:
         temp_ressource = parent.pop()
+        temp_ressource_response = parent_response.pop()
         print("group id ${0} is not close and the tool reached the end of the quesitonnaire, closing the group".format( ressource.id))
         temp_ressource.item.append(ressource)
         ressource = temp_ressource
-    return ressource
+        temp_ressource_response.item.append(response)
+        response = temp_ressource_response
+    return ressource, response
 
 def add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy):
     # pop the item if it exists
@@ -81,6 +96,19 @@ def add_questionnaire_item_line(existing_item, id, question, df_value_set, strat
         return existing_item
     return None
 
+def add_questionnaire_response_item_line(existing_item, id, question, df_value_set, strategy):
+    # pop the item if it exists
+    
+    # create or update the item based on the strategy
+    if existing_item is None\
+    or strategy in ( "overwriteDraft", "overwriteDraftAddOnly" ):
+        new_question = process_quesitonnaire_response_line(id, question, df_value_set,  existing_item )
+        if new_question is not None:
+            return new_question
+    elif existing_item is not None:
+        #put back the item if no update
+        return existing_item
+    return None
 
 def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
     type = get_question_fhir_type(question)
@@ -97,6 +125,17 @@ def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
     
     return new_question
 
+def process_quesitonnaire_response_line(id, question, df_value_set,  existing_item):
+    type = get_question_fhir_type(question)
+    new_questionResponse = QuestionnaireResponseItemSDC(
+                linkId = id,
+                extension = get_question_extension(question, df_value_set ),
+                definition = get_question_definition(question)
+            )
+    if question['description'] is not numpy.nan:
+        new_questionResponse.text = question['description']
+    
+    return new_questionResponse
 def get_question_fhir_type(question):
     # maps the pyfhirsdc type to real fhir type
     # mapping type are not in questionnaire
@@ -104,10 +143,16 @@ def get_question_fhir_type(question):
     if pd.notna(question['type']):
         type_arr = question['type'].split(" ")
         fhir_type = type_arr[0]
-    if fhir_type in ("select_one", "select_multiple"):
+    if fhir_type == 'phone':
+        fhir_type = 'string'
+    elif fhir_type == 'mapping':
+        fhir_type = 'reference'
+    elif fhir_type in ("select_one", "select_multiple"):
         fhir_type = "choice"
     elif fhir_type == "checkbox":
         fhir_type = "boolean"
+    elif fhir_type == "number":
+        fhir_type = "integer"
     return fhir_type
 ## maps the type of the question e.g. checkbox, to its respective data
 ## type that FHIR understands e.g. boolean
@@ -217,4 +262,15 @@ def init_questionnaire(filepath, id):
         questionnaire.id=id
 
     return questionnaire
-    
+
+def init_questionnaire_response(questionnaire):
+    questionnaire_response_json = {}
+    questionnaire_response_json["resourceType"] = "QuestionnaireResponse"
+    questionnaire_response_json["id"] = questionnaire.id
+    questionnaire_response_json["questionnaire"] = questionnaire.url
+    questionnaire_response_json["status"] = "completed"
+    #TODO should we have a reference to the subject here with mapping language?
+    #TODO same for encounter, source and author
+    #questionnaire_response_json.subject = ""
+    questionnaire_response = QuestionnaireResponseSDC.parse_raw(json.dumps(questionnaire_response_json))    
+    return questionnaire_response
