@@ -1,0 +1,49 @@
+@startuml
+
+' Actors
+'skinparam actorStyle awesome
+'skinparam controlStyle awesome
+
+actor HW as "heath worker" 
+'interface UI as "User interface"
+HW -> UI : enter  patient ID
+
+control L as "Engine"
+UI -> L : search for patient
+database F as "Fhir"
+
+L -> F : execute query
+F -> L : Send patient resource
+L -> F : Fetch eligible PlanDefinition\n Plan definition type workflow-definition?
+F -> L : reply with bundle of PlanDefinition "Encounter type"
+L -> UI : filter PlanDefinition "Encounter type"
+UI -> HW : propose format list of "Encounter type"
+HW -> UI: select "Encounter type"
+UI -> L: select "Encounter type"
+L->  L: $Apply "Encounter type"
+F -> L: bundle of activities
+L -> UI : present 1st activity \n"informationCollection"
+UI -> HW: show Questionnaire
+HW -> UI: Fill questionnaire
+UI -> L : send QuestionnaireResponse
+alt QuestionnaireResponseEvent 
+L->L: $apply planDefinitions for QuestionnaireResponseEvent
+L->UI: send QuestionnaireResponseEvent \n&  rest of "Encounter type" activities
+else StructureMap QuestionnaireResponse
+L->L: apply structureMap
+L->F: create/update resources (including task)
+L->L: Update the $apply "Encounter type" ?\n  or continue the other actions/activity
+L->UI: send updated activities + task
+end
+UI -> HW: present next activity (collectInformation, task .... )
+
+
+
+
+
+
+
+
+
+
+@enduml
