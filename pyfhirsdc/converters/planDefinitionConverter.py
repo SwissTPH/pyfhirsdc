@@ -49,7 +49,7 @@ def getIdentifierFirstRep(planDef):
     return planDef.identifier[0]
 
 def getActionFirstRep(planDef):
-    if (not planDef.action):
+    if (not planDef.action and pd.notna(planDef.action) and pd.notnull(planDef.action)):
         action= PlanDefinitionAction.construct()
         planDef.action = [action]
     return planDef.action[0]
@@ -168,12 +168,15 @@ def processAction(row):
     applicability_condition = ""
     counter = 1
     #TODO change the cql expresssions 
+    ## The Conditions are being extracted by splitting 
+    ## the expression using the = and taking the first part
+    ## of it
     for condition in conditionList:
         if "=" in condition:
-            condition = condition.split("=")[1].replace("\\", "" )
+            condition = condition.split("=")[0].replace("\\", "").strip()
             newCondition = "Patient.hasCondition("+condition+")"
         elif "≠" in condition:
-            condition = condition.split("≠")[1]
+            condition = condition.split("≠")[0].strip()
             newCondition = "not Patient.hasCondition("+condition+")"
         applicability_condition += newCondition
         if len(conditionList)!=counter:
@@ -280,7 +283,7 @@ def get_actions(parentActionId, df, plandef_action):
     ## fecth the parent row
     mainActionRow = (df[df['id'] == parentActionId].to_dict('records'))
     if plandef_action.action ==None : plandef_action.action = []
-    if pd.notna(mainActionRow):
+    if pd.notna(mainActionRow) and pd.notnull(mainActionRow):
         mainAction = processAction(mainActionRow[0])
         print("main Action Row is ", mainAction)
 
