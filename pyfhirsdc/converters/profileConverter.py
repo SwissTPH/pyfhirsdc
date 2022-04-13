@@ -172,12 +172,12 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
             if "::" in extension:
                 extension_details =extension.strip().split('::')
                 extension_name= extension_details[0].split('/')[-1]
-                extension_min =  extension_details[1]
-                extension_max =  extension_details[2]
+                extension_min =  extension_details[1].strip()
+                extension_max =  extension_details[2].strip()
             else: 
                 extension_min = '0'
                 extension_max = '*'
-                extension_name = (extension.split('/')[-1])
+                extension_name = (extension.split('/')[-1]).strip()
             print('Processing extension: {0}'.format(extension_name))
             extension_id = "{0}.extension.{1}".format(resource_type, extension_name).strip()
             print('The id of the extension is:',(extension_id) )
@@ -205,9 +205,9 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
             path = ''
             if pd.notna(row["map_path"]) and "::" in row["map_path"]:
                 profile_details = row["map_path"].strip().split('::')
-                profile_min =  profile_details[1]
-                profile_max =  profile_details[2]
-                path = profile_details[0]
+                profile_min =  profile_details[1].strip()
+                profile_max =  profile_details[2].strip()
+                path = profile_details[0].strip()
             elif pd.notna(row["map_path"]): 
                 profile_min = '0'
                 profile_max = '*'
@@ -245,8 +245,8 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                 "path" : path.strip(),
                 "short" : row["label"],
                 "definition" : row["description"],
-                "min" : profile_min.strip(),
-                "max": profile_max.strip(),
+                "min" : profile_min,
+                "max": profile_max,
                 "mapping": [
                     {
                         "identity": idx.split('.')[0],
@@ -285,9 +285,10 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
     while (i < len(element_list)):
         print('indexing through the list, right now at ', i)
         current_element = element_list[i]
+        
         if 'sliceName' in current_element.keys():
-            parent_min = str(current_element['min']).strip()
-            parent_max = str(current_element['max']).strip()
+            parent_min = str(current_element['min'])
+            parent_max = str(current_element['max'])
             parent_id = current_element['id'].rsplit('.',1)[0]
             siblings_list = []
             siblings, last_neighbour = check_slice_siblings(siblings_list, element_list, i+1)
