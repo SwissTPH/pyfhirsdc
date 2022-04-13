@@ -87,23 +87,18 @@ def get_checkbox_ext():
             text ="Check-box")
     )
 
+def convert_reference_to_firepath(expression):
+    return re.sub(pattern = r'\$\{([^}]+)\}', repl = r"%/resource.repeat(item).where(linkId='\1').answer.value", string = expression )
+
+
 def get_enable_when_expression_ext(expression, desc = None ):
-    ## Regex to find ${} pattern and extract the content.
-    ## TODO discuss how expression should be built 
-    enable_expression = re.split("^\${([^}]+)}(.*)", expression)
-    if len(enable_expression)>1:
-        linkid = enable_expression[1]
-        linkid_attr = enable_expression[2]
-        expression = '%/resource.repeat(item).where(linkId={0}){1}'.format(linkid,linkid_attr)
-    else: expression = '%/resource.repeat(item).where(linkId={0})'.format(enable_expression[0])
-    
-    
+  
     return Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/fhirpath",
-                expression = expression))
+                expression = convert_reference_to_firepath(expression)))
 
 def get_calculated_expression_ext(expression, desc = None ):
     return Extension(
@@ -111,7 +106,7 @@ def get_calculated_expression_ext(expression, desc = None ):
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/fhirpath",
-                expression = expression))
+                expression = convert_reference_to_firepath(expression)))
 
 def get_initial_expression_ext(expression, desc = None ):
     return Extension(
@@ -119,4 +114,4 @@ def get_initial_expression_ext(expression, desc = None ):
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/fhirpath",
-                expression = expression))
+                expression = convert_reference_to_firepath(expression)))
