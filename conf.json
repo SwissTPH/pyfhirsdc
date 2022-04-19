@@ -68,6 +68,33 @@
             }
             
         },
+        "QuestionnaireResponse":{
+            "outputPath":"resources/questionnaireresponse",
+            "default":{
+                "status":"active",
+                "meta": {
+                    "profile":[
+                        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaireresponse"
+                    ]
+                },
+                "extension": [{
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "shareable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "computable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "publishable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeRepresentationLevel",
+                    "valueCode": "structured"
+                  }],
+                  "experimental": false,
+                  "resourceType": "QuestionnaireResponse"
+            }
+            
+        },
         "Library":{
             "status":"active",
             "outputPath":"resources/library/"
