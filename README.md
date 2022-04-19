@@ -5,6 +5,15 @@ The goal of the project is to have tool like pyxform but for fhir structure data
 ## Principles of CPG/SDC encounter
 
 
+## main.py option 
+
+    -c / --conf config_file_path
+    -o to generate fhir ressoruces
+    -h / --help to generate this message
+    -b to bundle the fhir ressource int the output path
+    -l to build the library with cql in base64
+    --anthro to generate the antro code system from tsv files (files can be found here https://github.com/WorldHealthOrganization/anthro/tree/master/data-raw/growthstandards)
+
 
 ## Input files
 maturitiy:0
@@ -268,3 +277,5 @@ this tool was started to answer WHO EmCare project needs
  
 pyxform project
 cqf-tooling project
+
+
