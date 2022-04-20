@@ -182,11 +182,11 @@ def get_question_extension(question, df_value_set ):
         extensions.append(get_dropdown_ext())
     elif "select_" in type and  isinstance(question["display"], str) and question["display"].lower() == "candidateExpression":
         extensions = get_question_choice_column(extensions, detail_1, df_value_set)
-    if "enableWhenExpression" in question and question["enableWhenExpression"] is not numpy.nan:
+    if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]):
         extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"]))
-    if "calculatedExpression" in question and question["enableWhenExpression"] is not numpy.nan:
+    if "calculatedExpression" in question and pd.notna(question["enableWhenExpression"]):
         extensions.append(get_calculated_expression_ext(question["enableWhenExpression"]))
-    if "initialExpression" in question and question["initialExpression"] is not numpy.nan:
+    if "initialExpression" in question and pd.notna(question["initialExpression"]):
         extensions.append(get_initial_expression_ext(question["initialExpression"]))
     return extensions
 
