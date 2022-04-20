@@ -1,6 +1,6 @@
 {
     "processor":{
-        "inputFile":"PLACEHOLDER",
+        "anthroPath":"l2/anthro",
         "outputPath":"output/",
         "excudedWorksheets":[
             "q.new-encounter"
