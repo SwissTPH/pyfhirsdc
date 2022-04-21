@@ -2,6 +2,15 @@ import sys, getopt
 from pyfhirsdc.services.generateCodeSystem import generate_anthro_codesystems
 from pyfhirsdc.services.processInputFile import process_input_file
 
+def print_help():
+    print('-c / --conf config_file_path')
+    print('-o to generate fhir ressoruces')
+    print('-h / --help to generate this message')
+    print('-b to bundle the fhir ressource int the output path')
+    print('-l to build the library with cql in base64')
+    print('--anthro to generate the antro code system from tsv files (files can be found here https://github.com/WorldHealthOrganization/anthro/tree/master/data-raw/growthstandards)')
+    
+
 if __name__ == "__main__":
     bundle = False
     output = False
@@ -38,12 +47,5 @@ if __name__ == "__main__":
         # bundle everything
         pass
 
-def print_help():
-    print('-c / --conf config_file_path')
-    print('-o to generate fhir ressoruces')
-    print('-h / --help to generate this message')
-    print('-b to bundle the fhir ressource int the output path')
-    print('-l to build the library with cql in base64')
-    print('--anthro to generate the antro code system from tsv files (files can be found here https://github.com/WorldHealthOrganization/anthro/tree/master/data-raw/growthstandards)')
-    
+
     

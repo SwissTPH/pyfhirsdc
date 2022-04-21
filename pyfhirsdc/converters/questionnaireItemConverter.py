@@ -120,7 +120,7 @@ def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
                 design_note = "status::draft",
                 definition = get_question_definition(question)
             )
-    if question['description'] is not numpy.nan:
+    if pd.notna(question['description']):
         new_question.text = question['description']
     
     return new_question
@@ -132,7 +132,7 @@ def process_quesitonnaire_response_line(id, question, df_value_set,  existing_it
                 extension = get_question_extension(question, df_value_set ),
                 definition = get_question_definition(question)
             )
-    if question['description'] is not numpy.nan:
+    if pd.notna(question['description']):
         new_questionResponse.text = question['description']
     
     return new_questionResponse
@@ -228,7 +228,7 @@ def get_question_choice_column(extensions, candidate_expression, df_value_set):
 
 def get_question_definition(question):
     # if definition == scope then build def based on canonical base, if not take the def from the xls if any
-    if  question['display'] is not None and question['definition'] is not numpy.nan:
+    if  question['display'] is not None and pd.notna(question['definition']):
         if str(question['definition']).lower() == get_processor_cfg().scope.lower():
             return get_custom_codesystem_url()
         elif len(str(question['definition']))>5:  

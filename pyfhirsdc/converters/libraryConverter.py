@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.serializers.utils import write_resource
-from pyfhirsdc.converters.planDefinitionConverter import getIdentifierFirstRep,  write_action_condition, getActionFirstRep
+from pyfhirsdc.converters.planDefinitionConverter import getIdentifierFirstRep,  write_action_condition
 from fhir.resources.library import Library
 from fhir.resources.attachment import Attachment
 from fhir.resources.fhirtypes import Canonical
@@ -53,11 +53,10 @@ def generate_plan_defnition_lib(planDefinition):
     cql = {}
     cql['header'] = writeLibraryHeader(library, get_processor_cfg().scope)
     i = 0
-    list_actions = getActionFirstRep(planDefinition).action
+    list_actions = planDefinition.action
     if list_actions:
         for action in list_actions:
-            if (action.condition):
-                
+            if (action and action.condition):       
                 action_cql = write_action_condition(action)
                 if action_cql is not None:
                     cql[i] = action_cql

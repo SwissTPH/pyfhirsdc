@@ -54,16 +54,18 @@ def generate_anthro_codesystems(conf):
                 f = os.path.join(anthroPath, filename)
                 name = filename.split(".")[0]
                 df = read_tsv_file(f)
-                generate_anthro_codesystem(get_resource_name("CodeSystem", name),df)
+                generate_anthro_codesystem(name,df)
 
 
 def  generate_anthro_codesystem(name,df):
     resource_type = "CodeSystem"
+    ressource_name = get_resource_name("CodeSystem", name)
     code_system =  CodeSystem(
         status = "active",
         content = "complete",
-        url = get_resource_url(resource_type,name),
-        name = name,
+        url = get_resource_url(resource_type,ressource_name),
+        name = ressource_name,
+        id = name,
         concept = generate_anthro_valueset_concepts(df)
     )
     filepath = get_resource_path(resource_type, name)
