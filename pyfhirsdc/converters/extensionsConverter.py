@@ -88,7 +88,7 @@ def get_checkbox_ext():
     )
 
 def convert_reference_to_firepath(expression):
-    return re.sub(pattern = r'\$\{([^}]+)\}', repl = r"%/resource.repeat(item).where(linkId='\1').answer.value", string = expression )
+    return re.sub(pattern = r'\$\{([^}]+)\}', repl = r"%resource.repeat(item).where(linkId='\1').answer.value", string = expression )
 
 
 def get_enable_when_expression_ext(expression, desc = None ):

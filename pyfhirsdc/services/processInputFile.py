@@ -21,10 +21,10 @@ def process_input_file(conf):
     else:
         input_file = read_input_file(get_processor_cfg().inputFile)
         if input_file is not None:
-            dfs_questionnaire, dfs_decision_table,\
-                df_value_set, df_care_plan,\
-                df_profile, df_extension, df_cql = parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
+            dfs_questionnaire, dfs_decision_table, df_value_set, df_profile,\
+                 df_extension, df_cql = parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
             input_file.close()
+            print(len(dfs_questionnaire))
             # generate questionnaire
             generate_questionnaires(dfs_questionnaire, df_value_set)
 

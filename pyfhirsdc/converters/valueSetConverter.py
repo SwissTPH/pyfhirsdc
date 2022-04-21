@@ -3,6 +3,7 @@ from fhir.resources.valueset import  ValueSetCompose,\
      ValueSetComposeInclude, ValueSetComposeIncludeConcept,\
      ValueSetComposeIncludeConceptDesignation
 import numpy
+import pandas as pd
 from pyfhirsdc.config import get_processor_cfg
 
 from pyfhirsdc.converters.utils import get_custom_codesystem_url
@@ -79,7 +80,7 @@ def get_value_set_in_exclude(system, include, df_value_set):
 
 def get_value_set_concept(concepts, id, line):
     if line['display'] is not None and\
-         line['display'] is not numpy.nan and\
+         pd.notna(line['display']) and\
             [c for c in concepts if c.code == id] == []:
         concept = ValueSetComposeIncludeConcept(
             code = Code(id),
@@ -123,9 +124,9 @@ def get_value_set_excludes(excludes, name, df_value_set_in):
     
 
 def get_value_set_title(vs, line):
-    if  line['display'] is not numpy.nan:
+    if  pd.notna(line['display']):
         vs.title = line['display']
-    if line['definition'] is not numpy.nan:
+    if pd.notna(line['definition']):
         vs.definition = line['definition']
     return vs
 

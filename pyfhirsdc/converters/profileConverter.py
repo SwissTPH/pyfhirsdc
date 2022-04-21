@@ -11,101 +11,95 @@ from fhir.resources.elementdefinition import ElementDefinitionType
 from fhir.resources.fhirtypes import StructureDefinitionContextType
 from fhir.resources.elementdefinition import ElementDefinition
 from pyfhirsdc.converters.questionnaireItemConverter import get_question_fhir_data_type
-import pandas as pd 
+import pandas as pd
+import validators
 
-def convert_df_to_extension_profiles(df):
-    rows_with_extensions = df[pd.notna(df['map_extension'])]
-    extensions = []
-    names = []
-    for idx, row in rows_with_extensions.iterrows():
-        std_def, name = init_extension_def(row)
-        names.append(name)
-        extensions.append(std_def)
-    return extensions, names
+from pyfhirsdc.converters.utils import get_resource_name, get_resource_url
+
+      
 
 def init_extension_def(element):
     map_extension = element['map_extension'].strip().split('::')
     ## Check for the map resource of the extension and grab the extension URL
     ## Replace the Canonical base URL placeholder with the real url 
-    extension_path = (map_extension[0].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)).strip()
-    structure_def_slice_name =extension_path.split('/')[-1].strip()
-    structure_def_id = extension_path
-    # Pydantics does not allow to add a property to an object without providing all the 
-    # mandatory fields. So first this object has to be created 
-    structure_def_scaffold = {
-        "resourceType" : "StructureDefinition",
-        "kind" : Code('complex-type'),
-        "abstract" : False,
-        "name" : structure_def_slice_name,
-        "status" : Code('draft'), 
-        "type" : "Extension",
-        "url" : Uri(extension_path).strip()
-    }
-    structure_def = StructureDefinition.parse_obj(structure_def_scaffold)
-    structure_def.id = Id(structure_def_slice_name)
-    structure_def.experimental = False
-    structure_def.fhirVersion = get_fhir_cfg().version
-    structure_def.description = element['description']
-    if pd.notna(element["map_profile"]):
-        structure_def.context = [StructureDefinitionContextType({"type": "element",\
-            "expression": element['map_profile'].split(' ',1)[1]})]
-    structure_def.type = "Extension"
-    structure_def.baseDefinition = "http://hl7.org/fhir/StructureDefinition/Extension"
-    structure_def.derivation = "constraint"
-    min_cardinality = map_extension[1]
-    max_cardinality = map_extension[2].strip()
-    extension_element = [ElementDefinition.parse_obj(
-        {
-            "id":"Extension",
-            "path" : "Extension",
-            "short" :structure_def_slice_name,
-            "definition": element['description'],
-            "min" : min_cardinality,
-            "max" : max_cardinality
-        }),
-        ElementDefinition.parse_obj({
-            "id" : "Extension.extension",
-            "path" : "Extension.extension",
-            "min" : min_cardinality,
-            "max" : max_cardinality
-        }),
-        ElementDefinition.parse_obj({
-            "id" : "Extension.url",
-            "path" : "Extension.url",
-            "fixedUri" : Uri(extension_path),
-        }), 
-        ElementDefinition.parse_obj({
-            "id": "Extension.value",
-            "path" : "Extension.value[x]",
-            "short" : structure_def_slice_name,
-            "definition" : element['description'],
-            "min" : min_cardinality,
-            "max" : max_cardinality
-        })
-    ]
-    element_type = element['type']
-    add_reference = False
-    if element_type.startswith('select_one'):
-         element_valueset_name = element_type.split(' ',1)[-1]
-         ## Check if the name after slelect_one starts with a capital or not.
-         ## if it starts with a capital it is a reference to a profile
-         print("name of the value set: ",element_type)
-         if element_valueset_name[0].isupper():
-             add_reference = True
-             element_type = 'Reference'
-         else:
-             element_type = 'CodeableConcept'
-             add_binding = True
-    element_def_type = ElementDefinitionType.construct()
-    element_def_type.code = get_question_fhir_data_type(element_type)
-    if add_reference == True : 
-        element_def_type.targetProfile = [get_fhir_cfg().canonicalBase+\
-                'StructureDefinition/'+element['definition']+'-'+element_valueset_name]
-    extension_element[-1].type = [element_def_type]
-    differential = StructureDefinitionDifferential.construct()
-    differential.element = extension_element
-    structure_def.differential = differential
-    return structure_def, structure_def_slice_name
+    if not validators.url(map_extension[0]):
+        extension_name = get_resource_name("StructureDefinition", map_extension[0].strip())
+        extension_url = get_resource_url("StructureDefinition", extension_name)
+        # Pydantics does not allow to add a property to an object without providing all the 
+        # mandatory fields. So first this object has to be created 
+        print(extension_name)
+        structure_def = StructureDefinition(
+            kind = Code('complex-type'),
+            abstract = False,
+            name = extension_name,
+            status = Code('draft'), 
+            type = "Extension",
+            url = Uri(extension_url).strip(),
+            id = Id(map_extension[0].strip()),
+            experimental = False,
+            version = get_fhir_cfg().version,
+            baseDefinition = "http://hl7.org/fhir/StructureDefinition/Extension",
+            derivation = "constraint"
+        )
+        if pd.notna(element['description']):
+            structure_def.description = element['description']
+        if pd.notna(element["map_profile"]):
+            structure_def.context = [StructureDefinitionContextType({"type": "element",\
+                "expression": element['map_profile'].split(' ',1)[1]})]
+        min_cardinality = map_extension[1].strip()
+        max_cardinality = map_extension[2].strip()
+        extension_element = [ElementDefinition(
+                id ="Extension",
+                path = "Extension",
+                short = extension_name,
+                definition = element['description'],
+                min = min_cardinality,
+                max = max_cardinality
+            ),
+            ElementDefinition(
+                id = "Extension.extension",
+                path = "Extension.extension",
+                min = min_cardinality,
+                max = max_cardinality
+            ),
+            ElementDefinition(
+                id = "Extension.url",
+                path = "Extension.url",
+                fixedUri = Uri(extension_url),
+            ), 
+            ElementDefinition(
+                id =  "Extension.value",
+                path = "Extension.value[x]",
+                short = extension_name,
+                definition = element['description'],
+                min = min_cardinality,
+                max = max_cardinality
+            )
+        ]
+        element_type = element['type']
+        add_reference = False
+        if element_type.startswith('select_one'):
+            element_valueset_name = element_type.split(' ',1)[-1]
+            ## Check if the name after slelect_one starts with a capital or not.
+            ## if it starts with a capital it is a reference to a profile
+            print("name of the value set: ",element_type)
+            if element_valueset_name[0].isupper():
+                add_reference = True
+                element_type = 'Reference'
+            else:
+                element_type = 'CodeableConcept'
+                add_binding = True
+        element_def_type = ElementDefinitionType.construct()
+        element_def_type.code = get_question_fhir_data_type(element_type)
+        if add_reference == True : 
+            element_def_type.targetProfile = [get_fhir_cfg().canonicalBase+\
+                    'StructureDefinition/'+element['definition']+'-'+element_valueset_name]
+        extension_element[-1].type = [element_def_type]
+        differential = StructureDefinitionDifferential.construct()
+        differential.element = extension_element
+        structure_def.differential = differential
+        return structure_def
+    return None
 
 
 def convert_df_to_profiles(df_questions, df_profile, df_valueset):

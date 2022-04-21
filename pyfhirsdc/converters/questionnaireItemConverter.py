@@ -120,7 +120,7 @@ def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
                 design_note = "status::draft",
                 definition = get_question_definition(question)
             )
-    if question['description'] is not numpy.nan:
+    if pd.notna(question['description']):
         new_question.text = question['description']
     
     return new_question
@@ -132,7 +132,7 @@ def process_quesitonnaire_response_line(id, question, df_value_set,  existing_it
                 extension = get_question_extension(question, df_value_set ),
                 definition = get_question_definition(question)
             )
-    if question['description'] is not numpy.nan:
+    if pd.notna(question['description']):
         new_questionResponse.text = question['description']
     
     return new_questionResponse
@@ -182,11 +182,11 @@ def get_question_extension(question, df_value_set ):
         extensions.append(get_dropdown_ext())
     elif "select_" in type and  isinstance(question["display"], str) and question["display"].lower() == "candidateExpression":
         extensions = get_question_choice_column(extensions, detail_1, df_value_set)
-    if "enableWhenExpression" in question and question["enableWhenExpression"] is not numpy.nan:
+    if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]):
         extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"]))
-    if "calculatedExpression" in question and question["enableWhenExpression"] is not numpy.nan:
+    if "calculatedExpression" in question and pd.notna(question["enableWhenExpression"]):
         extensions.append(get_calculated_expression_ext(question["enableWhenExpression"]))
-    if "initialExpression" in question and question["initialExpression"] is not numpy.nan:
+    if "initialExpression" in question and pd.notna(question["initialExpression"]):
         extensions.append(get_initial_expression_ext(question["initialExpression"]))
     return extensions
 
@@ -228,7 +228,7 @@ def get_question_choice_column(extensions, candidate_expression, df_value_set):
 
 def get_question_definition(question):
     # if definition == scope then build def based on canonical base, if not take the def from the xls if any
-    if  question['display'] is not None and question['definition'] is not numpy.nan:
+    if  question['display'] is not None and pd.notna(question['definition']):
         if str(question['definition']).lower() == get_processor_cfg().scope.lower():
             return get_custom_codesystem_url()
         elif len(str(question['definition']))>5:  

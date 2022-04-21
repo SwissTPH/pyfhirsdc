@@ -10,7 +10,7 @@ from pyfhirsdc.converters.structureMapConverter import add_structure_maps_url, g
 from pyfhirsdc.config import  get_processor_cfg
 from pyfhirsdc.converters.questionnaireItemConverter import convert_df_to_questionitems, init_questionnaire
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
-from pyfhirsdc.converters.profileConverter import convert_df_to_extension_profiles
+from pyfhirsdc.converters.profileConverter import  init_extension_def
 from pyfhirsdc.converters.profileConverter import convert_df_to_profiles
 import pandas as pd 
 
@@ -31,13 +31,14 @@ def generate_extension(df_questions, df_profile):
     # clean the data frame
     df_questions = df_questions.dropna(axis=0, subset=['id']).set_index('id')
     # Create the structure definition for the extensions 
-    extensions, names = convert_df_to_extension_profiles(df_questions)
+    rows_with_extensions = df_questions[pd.notna(df_questions['map_extension'])]
+    for idx, row in rows_with_extensions.iterrows():
+        extension = init_extension_def(row)
+        fullpath_extensions = get_resource_path("Extensions", extension.name, get_processor_cfg().encoding, False )
+        write_resource(fullpath_extensions, extension, get_processor_cfg().encoding)
+
     # write extensions to file
-    for i in range (len(names)):
-        fullpath_extensions = get_resource_path("Extensions", names[i])
-        print("extension path" + fullpath_extensions)
-        write_resource(fullpath_extensions, extensions[i], get_processor_cfg().encoding)
-    return 
+
 
 def generate_profile(df_questions, df_profile, df_valuesets):
     print('processing profiles.................')
