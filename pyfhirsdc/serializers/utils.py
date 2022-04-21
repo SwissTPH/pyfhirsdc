@@ -24,13 +24,16 @@ def write_resource(filepath, resource, encoding = None):
         else:
             raise ValueError("Error writing resource: "+ filepath)
 
-def get_resource_path(resource_type, name, encoding = None):
+def get_resource_path(resource_type, name, encoding = None, generateName = True ):
     if encoding is None:
         encoding = get_processor_cfg().encoding
     if resource_type is not None and name is not None:
         path = get_defaut_path(resource_type, "resources/"+ resource_type.lower())
         if not os.path.exists(path):
             os.makedirs(path) 
-        filename = get_resource_name(resource_type, name)+  "." + encoding
+        if generateName:
+            filename = get_resource_name(resource_type, name)+  "." + encoding
+        else:
+            filename =  name + "." + encoding
         fullpath = os.path.join(path, filename)
         return fullpath

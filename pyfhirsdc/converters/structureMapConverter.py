@@ -9,6 +9,7 @@ Convert XLSsdc quesitonnair to structureMap
 import json
 
 import numpy
+import pandas as pd
 from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import get_structure_map_extension
 from fhir.resources.fhirtypes import Canonical, Code
@@ -140,7 +141,7 @@ def get_structure_map_rule(question_name, question):
     rule = None
     #print("Mapping ``{0}`` added".format(fhirmapping))
     if  'map_resource' in question\
-        and question['map_resource'] is not numpy.nan\
+        and pd.notna(question['map_resource'])\
         and question['map_resource'] is not None:
         is_complex = str(question['map_resource']).find(',') != -1\
             or str(question['map_resource']).find('{') != -1\

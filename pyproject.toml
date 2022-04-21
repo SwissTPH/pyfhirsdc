@@ -6,6 +6,7 @@ requires = [
     "openpyxl",
     "fhir.resources",
     "pydantic",
+    "validators",
     "odfpy"
 ]
 build-backend = "setuptools.build_meta"

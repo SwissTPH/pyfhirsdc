@@ -36,6 +36,7 @@ def parse_sheets(input_file, excudedWorksheets):
         print ("loading sheet {0}".format( worksheet))
         if excudedWorksheets is None or worksheet not in excudedWorksheets:
             df = input_file.parse(worksheet)
+            worksheet= worksheet.replace("_", ".")
             # strip space
             df = df.applymap(lambda x: x.strip() if type(x)==str else x)
             if worksheet.startswith('q.'):
@@ -50,7 +51,7 @@ def parse_sheets(input_file, excudedWorksheets):
                     break
             elif worksheet == "valueSet":
                 if validate_value_set_sheet(df):
-                    value_set = df
+                    df_value_set = df
                 else:
                     break
             elif worksheet == "profile":
@@ -63,17 +64,12 @@ def parse_sheets(input_file, excudedWorksheets):
                     df_extension = df
                 else:
                     break
-            elif worksheet == "carePlan":
-                if validate_value_set_sheet(df):
-                    df_care_plan = df
-                else:
-                    break
             elif worksheet == "cql":
                 if validate_value_set_sheet(df):
                     df_cql = df
                 else:
                     break
-    return dfs_questionnaire, dfs_decision_table, value_set, df_care_plan, df_profile, df_extension, df_cql
+    return dfs_questionnaire, dfs_decision_table, df_value_set, df_profile, df_extension, df_cql
 
 def validate_questionnaire_sheet(df):
     return True
@@ -87,9 +83,6 @@ def validate_choice_column_sheet(df):
 def validate_value_set_sheet(df):
     return True
 
-
-def validate_care_plan_sheet(df):
-    return True
 
 def validate_cql_sheet(df):
     return True
