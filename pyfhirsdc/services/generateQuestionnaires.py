@@ -36,15 +36,7 @@ def generate_questionnaire( name ,df_questions, df_value_set ) :
     questionnaire = add_structure_maps_url(questionnaire, structure_maps) 
     # write file
     write_resource(fullpath, questionnaire, get_processor_cfg().encoding)
-    #write_resource(fullpath_response, questionnaire_response, get_processor_cfg().encoding)
-    
-def generate_questionnaire_responses(dfs_questionnaire):
-    for name, questions in dfs_questionnaire.items():
-        generate_questionnaire_response(name ,questions)
-
-def generate_questionnaire_response(name,questions):
-    return
-
+    write_resource(fullpath_response, questionnaire_response, get_processor_cfg().encoding)
 
     
 
