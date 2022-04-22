@@ -160,6 +160,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
         # add a slice name
         extension = row["map_extension"]
         is_profile = pd.notna(row["map_profile"])
+
         if not pd.notna(row["map_profile"]) and not pd.notna(row["map_path"]):
             continue
         if pd.notna(extension) and is_profile:
@@ -172,9 +173,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                 extension_min = '0'
                 extension_max = '*'
                 extension_name = (extension.split('/')[-1]).strip()
-            print('Processing extension: {0}'.format(extension_name))
             extension_id = "{0}.extension.{1}".format(resource_type, extension_name).strip()
-            print('The id of the extension is:',(extension_id) )
             element_def = {
                 "id" : extension_id,
                 "path" : resource_type+".extension",
@@ -195,7 +194,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                 ]
             }
             element_list.append(element_def)
-        else:
+        else:                        
             path = ''
             if pd.notna(row["map_path"]) and "::" in row["map_path"]:
                 profile_details = row["map_path"].strip().split('::')
@@ -206,9 +205,10 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                 profile_min = '0'
                 profile_max = '*'
                 path = row["map_path"].strip()
+            print('Processing path: {0}'.format(path))
+            
             if not path:
                 continue
-            print('Processing extension: {0}'.format(path))
             
             ## mapping the element type written in the xls to a corresponding 
             # fhir data type. Special cases with select one have to be 
