@@ -17,13 +17,16 @@ import pandas as pd
 
 def generate_profiles(dfs_questionnaire, df_profile, df_valuesets):
     
-    all_dataframes = pd.concat(dfs_questionnaire).dropna(axis=0, subset=['map_extension'])
-    
-    generate_extension(all_dataframes, df_profile)
+    all_dataframes = []
+    for name, questions in dfs_questionnaire.items():
+        if not questions["id"].isnull().values.all() and 'map_extension' in questions.columns:
+            ## append all the questionnaires in a list
+            all_dataframes.append(questions)
+            generate_extension(questions, df_profile)
     ## Concat all the dataframes together so that we can create the profiles based on it 
     ## instead of going through sheets one by one
-    #all_questionnaires = pd.concat(all_dataframes, ignore_index=True)
-    generate_profile(all_dataframes, df_profile, df_valuesets)
+    all_questionnaires = pd.concat(all_dataframes, ignore_index=True)
+    generate_profile(all_questionnaires, df_profile, df_valuesets)
     
 def generate_extension(df_questions, df_profile):
     print('processing extenstions ')
