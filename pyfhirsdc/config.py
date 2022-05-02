@@ -35,7 +35,7 @@ def get_defaut_fhir(resource):
     return dict_cfg['fhir'][resource]['default']
 
 def get_defaut_path(resource, default):
-    if dict_cfg['fhir'][resource]['outputPath'] is None:
+    if not resource in dict_cfg['fhir'] or dict_cfg['fhir'][resource]['outputPath'] is None:
         return get_processor_cfg().outputPath + default
     return get_processor_cfg().outputPath + dict_cfg['fhir'][resource]['outputPath']
 
