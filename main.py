@@ -1,6 +1,7 @@
 import sys, getopt
 from pyfhirsdc.services.generateCodeSystem import generate_anthro_codesystems
 from pyfhirsdc.services.processInputFile import process_input_file
+from pyfhirsdc.services.processLibraries import process_libraries
 
 def print_help():
     print('-c / --conf config_file_path')
@@ -41,6 +42,7 @@ if __name__ == "__main__":
         process_input_file(conf) # output is the default output directory
     if library:
         # compress CQL
+        process_libraries(conf)
         # update Libraries
         pass
     if bundle:

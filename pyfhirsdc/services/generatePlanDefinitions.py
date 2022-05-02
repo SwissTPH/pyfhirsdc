@@ -1,6 +1,6 @@
 
 
-from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg, get_defaut_fhir
+from pyfhirsdc.config import get_defaut_path, get_fhir_cfg, get_processor_cfg, get_defaut_fhir
 from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.plandefinition import PlanDefinition
 from fhir.resources.library import Library
@@ -60,7 +60,7 @@ def generate_plandefinition( name,df_actions):
     planDefinition = processDecisionTable(pd_df, df_actions)
      
     if planDefinition is not None:
-        cql, pd_library = generate_plan_defnition_lib(planDefinition)
+        cql, library = generate_plan_defnition_lib(planDefinition)
         # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
         #plan_definition = processDecisionTable(plandefinitions, dict_actions)
         # write file
@@ -73,8 +73,9 @@ def generate_plandefinition( name,df_actions):
                 output_lib_path,
                 "library-"+ name +  "." + get_processor_cfg().encoding
             )
-        write_resource(output_lib_file, pd_library, get_processor_cfg().encoding)
-        write_library_CQL(output_lib_path, pd_library.id, cql)
+        write_resource(output_lib_file, library, get_processor_cfg().encoding)
+        cql_path = get_defaut_path('CQL', 'cql')
+        write_library_CQL(cql_path, library, cql)
 
     return planDefinition
 
