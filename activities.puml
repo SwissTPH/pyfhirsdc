@@ -4,40 +4,79 @@
 'skinparam actorStyle awesome
 'skinparam controlStyle awesome
 
-actor HW as "heath worker" 
-'interface UI as "User interface"
-HW -> UI : enter  patient ID
+actor HW as "health workers" 
+'interface UI as "user interface"
+
+
+HW -> UI : patient selected (created before if needed)
 
 control L as "Engine"
 UI -> L : search for patient
 database F as "Fhir"
 
-L -> F : execute query
-F -> L : Send patient resource
-L -> F : Fetch eligible PlanDefinition\n Plan definition type workflow-definition?
-F -> L : reply with bundle of PlanDefinition "Encounter type"
-L -> UI : filter PlanDefinition "Encounter type"
-UI -> HW : propose format list of "Encounter type"
-HW -> UI: select "Encounter type"
-UI -> L: select "Encounter type"
-L->  L: $Apply "Encounter type"
-F -> L: bundle of activities
-L -> UI : present 1st activity \n"informationCollection"
-UI -> HW: show Questionnaire
-HW -> UI: Fill questionnaire
-UI -> L : send QuestionnaireResponse
-alt QuestionnaireResponseEvent 
-L->L: $apply planDefinitions for QuestionnaireResponseEvent
-L->UI: send QuestionnaireResponseEvent \n&  rest of "Encounter type" activities
-else StructureMap QuestionnaireResponse
-L->L: apply structureMap
-L->F: create/update resources (including task)
-L->L: Update the $apply "Encounter type" ?\n  or continue the other actions/activity
-L->UI: send updated activities + task
+
+L->F: $Apply on planDefinition to find the available careplan actions.code (system=cpg-common-process) = "registration"
+F->L: send a list of careplans
+L->UI: display available carePlan (action title + description in infobox)
+HW-> UI : select the careplan (ie. further $Apply will be applied on the plandefinition that gave the selected "registration" action )
+L -> F : $Apply on the planDefintion EmCareD01 with patient as subject
+
+
+
+loop  as long as the EmCareD01$Apply has actions and all the "inMemory" actions are done
+note over L, F
+those actions might be subaction of an action pointing to an Activity definition with the actions.code (system=cpg-common-process) = "guideline-based-care"
+end note
+    L->L: Save the action "inMemory"
+    alt next action is an ActivityDefinition (interrogation, test)
+        L->L: get the questionnaire in the "cpg-collect-with"
+    end 
+    L -> F : $populate the questionnaire
+    F -> L : send back the pre-filled QuestionnaireResponse, attach that questionnaire to the "tile" matching the actions.code (system=cpg-common-process)
+    L -> UI: Send Questionnaire & QuestionnaireResponse
+    HW -> UI : Fill the questionnaire and submit
+    UI -> L: send the questionnaire response
+    L -> F: Save the QuestionnaireResponse & run the structureMap
+    L -> F : $Apply on EmCareD01 plandefinition with name-event = questionnaireName and patient as subject
 end
-UI -> HW: present next activity (collectInformation, task .... )
+group  Diagnostic :
+    L->F: get the diagnostic : $Apply on encounter plandefinition, name-event="determine-diagnosis" \ntake the action with  actions.code (system=cpg-common-process) =  "determine-diagnosis"
+    L -> F : $Apply on diagnostic plandefinition,  
+    F -> L: send the classificaiton in the diagnostic "title" in action title & description as infobox:  + observationDefinition inb action.definition
+
+    L->UI:  display the classification
+    HW->UI: agree or disagree with classification
+    HW->UI: add classification
+    UI -> L: send the list of approved classification
+    alt classification confirmed
+        L -> F : save observation 
+    end
+end
+group dispense-medications	
+    L->F: get the medication : $Apply on encounter plandefinition, name-event="dispense-medications" \ntake the action with  actions.code (system=cpg-common-process) =  "dispense-medications"
+    L -> F : $Apply on medication plandefinition, 
+    alt next action is a ActivityDefinition (treatment)
+        L->L: get the questionnaire in the "cpg-collect-with"
+    end 
+    L -> F : $populate the questionnaire
+    F -> L : send back the pre-filled QuestionnaireResponse, attach that questionnaire to the "tile" matching the actions.code (system=cpg-common-process)
+    L -> UI: Send Questionnaire & QuestionnaireResponse
+    HW -> UI : Fill the questionnaire and submit
+    UI -> L: send the questionnaire response
+    L -> F: Save the QuestionnaireResponse & run the structureMap
+end
+
+group  provide-counseling :
+    L->F: get the conseling/addtionnal classification : $Apply on encounter plandefinition, name-event="provide-counseling" \ntake the action with  actions.code (system=cpg-common-process) =  "provide-counseling"
+    L -> F : $Apply on counseling plandefinition,  
+    F -> L: send the classificaiton in the diagnostic "title" in action title & description as infobox
+    L->UI:  display the conseling / addtionnal classification (measure like)
+    UI -> L: send the list of approved classification
+end
 
 
+
+L->F: save classification (observation) at the end of the encounter
 
 
 
