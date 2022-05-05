@@ -4,6 +4,8 @@
 'skinparam actorStyle awesome
 'skinparam controlStyle awesome
 
+title draft displaying the possible interAction of the L4 with the L3
+
 actor HW as "health workers" 
 'interface UI as "user interface"
 
@@ -11,38 +13,72 @@ actor HW as "health workers"
 HW -> UI : patient selected (created before if needed)
 
 control L as "Engine"
-UI -> L : search for patient
 database F as "Fhir"
+note over HW, F
+    This diagrams intend to use the Action __named-event trigger__ to avoid puting too much load on handset in LIMC, 
+    * latest phones and tablets are not always avaiable 
+    * in general, electonic equipment are more expensive (~30%),
+    * if the L4 need to be scaled up  political and financial constraint might prevent the purshase of high end handsets
+    
+    there is 2 type of triggers
+    * trigger that match the Actions.code, those are removed in the new version, replaced by sub PlanDefinition
+    * trigger that ensure adderence to guideline, in Emcare, the guidline define the order of the question and questionnaires.  if we removed them then we would have to be replace by a similar logic  in the conditions (no advantages)
+        using the start-after contrainst wont help as the condition will need to be re-evaluated after the submission of the previous questionnaireResponse, that would lead to assess multiple time the same logic
 
-
-L->F: $Apply on planDefinition to find the available careplan actions.code (system=cpg-common-process) = "registration"
-F->L: send a list of careplans
-L->UI: display available carePlan (action title + description in infobox)
-HW-> UI : select the careplan (ie. further $Apply will be applied on the plandefinition that gave the selected "registration" action )
-L -> F : $Apply on the planDefintion EmCareD01 with patient as subject
-
-
-
-loop  as long as the EmCareD01$Apply has actions and all the "inMemory" actions are done
-note over L, F
-those actions might be subaction of an action pointing to an Activity definition with the actions.code (system=cpg-common-process) = "guideline-based-care"
+    providing a trigger should not block Action without trigger
 end note
-    L->L: Save the action "inMemory"
-    alt next action is an ActivityDefinition (interrogation, test)
-        L->L: get the questionnaire in the "cpg-collect-with"
+
+UI -> L : search for patient
+
+
+
+== chosing the IG to run ==
+
+L->F: PlanDefinition/$Apply to find the available CarePlan Actions.code (system=cpg-common-process) = "registration", (possibly using the named-event trigger "registration"  ) with patient as subject
+F->L: evaluate the condition of the PlanDefinition available, then create CarePlan for the plan definiotn that have valid Actions
+F->L: send a list of CarePlans
+L->UI: display available CarePlan (Action title + description in infobox)
+HW<-> UI : select the CarePlan (ie. further $Apply will be applied on the PlanDefinition that gave the selected "registration" Action )
+UI -> L: send the CarePlan to use ( does include sub PlanDefinition)
+L->L : save "inMemory" the PlanDefinition for guideline-based-care / determine-diagnosis / dispense-medications / provide-counseling based on Actioncode from the system cpg-common-process
+
+L-> L : create the encounter
+
+
+note over HW, F
+    the section below, could be run at different time, for example the L4 might retrieve the "clinical interogation" Actions and run the other while the healthcare worker is filling questionnaires
+end note
+loop
+    L -> F : PlanDefinition/EmCareDXX(interogation PlanDefinition)/$Apply,   with patient as subject
+    F -> L: reply with CarePlan, this CarePlan Action will refers to Activity or questionnaire
+    alt CarePlan hase "new Actions"
+        == clinical interogation ==
+        loop  on all not-done Actions
+            L->L: Save the Action "inMemory"
+            alt next Action is an ActivityDefinition (interrogation, test)
+                alt ActivityDefinition already run/started
+                    L-> L: skip that activity
+                else
+                    L->L: get the questionnaire in the "cpg-collect-with"
+                    L->L: save that this activity is started
+                end
+            end 
+            L -> F : $populate the questionnaire
+            F -> L : send back the pre-filled QuestionnaireResponse, attach that questionnaire to the "tile" matching the Actions.code (system=cpg-common-process)
+            L -> UI: Send Questionnaire & QuestionnaireResponse
+            HW -> UI : Fill the questionnaire and submit
+            UI -> L: send the questionnaire response
+            L -> F: Save the QuestionnaireResponse & run the structureMap
+        end
+    else
+        L->L: break 
     end 
-    L -> F : $populate the questionnaire
-    F -> L : send back the pre-filled QuestionnaireResponse, attach that questionnaire to the "tile" matching the actions.code (system=cpg-common-process)
-    L -> UI: Send Questionnaire & QuestionnaireResponse
-    HW -> UI : Fill the questionnaire and submit
-    UI -> L: send the questionnaire response
-    L -> F: Save the QuestionnaireResponse & run the structureMap
-    L -> F : $Apply on EmCareD01 plandefinition with name-event = questionnaireName and patient as subject
-end
+end 
+==  determine-diagnosis ==
+
 group  Diagnostic :
-    L->F: get the diagnostic : $Apply on encounter plandefinition, name-event="determine-diagnosis" \ntake the action with  actions.code (system=cpg-common-process) =  "determine-diagnosis"
-    L -> F : $Apply on diagnostic plandefinition,  
-    F -> L: send the classificaiton in the diagnostic "title" in action title & description as infobox:  + observationDefinition inb action.definition
+    L -> F : PlanDefinition/EmCareDXX(diagnostic PlanDefinition)/$Apply,  
+    F -> L: send the classification in the diagnostic "title" in Action title & description as infobox:  + ObservationDefinition inb Action.definition
 
     L->UI:  display the classification
     HW->UI: agree or disagree with classification
@@ -52,37 +88,37 @@ group  Diagnostic :
         L -> F : save observation 
     end
 end
-group dispense-medications	
-    L->F: get the medication : $Apply on encounter plandefinition, name-event="dispense-medications" \ntake the action with  actions.code (system=cpg-common-process) =  "dispense-medications"
-    L -> F : $Apply on medication plandefinition, 
-    alt next action is a ActivityDefinition (treatment)
-        L->L: get the questionnaire in the "cpg-collect-with"
+
+== dispense-medications	==
+
+loop 
+
+    L -> F : PlanDefinition/EmCareDXX(medication PlanDefinition)/$Apply,  
+    F-> : reply with CarePlan  
+    loop over the CarePlan Actions
+        alt  ActivityDefinition linked to "new" MedicationRequest
+            L->L: save MedicationRequest "inMemory"
+            L -> UI: propose medication
+            UI <-> HW : approve medicaiton (out of stock)
+            alt medication declined
+                L-> F : save DispenseMedication with declided status 
+            else medication 
+                L-> F: save DispenseMedication/AdministerMedication
+            end
+        end 
+    end
+    alt no new medicationRequest was recieve in the $Aplly
+        L->L:break
     end 
-    L -> F : $populate the questionnaire
-    F -> L : send back the pre-filled QuestionnaireResponse, attach that questionnaire to the "tile" matching the actions.code (system=cpg-common-process)
-    L -> UI: Send Questionnaire & QuestionnaireResponse
-    HW -> UI : Fill the questionnaire and submit
-    UI -> L: send the questionnaire response
-    L -> F: Save the QuestionnaireResponse & run the structureMap
+    
 end
 
-group  provide-counseling :
-    L->F: get the conseling/addtionnal classification : $Apply on encounter plandefinition, name-event="provide-counseling" \ntake the action with  actions.code (system=cpg-common-process) =  "provide-counseling"
-    L -> F : $Apply on counseling plandefinition,  
-    F -> L: send the classificaiton in the diagnostic "title" in action title & description as infobox
+== provide-counseling ==
+
+  
+    L -> F : PlanDefinition/EmCareDXX(provide conseling)/$Apply,  ,  
+    F -> L: send the classification in the diagnostic "title" in Action title & description as infobox
     L->UI:  display the conseling / addtionnal classification (measure like)
-    UI -> L: send the list of approved classification
-end
-
-
-
-L->F: save classification (observation) at the end of the encounter
-
-
-
-
-
-
-
+    HW -> UI: act based on the conseling 
 
 @enduml
