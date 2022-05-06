@@ -31,16 +31,15 @@ end note
 UI -> L : search for patient
 
 
-
 == chosing the IG to run ==
 
-L->F: PlanDefinition/$Apply to find the available CarePlan Actions.code (system=cpg-common-process) = "registration", (possibly using the named-event trigger "registration"  ) with patient as subject
+L->F: PlanDefinition/$Apply to find the available CarePlan\n Actions.code (system=cpg-common-process) = "registration",\n (possibly using the named-event trigger "registration"  ) with patient as subject
 F->L: evaluate the condition of the PlanDefinition available, then create CarePlan for the plan definiotn that have valid Actions
 F->L: send a list of CarePlans
 L->UI: display available CarePlan (Action title + description in infobox)
 HW<-> UI : select the CarePlan (ie. further $Apply will be applied on the PlanDefinition that gave the selected "registration" Action )
 UI -> L: send the CarePlan to use ( does include sub PlanDefinition)
-L->L : save "inMemory" the PlanDefinition for guideline-based-care / determine-diagnosis / dispense-medications / provide-counseling based on Actioncode from the system cpg-common-process
+L->L : save "inMemory" the PlanDefinition for \nguideline-based-care / determine-diagnosis / dispense-medications / provide-counseling\n based on Actioncode from the system cpg-common-process
 
 L-> L : create the encounter
 
@@ -64,7 +63,7 @@ loop
                 end
             end 
             L -> F : $populate the questionnaire
-            F -> L : send back the pre-filled QuestionnaireResponse, attach that questionnaire to the "tile" matching the Actions.code (system=cpg-common-process)
+            F -> L : send back the pre-filled QuestionnaireResponse, \nattach that questionnaire to the "tile" matching\n the Actions.code (system=cpg-common-process)
             L -> UI: Send Questionnaire & QuestionnaireResponse
             HW -> UI : Fill the questionnaire and submit
             UI -> L: send the questionnaire response
@@ -78,7 +77,7 @@ end
 
 group  Diagnostic :
     L -> F : PlanDefinition/EmCareDXX(diagnostic PlanDefinition)/$Apply,  
-    F -> L: send the classification in the diagnostic "title" in Action title & description as infobox:  + ObservationDefinition inb Action.definition
+    F -> L: send the classification in the diagnostic "title" in Action title\n& description as infobox:  + ObservationDefinition inb Action.definition
 
     L->UI:  display the classification
     HW->UI: agree or disagree with classification

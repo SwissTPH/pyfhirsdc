@@ -184,8 +184,8 @@ def get_question_extension(question, df_value_set ):
         extensions = get_question_choice_column(extensions, detail_1, df_value_set)
     if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]):
         extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"]))
-    if "calculatedExpression" in question and pd.notna(question["enableWhenExpression"]):
-        extensions.append(get_calculated_expression_ext(question["enableWhenExpression"]))
+    if "calculatedExpression" in question and pd.notna(question["calculatedExpression"]):
+        extensions.append(get_calculated_expression_ext(question["calculatedExpression"]))
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
         extensions.append(get_initial_expression_ext(question["initialExpression"]))
     return extensions
