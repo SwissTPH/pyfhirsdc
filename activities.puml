@@ -38,7 +38,53 @@ end
 UI -> HW: present next activity (collectInformation, task .... )
 
 
+== chosing the IG to run ==
 
+L->F: PlanDefinition/$Apply to find the available CarePlan\n Actions.code (system=cpg-common-process) = "registration",\n (possibly using the named-event trigger "registration"  ) with patient as subject
+F->L: evaluate the condition of the PlanDefinition available, then create CarePlan for the plan definiotn that have valid Actions
+F->L: send a list of CarePlans
+L->UI: display available CarePlan (Action title + description in infobox)
+HW<-> UI : select the CarePlan (ie. further $Apply will be applied on the PlanDefinition that gave the selected "registration" Action )
+UI -> L: send the CarePlan to use ( does include sub PlanDefinition)
+L->L : save "inMemory" the PlanDefinition for \nguideline-based-care / determine-diagnosis / dispense-medications / provide-counseling\n based on Actioncode from the system cpg-common-process
+
+L-> L : create the encounter
+
+
+note over HW, F
+    the section below, could be run at different time, for example the L4 might retrieve the "clinical interogation" Actions and run the other while the healthcare worker is filling questionnaires
+end note
+loop
+    L -> F : PlanDefinition/EmCareDXX(interogation PlanDefinition)/$Apply,   with patient as subject
+    F -> L: reply with CarePlan, this CarePlan Action will refers to Activity or questionnaire
+    alt CarePlan hase "new Actions"
+        == clinical interogation ==
+        loop  on all not-done Actions
+            L->L: Save the Action "inMemory"
+            alt next Action is an ActivityDefinition (interrogation, test)
+                alt ActivityDefinition already run/started
+                    L-> L: skip that activity
+                else
+                    L->L: get the questionnaire in the "cpg-collect-with"
+                    L->L: save that this activity is started
+                end
+            end 
+            L -> F : $populate the questionnaire
+            F -> L : send back the pre-filled QuestionnaireResponse, \nattach that questionnaire to the "tile" matching\n the Actions.code (system=cpg-common-process)
+            L -> UI: Send Questionnaire & QuestionnaireResponse
+            HW -> UI : Fill the questionnaire and submit
+            UI -> L: send the questionnaire response
+            L -> F: Save the QuestionnaireResponse & run the structureMap
+        end
+    else
+        L->L: break 
+    end 
+end 
+==  determine-diagnosis ==
+
+group  Diagnostic :
+    L -> F : PlanDefinition/EmCareDXX(diagnostic PlanDefinition)/$Apply,  
+    F -> L: send the classification in the diagnostic "title" in Action title\n& description as infobox:  + ObservationDefinition inb Action.definition
 
 
 
