@@ -4,38 +4,31 @@
 'skinparam actorStyle awesome
 'skinparam controlStyle awesome
 
-actor HW as "heath worker" 
-'interface UI as "User interface"
-HW -> UI : enter  patient ID
+title draft displaying the possible interAction of the L4 with the L3
+
+actor HW as "health workers" 
+'interface UI as "user interface"
+
+
+HW -> UI : patient selected (created before if needed)
 
 control L as "Engine"
-UI -> L : search for patient
 database F as "Fhir"
+note over HW, F
+    This diagrams intend to use the Action __named-event trigger__ to avoid puting too much load on handset in LIMC, 
+    * latest phones and tablets are not always avaiable 
+    * in general, electonic equipment are more expensive (~30%),
+    * if the L4 need to be scaled up  political and financial constraint might prevent the purshase of high end handsets
+    
+    there is 2 type of triggers
+    * trigger that match the Actions.code, those are removed in the new version, replaced by sub PlanDefinition
+    * trigger that ensure adderence to guideline, in Emcare, the guidline define the order of the question and questionnaires.  if we removed them then we would have to be replace by a similar logic  in the conditions (no advantages)
+        using the start-after contrainst wont help as the condition will need to be re-evaluated after the submission of the previous questionnaireResponse, that would lead to assess multiple time the same logic
 
-L -> F : execute query
-F -> L : Send patient resource
-L -> F : Fetch eligible PlanDefinition\n Plan definition type workflow-definition?
-F -> L : reply with bundle of PlanDefinition "Encounter type"
-L -> UI : filter PlanDefinition "Encounter type"
-UI -> HW : propose format list of "Encounter type"
-HW -> UI: select "Encounter type"
-UI -> L: select "Encounter type"
-L->  L: $Apply "Encounter type"
-F -> L: bundle of activities
-L -> UI : present 1st activity \n"informationCollection"
-UI -> HW: show Questionnaire
-HW -> UI: Fill questionnaire
-UI -> L : send QuestionnaireResponse
-alt QuestionnaireResponseEvent 
-L->L: $apply planDefinitions for QuestionnaireResponseEvent
-L->UI: send QuestionnaireResponseEvent \n&  rest of "Encounter type" activities
-else StructureMap QuestionnaireResponse
-L->L: apply structureMap
-L->F: create/update resources (including task)
-L->L: Update the $apply "Encounter type" ?\n  or continue the other actions/activity
-L->UI: send updated activities + task
-end
-UI -> HW: present next activity (collectInformation, task .... )
+    providing a trigger should not block Action without trigger
+end note
+
+UI -> L : search for patient
 
 
 == chosing the IG to run ==
@@ -86,10 +79,45 @@ group  Diagnostic :
     L -> F : PlanDefinition/EmCareDXX(diagnostic PlanDefinition)/$Apply,  
     F -> L: send the classification in the diagnostic "title" in Action title\n& description as infobox:  + ObservationDefinition inb Action.definition
 
+    L->UI:  display the classification
+    HW->UI: agree or disagree with classification
+    HW->UI: add classification
+    UI -> L: send the list of approved classification
+    alt classification confirmed
+        L -> F : save observation 
+    end
+end
 
+== dispense-medications	==
 
+loop 
 
+    L -> F : PlanDefinition/EmCareDXX(medication PlanDefinition)/$Apply,  
+    F-> : reply with CarePlan  
+    loop over the CarePlan Actions
+        alt  ActivityDefinition linked to "new" MedicationRequest
+            L->L: save MedicationRequest "inMemory"
+            L -> UI: propose medication
+            UI <-> HW : approve medicaiton (out of stock)
+            alt medication declined
+                L-> F : save DispenseMedication with declided status 
+            else medication 
+                L-> F: save DispenseMedication/AdministerMedication
+            end
+        end 
+    end
+    alt no new medicationRequest was recieve in the $Aplly
+        L->L:break
+    end 
+    
+end
 
+== provide-counseling ==
 
+  
+    L -> F : PlanDefinition/EmCareDXX(provide conseling)/$Apply,  ,  
+    F -> L: send the classification in the diagnostic "title" in Action title & description as infobox
+    L->UI:  display the conseling / addtionnal classification (measure like)
+    HW -> UI: act based on the conseling 
 
 @enduml
