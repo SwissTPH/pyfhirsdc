@@ -112,9 +112,17 @@ def add_questionnaire_response_item_line(existing_item, id, question, df_value_s
 
 def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
     type = get_question_fhir_type(question)
+    print('At line ', question)
+    if pd.notna(question['required']):
+        if int(question['required']) == 1:
+            question['required']=1
+        else : question['required']=0
+    else : question['required']=0
+
     new_question = QuestionnaireItemSDC(
                 linkId = id,
                 type = type,
+                required= question['required'],
                 extension = get_question_extension(question, df_value_set ),
                 answerValueSet = get_question_valueset(question, df_value_set),
                 design_note = "status::draft",
