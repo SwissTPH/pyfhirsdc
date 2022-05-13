@@ -6,7 +6,7 @@ import os
 def read_json(filepath, type = "object"):
     json_str = None
     try:
-        file = open(filepath)
+        file = open(filepath, 'r',  encoding="utf-8")
         if type == "object":
             json_str = json.load(file, object_hook=lambda d: SimpleNamespace(**d))
         elif type == "str":
