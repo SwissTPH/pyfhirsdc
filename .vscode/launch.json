@@ -5,11 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Python: output",
             "type": "python",
             "request": "launch",
             "program": "main.py",
             "args": ["-c","conf.json","-o"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },        {
+            "name": "Python: Library",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": ["-c","conf.json","-l"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },        {
+            "name": "Python: Bundle",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": ["-c","conf.json","-b"],
             "console": "integratedTerminal",
             "justMyCode": true
         }
