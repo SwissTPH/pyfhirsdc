@@ -5,9 +5,8 @@
         - choiceColumn
         - valueSet
 """
-import json
-from pyfhirsdc.converters.structureMapConverter import add_structure_maps_url, get_structure_maps
-from pyfhirsdc.models.questionnaireResponseSDC import QuestionnaireResponseItemSDC, QuestionnaireResponseSDC
+
+from pyfhirsdc.converters.structureMapConverter import add_structure_maps_url, get_structure_map_bundle
 from pyfhirsdc.config import  get_processor_cfg
 from pyfhirsdc.converters.questionnaireItemConverter import convert_df_to_questionitems, init_questionnaire,\
      init_questionnaire_response
@@ -32,7 +31,8 @@ def generate_questionnaire( name ,df_questions, df_value_set ) :
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
     questionnaire, questionnaire_response = convert_df_to_questionitems(questionnaire, questionnaire_response, df_questions,  df_value_set, strategy = 'overwriteDraft')
     #### StructureMap ####
-    structure_maps = get_structure_maps(name, df_questions)
+    structure_maps = get_structure_map_bundle(name, df_questions)
+    #structure_maps = get_structure_maps(name, df_questions)
     questionnaire = add_structure_maps_url(questionnaire, structure_maps) 
     # write file
     write_resource(fullpath, questionnaire, get_processor_cfg().encoding)

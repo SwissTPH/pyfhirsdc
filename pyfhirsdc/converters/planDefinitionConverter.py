@@ -16,6 +16,8 @@ from datetime import datetime
 from datetime import timezone
 from fhir.resources.fhirtypes import Canonical
 
+from pyfhirsdc.converters.utils import clean_name
+
 
 
 # Merge action conditions as an Or, given that the actions are equal
@@ -93,7 +95,7 @@ expressionNameCounterMap = {}
 def processAction(row):
     # Check if any of the rows has empty cells in the relevant columns, stop if so
     action = PlanDefinitionAction(
-        id = row["id"],
+        id = clean_name(row["id"]),
     )
     # input must be better managed
     # https://build.fhir.org/metadatatypes.html#DataRequirement

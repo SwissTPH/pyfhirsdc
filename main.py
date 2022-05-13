@@ -18,7 +18,7 @@ if __name__ == "__main__":
     library = False
     anthro = False
     try:
-      opts, args = getopt.getopt(sys.argv[1:],"hlob:c:",["conf=","help","anthro"])
+      opts, args = getopt.getopt(sys.argv[1:],"hlobc:",["conf=","help","anthro"])
     except getopt.GetoptError:
         print_help()
         sys.exit(2)

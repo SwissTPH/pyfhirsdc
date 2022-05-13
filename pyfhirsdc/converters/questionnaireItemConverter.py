@@ -13,7 +13,7 @@ from pyfhirsdc.models.questionnaireResponseSDC import QuestionnaireResponseItemS
 from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_initial_expression_ext
 from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
 from pyfhirsdc.serializers.json import read_resource
-from pyfhirsdc.converters.utils import get_custom_codesystem_url, get_resource_url
+from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
 import pandas as pd
 
 def convert_df_to_questionitems(questionnaire, questionnaire_response,df_questions, df_value_set, strategy = 'overwrite'):
@@ -112,9 +112,16 @@ def add_questionnaire_response_item_line(existing_item, id, question, df_value_s
 
 def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
     type = get_question_fhir_type(question)
+    if pd.notna(question['required']):
+        if int(question['required']) == 1:
+            question['required']=1
+        else : question['required']=0
+    else : question['required']=0
+
     new_question = QuestionnaireItemSDC(
                 linkId = id,
                 type = type,
+                required= question['required'],
                 extension = get_question_extension(question, df_value_set ),
                 answerValueSet = get_question_valueset(question, df_value_set),
                 design_note = "status::draft",
@@ -240,7 +247,9 @@ def get_question_definition(question):
 
 def get_type_details(question):
     # structure main_type detail_1::detail_2
-    type_arr = question['type'].split(" ")
+    if 'type' not in question or not isinstance(question['type'], str):
+        return None, None, None
+    type_arr = str(question['type']).split(" ")
     # split each details
     if len(type_arr)>1:
         detail_arr = type_arr[1].split('::')
@@ -259,7 +268,7 @@ def init_questionnaire(filepath, id):
     elif default is not None:
         # create file from default
         questionnaire = QuestionnaireSDC.parse_raw( json.dumps(default))
-        questionnaire.id=id
+        questionnaire.id=clean_name(id)
 
     return questionnaire
 

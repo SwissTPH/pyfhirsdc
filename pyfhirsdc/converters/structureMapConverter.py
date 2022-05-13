@@ -26,22 +26,49 @@ def get_question_profiles(df_questions):
     profiles = df_questions['map_profile'].dropna().unique()
     return profiles
 
+# generate a single structureMap
+def get_structure_map_bundle(questionnaire_name, df_questions):
+    structure_maps = []
+    profiles = get_question_profiles(df_questions)
+    sm_name = get_structure_map_name(profiles, questionnaire_name)
+    filepath = get_resource_path(
+        "StructureMap", 
+        sm_name
+    )
+    structure_map = init_structure_map(filepath, profiles, questionnaire_name)
+    if structure_map is not None:
+        map_filepath = get_resource_path("StructureMap", sm_name, "map")
+        structure_map.group = get_structure_map_groups(structure_map.group, profiles, questionnaire_name, df_questions)
+        if structure_map.group and len(structure_map.group)>0 and structure_map.group[0].name != 'fake':
+            structure_map = write_mapping_file(map_filepath, structure_map)
+            structure_maps.append(structure_map)
+            write_resource(filepath, structure_map, get_processor_cfg().encoding)
+        else:
+            print("No mapping found for the questionnaire {0}".format(questionnaire_name))
+
+    return structure_maps
+
+def clean_group_name(name):
+    return clean_name(name).replace('-','').replace('.','')
+
 def get_structure_maps(questionnaire_name, df_questions):
     structure_maps = []
     profiles = get_question_profiles(df_questions)
     for profile in profiles:
-        sm_name = clean_name(profile) + "-" + clean_name(questionnaire_name)
+        sm_name = get_structure_map_name([profile], questionnaire_name)
         filepath = get_resource_path(
             "StructureMap", 
             sm_name
             )
-        structure_map = init_structure_map(filepath, profile, questionnaire_name)
+        structure_map = init_structure_map(filepath, [profile], questionnaire_name)
         if structure_map is not None:
             map_filepath = get_resource_path("StructureMap", sm_name, "map")
-            structure_map.group = get_structure_map_groups(structure_map.group, profile, questionnaire_name, df_questions)
-            structure_map = write_mapping_file(map_filepath, structure_map)
-            structure_maps.append(structure_map)
-            write_resource(filepath, structure_map, get_processor_cfg().encoding)
+            structure_map.group = get_structure_map_groups(structure_map.group, [profile], questionnaire_name, df_questions)
+            #Write the structure map only if the is content
+            if structure_map.group and len(structure_map.group)>0 and structure_map.group[0].name != 'fake':
+                structure_map = write_mapping_file(map_filepath, structure_map)
+                structure_maps.append(structure_map)
+                write_resource(filepath, structure_map, get_processor_cfg().encoding)
     return structure_maps
 
 def add_structure_maps_url(resource, structure_maps):
@@ -52,73 +79,84 @@ def add_structure_maps_url(resource, structure_maps):
             )
     return resource
 
-def init_structure_map(filepath, profile, questionnaire_name):
-    strucutred_map_json = read_resource(filepath, "StructureMap")
-    default =get_defaut_fhir('StructureMap')
+def init_structure_map(filepath, profiles, questionnaire_name):
+    strucutred_map_json = None# read_resource(filepath, "StructureMap")
+    default = get_defaut_fhir('StructureMap')
     if strucutred_map_json is not None :
         structure_map = StructureMap.parse_raw( json.dumps(strucutred_map_json))  
     elif default is not None:
         # create file from default
         structure_map = StructureMap.parse_raw( json.dumps(default))
-        structure_map.id=get_structure_map_name(profile, questionnaire_name)
+        structure_map.id=get_structure_map_name(profiles, questionnaire_name)
         structure_map.name= structure_map.id
         structure_map.url=get_resource_url("StructureMap", structure_map.id)
-        structure_map.structure = get_structure_map_structure(profile, questionnaire_name)
+        structure_map.structure = get_structure_map_structure(profiles, questionnaire_name)
         
     return structure_map
 
+# 1 structure map per profile and questionnaire
+def get_structure_map_name(profiles, questionnaire_name):
+    if len(profiles)==1:
+        return clean_name(profiles[0]) + "-" + clean_name(questionnaire_name)
+    else:
+        return clean_name(questionnaire_name)
 
-def get_structure_map_name(profile, questionnaire_name):
-    return clean_name(profile) + "-" + questionnaire_name
 
 
-
-def get_structure_map_structure(profile, questionnaire_id):
+def get_structure_map_structure(profiles, questionnaire_id):
     structures = []
     # generate source strucutre
     structures.append(StructureMapStructure(
         url = Canonical(  get_resource_url("Questionnaire", questionnaire_id)),
         mode = Code( 'source'),
-        alias = clean_name(questionnaire_id)
+        alias = clean_group_name(questionnaire_id)
 
     ))
-    # generate target structure
-    structures.append(StructureMapStructure(
-        url = Canonical( get_resource_url("Profile", profile)),
-        mode = Code( 'target'),
-        alias = clean_name(profile)
-    ))
+    for profile in profiles:
+        # generate target structure
+        structures.append(StructureMapStructure(
+            url = Canonical( get_resource_url("Profile", profile)),
+            mode = Code( 'target'),
+            alias = clean_group_name(profile)
+        ))
     return structures
 
-def get_structure_map_groups(groups, profile, questionnaire_name, df_questions):
-    groups = []
-    group_tmp = get_structure_map_generated_group(profile, questionnaire_name, df_questions)
-    # clean fake/merge
-    replaced = False
-    for group in groups:
-        if group.name != 'fake':
-            if group.name == group_tmp.name:
-                group = group_tmp
-                replaced = True
-            groups.append(group)
-    if replaced is False:
-        groups.append(group_tmp)
-    return groups
+def get_structure_map_groups(groups, profiles, questionnaire_name, df_questions):
+    out_groups = []
+    for profile in profiles:
+        group_tmp = get_structure_map_generated_group(profile, questionnaire_name, df_questions)
+        # clean fake/merge
+        if len(groups) == 1 and groups[0].name == 'fake':
+             out_groups.append(group_tmp)
+        else:
+            replaced = False
+            for group in groups:           
+                if group.name == group_tmp.name:
+                    #TODO manage group merge ? 
+                    group = group_tmp
+                    replaced = True
+                    out_groups.append(group)
+                    break  
+                else:
+                    out_groups.append(group)
+            if replaced is False:
+                out_groups.append(group_tmp)
+    return out_groups
 
 def get_structure_map_generated_group(profile, questionnaire_name, df_questions):
 
     group = StructureMapGroup(
-        name = "main",
+        name = clean_group_name(profile),
         typeMode = Code('types'),
         input = [StructureMapGroupInput(
             mode = Code( 'source'),
             name = "qr",
-            type = clean_name(questionnaire_name)
+            type = clean_group_name(questionnaire_name)
         ),
         StructureMapGroupInput(
             mode = Code( 'target'),
             name = "tgt",
-            type = clean_name(profile)
+            type = clean_group_name(profile)
         )],
         rule = get_structure_map_rules(profile, df_questions)
     )

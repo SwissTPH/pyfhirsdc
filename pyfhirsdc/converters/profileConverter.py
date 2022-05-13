@@ -14,7 +14,7 @@ from pyfhirsdc.converters.questionnaireItemConverter import get_question_fhir_da
 import pandas as pd
 import validators
 
-from pyfhirsdc.converters.utils import get_resource_name, get_resource_url
+from pyfhirsdc.converters.utils import clean_name, get_resource_name, get_resource_url
 
       
 
@@ -22,9 +22,11 @@ def init_extension_def(element):
     map_extension = element['map_extension'].strip().split('::')
     ## Check for the map resource of the extension and grab the extension URL
     ## Replace the Canonical base URL placeholder with the real url 
+    
     if not validators.url(map_extension[0]):
+        id = clean_name(map_extension[0].strip())
         extension_name = get_resource_name("StructureDefinition", map_extension[0].strip())
-        extension_url = get_resource_url("StructureDefinition", extension_name)
+        extension_url = get_resource_url("StructureDefinition", id)
         # Pydantics does not allow to add a property to an object without providing all the 
         # mandatory fields. So first this object has to be created 
         print(extension_name)
@@ -35,7 +37,7 @@ def init_extension_def(element):
             status = Code('draft'), 
             type = "Extension",
             url = Uri(extension_url).strip(),
-            id = Id(map_extension[0].strip()),
+            id = id,
             experimental = False,
             version = get_fhir_cfg().version,
             baseDefinition = "http://hl7.org/fhir/StructureDefinition/Extension",
@@ -140,7 +142,7 @@ def init_profile_def(element):
         structure_def_scaffold['baseDefinition'] = Uri(path)
         structure_def_scaffold["derivation"] = "constraint"
     structure_def = StructureDefinition.parse_obj(structure_def_scaffold)
-    structure_def.id = Id(structure_def_name.replace(' ', '-'))
+    structure_def.id = clean_name(structure_def_name)
     structure_def.experimental = False
     structure_def.fhirVersion = get_fhir_cfg().version
     structure_def.description = element['description']
@@ -174,7 +176,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                 extension_name = (extension.split('/')[-1]).strip()
             extension_id = "{0}.extension.{1}".format(resource_type, extension_name).strip()
             element_def = {
-                "id" : extension_id,
+                "id" : clean_name(extension_id),
                 "path" : resource_type+".extension",
                 "definition" : row["description"],
                 "sliceName" : extension_name,
@@ -183,7 +185,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                 "max": extension_max,
                 "type": [{
                     "code": "Extension",
-                    "profile": [get_fhir_cfg().canonicalBase+'StructureDefinition/'+extension_name.strip()]
+                    "profile": [ get_resource_url('StructureDefinition', extension_name)]
                 }],
                 "mapping": [
                     {

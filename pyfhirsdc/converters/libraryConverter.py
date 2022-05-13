@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
-from pyfhirsdc.converters.utils import get_resource_url
+from pyfhirsdc.converters.utils import clean_name, get_resource_url
 from pyfhirsdc.serializers.utils import write_resource
 from pyfhirsdc.converters.planDefinitionConverter import getIdentifierFirstRep,  write_action_condition
 from fhir.resources.library import Library
@@ -26,7 +26,7 @@ def write_library_CQL(output_path, lib, cql):
             output.write(cql[entry])
 
 def generate_plan_defnition_lib(planDefinition):
-    id = planDefinition.id
+    id = clean_name(planDefinition.id)
     print("Generating library ", planDefinition.name, ".......")
     library = Library(
         id = id,

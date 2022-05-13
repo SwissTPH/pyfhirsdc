@@ -7,7 +7,7 @@ the mapping language is define in the rule description
 
 import numpy
 import json
-from pyfhirsdc.config import get_fhir_cfg
+from pyfhirsdc.converters.utils import get_resource_url
 from pyfhirsdc.serializers.utils import write_resource
 import requests
 from fhir.resources.structuremap import StructureMap
@@ -22,9 +22,11 @@ def write_mapping_file(filepath, structure_map, update_map = True):
         , 'map'
         )
     if update_map:
-        url_map= get_fhir_cfg().canonicalBase + '/StructureMap'
+        
+        url_map= get_resource_url('StructureMap', structure_map.id)
+        print("Sending the mapping file {0}".format(url_map))
         headers_map = {'Content-type': 'text/fhir-mapping', 'Accept': 'application/fhir+json;fhirVersion=4.0'}
-        response = requests.post(url_map, data = buffer, headers = headers_map) 
+        response = requests.put(url_map, data = buffer, headers = headers_map) 
         if response.status_code == 200 or response.status_code == 201:
             obj = json.loads(response.text)
             obj['status'] = structure_map.status
