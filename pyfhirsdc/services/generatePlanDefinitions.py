@@ -56,7 +56,7 @@ def generate_plandefinition( name,df_actions):
     pd_df.id= planDefinitionId
 
     pd_df.name = planDefinitionId
-    pd_df.url = get_fhir_cfg().canonicalBase + "/PlanDefinition/" + planDefinitionId
+    pd_df.url = get_fhir_cfg().canonicalBase + "PlanDefinition/" + planDefinitionId
     planDefinition = processDecisionTable(pd_df, df_actions)
      
     if planDefinition is not None:
