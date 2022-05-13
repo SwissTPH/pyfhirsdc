@@ -1,6 +1,7 @@
 
 
 from pyfhirsdc.config import get_defaut_path, get_fhir_cfg, get_processor_cfg, get_defaut_fhir
+from pyfhirsdc.converters.utils import get_resource_url
 from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.plandefinition import PlanDefinition
 from fhir.resources.library import Library
@@ -56,7 +57,7 @@ def generate_plandefinition( name,df_actions):
     pd_df.id= planDefinitionId
 
     pd_df.name = planDefinitionId
-    pd_df.url = get_fhir_cfg().canonicalBase + "/PlanDefinition/" + planDefinitionId
+    pd_df.url = get_resource_url("PlanDefinition", planDefinitionId)
     planDefinition = processDecisionTable(pd_df, df_actions)
      
     if planDefinition is not None:

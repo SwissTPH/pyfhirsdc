@@ -73,13 +73,13 @@ def get_structure_map_name(profile, questionnaire_name):
 
 
 
-def get_structure_map_structure(profile, questionnaire_name):
+def get_structure_map_structure(profile, questionnaire_id):
     structures = []
     # generate source strucutre
     structures.append(StructureMapStructure(
-        url = Canonical(  get_resource_url("Questionnaire", questionnaire_name)),
+        url = Canonical(  get_resource_url("Questionnaire", questionnaire_id)),
         mode = Code( 'source'),
-        alias = clean_name(questionnaire_name)
+        alias = clean_name(questionnaire_id)
 
     ))
     # generate target structure

@@ -38,7 +38,7 @@ def generate_custom_code_system(dfs_questionnaire, df_value_set):
     code_system.concept = concept
 
     # write file
-    with open(filepath, 'w') as json_file:
+    with open(filepath, 'w',  encoding="utf-8") as json_file:
         json_file.write(code_system.json( indent=4))
 
 def generate_anthro_codesystems(conf):
@@ -63,7 +63,7 @@ def  generate_anthro_codesystem(name,df):
     code_system =  CodeSystem(
         status = "active",
         content = "complete",
-        url = get_resource_url(resource_type,ressource_name),
+        url = get_resource_url(resource_type,name),
         name = ressource_name,
         id = name,
         concept = generate_anthro_valueset_concepts(df)

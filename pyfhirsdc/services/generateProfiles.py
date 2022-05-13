@@ -6,7 +6,7 @@
 """
 
 from tkinter.font import names
-from pyfhirsdc.converters.structureMapConverter import add_structure_maps_url, get_structure_maps
+
 from pyfhirsdc.config import  get_processor_cfg
 from pyfhirsdc.converters.questionnaireItemConverter import convert_df_to_questionitems, init_questionnaire
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource

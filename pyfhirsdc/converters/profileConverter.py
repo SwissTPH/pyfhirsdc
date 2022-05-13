@@ -124,7 +124,6 @@ def convert_df_to_profiles(df_questions, df_profile, df_valueset):
 
 def init_profile_def(element):
     path = element['baseProfile']
-    canonical = get_fhir_cfg().canonicalBase
     structure_def_name_list = element['title'].split(' ',1)
     structure_def_name = ' '.join(structure_def_name_list)
     structure_def_scaffold = {
@@ -135,7 +134,7 @@ def init_profile_def(element):
         "name" : structure_def_name,
         "status" : Code('draft'), 
         "type" : structure_def_name_list[-1],
-        "url" : Uri(canonical+"StructureDefinition/"+structure_def_name.replace(' ', '-')).strip()
+        "url" : get_resource_url('StructureDefinition', Id(structure_def_name.replace(' ', '-')))
     }
     if pd.notna(path):
         structure_def_scaffold['baseDefinition'] = Uri(path)
@@ -263,7 +262,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                         "valueString" : element_valueset_name
                     }],
                     "strength":"extensible",
-                    "valueSet" : get_fhir_cfg().canonicalBase+"/ValueSet/valueset-"+element_valueset_name
+                    "valueSet" : get_resource_url('ValueSet',element_valueset_name) 
                 }
             element_def['type'] = [element_def_type]
             element_list.append(element_def)

@@ -26,7 +26,7 @@ def  generate_value_set(name, df_value_set):
     vs = init_vs(filepath)
     vs.name =  get_resource_name('ValueSet',name)
     vs.id =  clean_name(name)
-    vs.url = get_resource_url('ValueSet', name)
+    vs.url = get_resource_url('ValueSet', vs.id)
     vs.compose = get_value_set_compose(vs.compose, name, df_value_set)
     vs = get_value_set_additional_data(vs,  df_value_set[df_value_set['valueSet'] == name ])
     write_resource(filepath, vs, get_processor_cfg().encoding)
