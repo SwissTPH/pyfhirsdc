@@ -2,6 +2,7 @@ import sys, getopt
 from pyfhirsdc.services.generateCodeSystem import generate_anthro_codesystems
 from pyfhirsdc.services.processInputFile import process_input_file
 from pyfhirsdc.services.processLibraries import process_libraries
+from pyfhirsdc.services.uploadFiles import upload_files
 
 def print_help():
     print('-c / --conf config_file_path')
@@ -17,8 +18,9 @@ if __name__ == "__main__":
     output = False
     library = False
     anthro = False
+    upload = False
     try:
-      opts, args = getopt.getopt(sys.argv[1:],"hlobc:",["conf=","help","anthro"])
+      opts, args = getopt.getopt(sys.argv[1:],"hlobuc:",["conf=","help","anthro"])
     except getopt.GetoptError:
         print_help()
         sys.exit(2)
@@ -36,6 +38,8 @@ if __name__ == "__main__":
             anthro = True
         elif opt == "-l":
             library = True
+        elif  opt == "-u":
+            upload = True 
     if anthro:
         generate_anthro_codesystems(conf)
     if output:
@@ -48,6 +52,9 @@ if __name__ == "__main__":
     if bundle:
         # bundle everything
         pass
+    if upload:
+        upload_files(conf, bundle)
+        
 
 
     

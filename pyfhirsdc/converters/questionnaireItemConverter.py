@@ -269,17 +269,21 @@ def init_questionnaire(filepath, id):
         # create file from default
         questionnaire = QuestionnaireSDC.parse_raw( json.dumps(default))
         questionnaire.id=clean_name(id)
+        questionnaire.url=get_resource_url('Questionnaire',id) 
 
     return questionnaire
 
 def init_questionnaire_response(questionnaire):
-    questionnaire_response_json = {}
-    questionnaire_response_json["resourceType"] = "QuestionnaireResponse"
-    questionnaire_response_json["id"] = questionnaire.id
-    questionnaire_response_json["questionnaire"] = questionnaire.url
-    questionnaire_response_json["status"] = "completed"
+
+
     #TODO should we have a reference to the subject here with mapping language?
     #TODO same for encounter, source and author
     #questionnaire_response_json.subject = ""
-    questionnaire_response = QuestionnaireResponseSDC.parse_raw(json.dumps(questionnaire_response_json))    
+    questionnaire_response = QuestionnaireResponseSDC(
+        resourceType = "QuestionnaireResponse",
+        id = questionnaire.id,
+        #url = get_resource_url('QuestionnaireResponse',questionnaire.id),there is no quesionnaire response urlMust be profile
+        questionnaire = questionnaire.url, 
+        status = "completed"
+    )  
     return questionnaire_response
