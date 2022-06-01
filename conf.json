@@ -1,6 +1,6 @@
 {
     "processor":{
-        "anthroPath":"l2/anthro",
+        "inputFile":"PLACEHOLDER",
         "outputPath":"output/",
         "excudedWorksheets":[
             "q.new-encounter"
@@ -95,9 +95,42 @@
             }
             
         },
+        "Activity":{
+            "outputPath":"resources/activitydefinition",
+            "default":{
+                "status":"active",
+                "extension": [{
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "shareable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "computable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
+                    "valueCode": "publishable"
+                  }, {
+                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeRepresentationLevel",
+                    "valueCode": "structured"
+                  }],
+                  "experimental": false,
+                  "resourceType": "ActivityDefinition",
+                  "code" : {
+                    "coding" : [
+                      {
+                        "system" : "http://hl7.org/fhir/uv/cpg/CodeSystem/cpg-activity-type",
+                        "code" : "collect-information",
+                        "display" : "Collect information"
+                      }
+                    ]
+                  }
+            }
+        },
         "Library":{
             "status":"active",
             "outputPath":"resources/library/"
+        },
+        "Bundle":{
+            "outputPath" : "bundles"
         },
         "pagecontent":{
             "outputPath":"/pagecontent/"
@@ -106,10 +139,10 @@
             "outputPath":"vocabulary/codesystem/",
             "default":{
                 "resourceType": "CodeSystem",
-                "id": "emc-custom-codes-codes",
-                "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emc-custom-codes-codes",
-                "name": "emc-custom-codes_codes",
-                "title": "Extended Codes CodeSystem codes",
+                "id": "emcare-custom-codes",
+                "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                "name": "emc-custom-codes",
+                "title": "Extended Codes CodeSystem",
                 "status": "draft",
                 "experimental": false,
                 "description": "Set of codes identified as being needed but not found in existing Code Systems",
@@ -150,7 +183,6 @@
                 "id": "emcare-a-de12",
                 "url": "/ValueSet/emc-",
                 "name": "emcare-",
-                "title": "Provide an estimated age or estimated date of birth",
                 "status": "draft",
                 "experimental": false,
                 "description": "Codes representing possible values for the Provide an estimated age or estimated date of birth element",
