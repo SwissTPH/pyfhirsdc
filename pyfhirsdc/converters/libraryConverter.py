@@ -48,8 +48,9 @@ def generate_plan_defnition_lib(planDefinition):
         )
     )
     libraryCanonical = Canonical(library.url)
-    if not planDefinition.library:  planDefinition.library = []    
-    planDefinition.library.append(libraryCanonical)
+    if not planDefinition.library: 
+        planDefinition.library = []    
+        planDefinition.library.append(libraryCanonical)
     cql = {}
     cql['header'] = writeLibraryHeader(library, get_processor_cfg().scope)
     i = 0
