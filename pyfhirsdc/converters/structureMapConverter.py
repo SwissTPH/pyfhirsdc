@@ -115,7 +115,7 @@ def get_structure_map_structure(profiles, questionnaire_id):
     for profile in profiles:
         # generate target structure
         structures.append(StructureMapStructure(
-            url = Canonical( get_resource_url("Profile", profile)),
+            url = Canonical( get_resource_url("StructureDefinition", profile)),
             mode = Code( 'target'),
             alias = clean_group_name(profile)
         ))

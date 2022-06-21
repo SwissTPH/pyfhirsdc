@@ -97,11 +97,11 @@ def get_value_set_concept(concepts, id, line):
 
 def get_value_set_additional_data(vs, df_value_set):
     # need to support {{title}}
-    df_value_set = df_value_set[df_value_set.index.isin(
-        get_value_set_additional_data_keyword()
-        )].to_dict('index')
-    for code, line in df_value_set.items():
-        if code == '{{title}}':
+    #df_value_set = df_value_set[df_value_set.index.isin(
+    #    get_value_set_additional_data_keyword()
+    #    )].to_dict('index')
+    for index, line in df_value_set.iterrows():
+        if line['code'] == '{{title}}':
             vs = get_value_set_title(vs, line)
     return vs
 
@@ -127,7 +127,7 @@ def get_value_set_title(vs, line):
     if  pd.notna(line['display']):
         vs.title = line['display']
     if pd.notna(line['definition']):
-        vs.definition = line['definition']
+        vs.description = line['definition']
     return vs
 
 

@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from pyfhirsdc.config import get_defaut_path, get_processor_cfg
 from pyfhirsdc.converters.utils import get_resource_name
-
+import json
 
 def write_resource(filepath, resource, encoding = None):
     if encoding is None:
@@ -37,3 +37,11 @@ def get_resource_path(resource_type, name, encoding = None, generateName = True 
             filename =  name + "." + encoding
         fullpath = os.path.join(path, filename)
         return fullpath
+
+def get_resources_files(resource_type):
+    path = get_defaut_path(resource_type, "resources/"+ resource_type.lower())
+    resources = []
+    for p in Path(path).glob('*.json'):
+        json_obj = json.loads(p.read_text())
+        resources.append(json_obj)
+    return resources

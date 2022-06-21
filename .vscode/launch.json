@@ -56,6 +56,19 @@
             ],
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Python: UJpload",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": [
+                "-c",
+                "conf.json",
+                "-u"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

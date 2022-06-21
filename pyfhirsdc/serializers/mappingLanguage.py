@@ -46,8 +46,8 @@ def get_mapping_file_header(structure_map):
     header = "map '" + structure_map.url + "' = '" + structure_map.name + "'\n\n"
     # get the source / Source
     for in_output in structure_map.structure:
-        header = header + "uses '" + in_output.url + "' alias '"\
-             + str(in_output.alias).strip("'") + "' as " + in_output.mode + "\n"
+        header = header + "uses '" + in_output.url + "' alias "\
+             + str(in_output.alias).strip("'") + " as " + in_output.mode + "\n"
     
     return header
 
@@ -70,7 +70,7 @@ def get_mapping_file_group(group):
             and in_output.name is not None\
             and in_output.type is not None :
             group_buffer = group_buffer + "\t" + in_output.mode + " "\
-                + in_output.name + " : '" + in_output.type + "'"
+                + in_output.name + " : " + in_output.type 
             group_buffer = group_buffer + ",\n" if i < len(group.input)\
                 else group_buffer + "\n"
             if in_output.mode == 'source':

@@ -8,7 +8,6 @@
 import json
 import os
 from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg, read_config_file
-from ocl_map.conceptConverter import fhir_concepts_to_ocl_concepts
 from pyfhirsdc.converters.codeSystemConverter import generate_anthro_valueset_concepts, generate_questionnaire_concept, generate_valueset_concept
 from pyfhirsdc.serializers.inputFile import read_tsv_file
 from pyfhirsdc.serializers.json import  read_resource
