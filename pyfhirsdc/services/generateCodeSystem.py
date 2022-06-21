@@ -8,6 +8,7 @@
 import json
 import os
 from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg, read_config_file
+from ocl_map.conceptConverter import fhir_concepts_to_ocl_concepts
 from pyfhirsdc.converters.codeSystemConverter import generate_anthro_valueset_concepts, generate_questionnaire_concept, generate_valueset_concept
 from pyfhirsdc.serializers.inputFile import read_tsv_file
 from pyfhirsdc.serializers.json import  read_resource
@@ -24,13 +25,14 @@ def generate_custom_code_system(dfs_questionnaire, df_value_set):
            concept = concept +  question_concept
     valueset_concept = generate_valueset_concept(df_value_set)
     if len(valueset_concept)>0:
-          concept = concept +  valueset_concept
+        concept = concept +  valueset_concept
 
+    
     # path must end with /
+    
     # create directory if not exists
 
     filepath = get_resource_path("CodeSystem", get_processor_cfg().scope.lower())
-
 
     print('processing codeSystem {0}'.format( get_processor_cfg().scope.lower()))
     # read file content if it exists
@@ -40,6 +42,9 @@ def generate_custom_code_system(dfs_questionnaire, df_value_set):
     # write file
     with open(filepath, 'w',  encoding="utf-8") as json_file:
         json_file.write(code_system.json( indent=4))
+        #TODO use configuration
+
+        
 
 def generate_anthro_codesystems(conf):
     # Read the config file

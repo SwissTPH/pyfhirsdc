@@ -1,14 +1,19 @@
 {
     "processor":{
         "anthroPath":"l2/anthro",
-        "outputPath":"output/",
-        "excudedWorksheets":[
-            "q.new-encounter"
-        ],
+        "outputPath":"C:\\Users\\delcpa\\Development\\smart-emcare\\input\\",
+        "inputFile":"C:\\Users\\delcpa\\switchdrive\\DHU\\Projects\\WHO DAK\\merged\\xls_form2.xlsx",
+        "excudedWorksheets":[],
         "skiprows" : 0,
         "skipcols" : 0,
         "scope":"EmCare",
-        "encoding":"json"
+        "encoding":"json",
+        "ocl":{
+            "server":"app.openconceptlab.org",
+            "source":"emcare",
+            "org":"SwissTPH",
+            "APIToken":"3a0982c6d5122391ce91c1491523c37f0fd60757"
+        }
     },
     "fhir":{
         "version": "4.0.1",
@@ -33,7 +38,7 @@
             }
         },
         "Extensions":{
-            "outputPath":"resources/extensions"
+            "outputPath":"extensions"
         },
         "Profiles": {
             "outputPath":"profiles"

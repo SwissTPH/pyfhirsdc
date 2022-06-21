@@ -1,7 +1,7 @@
 
 
 from pyfhirsdc.config import get_defaut_path, get_fhir_cfg, get_processor_cfg, get_defaut_fhir
-from pyfhirsdc.converters.utils import get_resource_url
+from pyfhirsdc.converters.utils import clean_name, get_resource_url
 from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.plandefinition import PlanDefinition
 from fhir.resources.library import Library
@@ -48,7 +48,7 @@ def generate_plandefinition( name,df_actions):
     dict_actions = df_actions.to_dict('index')
 
     ## generate libraries, plandefinitions and libraries
-    planDefinitionId = name.replace('.','')
+    planDefinitionId = clean_name(name)
     pd_df.title = planDefinitionId
     identifier = Identifier.construct()
     identifier.use = "official"
