@@ -45,3 +45,9 @@ def get_resources_files(resource_type):
         json_obj = json.loads(p.read_text())
         resources.append(json_obj)
     return resources
+
+def get_cql_files(path):
+    resources = []
+    for p in Path(path).glob('*.cql'):
+        resources.append(p.read_text())
+    return resources
