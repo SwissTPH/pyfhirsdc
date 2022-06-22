@@ -1,5 +1,4 @@
 from pyfhirsdc.serializers.inputFile import read_input_file, parse_sheets
-from pyfhirsdc.serializers.json import read_json
 from pyfhirsdc.config import *
 from pyfhirsdc.services.generateActivities import generate_activities
 from pyfhirsdc.services.generateCodeSystem import generate_custom_code_system

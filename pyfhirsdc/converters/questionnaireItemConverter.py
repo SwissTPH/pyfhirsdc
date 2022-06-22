@@ -172,6 +172,7 @@ def get_question_fhir_data_type(question_type):
                 "boolean" : "boolean",
                 "date" : "date",
                 "time" : "time",
+                "dateTime" : "datetime",
                 "decimal" :"decimal",
                 "CodeableConcept": "CodeableConcept",
                 "Reference" : "Reference"

@@ -15,8 +15,8 @@ import pandas as pd
 import validators
 
 from pyfhirsdc.converters.utils import clean_name, get_resource_name, get_resource_url
-
-      
+# allow slice in ID
+Id.configure_constraints(regex=re.compile(r"^[A-Za-z0-9\-.]+(:[A-Za-z0-9\-.]+)?$"))      
 
 def init_extension_def(element):
     map_extension = element['map_extension'].strip().split('::')
@@ -47,7 +47,7 @@ def init_extension_def(element):
             structure_def.description = element['description']
         if pd.notna(element["map_profile"]):
             structure_def.context = [StructureDefinitionContextType({"type": "element",\
-                "expression": element['map_profile'].split(' ',1)[1]})]
+                "expression": '-'.join(element['map_profile'].split(' ',1)[1:])})]
         min_cardinality = map_extension[1].strip()
         max_cardinality = map_extension[2].strip()
         extension_element = [ElementDefinition(
@@ -152,7 +152,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
     resource_type = name.split(' ', 1 )[-1].strip()
     element_list = []
     element_list.append({
-        "id": resource_type,
+        "id": clean_name(resource_type),
         "path": resource_type
     })
     print('Processing Profile: {0}'.format(name))
@@ -236,7 +236,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                     element_type = 'CodeableConcept'
                     add_binding = True
             element_def = {
-                "id" : id.replace(':','.').strip(), 
+                "id" : clean_name(id), 
                 "path" : path.strip(),
                 "short" : row["label"],
                 "definition" : row["description"],
@@ -298,7 +298,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                 elif int(sibling['max'])> int(parent_max):
                     parent_max = sibling['max']
             parent_element_def = {
-                    "id" : parent_id,
+                    "id" : clean_name(parent_id),
                     "path" : parent_id,
                     "slicing" : {
                         "discriminator" : [{
