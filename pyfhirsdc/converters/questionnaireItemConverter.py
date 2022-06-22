@@ -127,8 +127,8 @@ def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
                 design_note = "status::draft",
                 definition = get_question_definition(question)
             )
-    if pd.notna(question['description']):
-        new_question.text = question['description']
+    if pd.notna(question['label']):
+        new_question.text = question['label']
     
     return new_question
 
