@@ -270,6 +270,7 @@ def init_questionnaire(filepath, id):
         # create file from default
         questionnaire = QuestionnaireSDC.parse_raw( json.dumps(default))
         questionnaire.id=clean_name(id)
+        questionnaire.title=id
         questionnaire.url=get_resource_url('Questionnaire',id) 
 
     return questionnaire
