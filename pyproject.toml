@@ -7,6 +7,7 @@ requires = [
     "fhir.resources",
     "pydantic",
     "validators",
-    "odfpy"
+    "odfpy",
+    "ocldev"
 ]
 build-backend = "setuptools.build_meta"
