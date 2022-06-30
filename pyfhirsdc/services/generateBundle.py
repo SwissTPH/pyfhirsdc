@@ -1,7 +1,8 @@
 import json
 import os
-from fhir.resources.bundle import Bundle, BundleEntry
+from fhir.resources.bundle import Bundle, BundleEntry,BundleEntryRequest
 from fhir.resources.identifier import Identifier
+
 from pyfhirsdc.config import get_processor_cfg, read_config_file
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireSDC
 from pyfhirsdc.serializers.json import read_json, read_resource
@@ -14,7 +15,7 @@ from pyfhirsdc.serializers.utils import write_resource
     
 def write_bundle(conf):
     bundle = Bundle( identifier = Identifier(value = 'EmCareBundle'),
-                type  = 'collection', entry = [])
+                type  = 'batch', entry = [])
     # Read the config file
     config_obj = read_config_file(conf)
     if config_obj is None:
@@ -39,6 +40,10 @@ def add_resource(path,name,bundle):
         bundle.entry.append(
             BundleEntry(
                 fullUrl = ressource_dict['url'],
+                request = BundleEntryRequest(
+                    method  = 'PUT',
+                    url =  ressource_dict['resourceType'] + '/' + ressource_dict['id']      
+                ),
                 resource= QuestionnaireSDC.parse_raw( read_json(file_path, type = "str")) if ressource_dict['resourceType'] == 'Questionnaire' else read_json(file_path, type = "str")
             )
         )
