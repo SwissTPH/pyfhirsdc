@@ -46,16 +46,47 @@ def get_mapping_file_header(structure_map):
     header = "map '" + structure_map.url + "' = '" + structure_map.name + "'\n\n"
     # get the source / Source
     for in_output in structure_map.structure:
-        header = header + "uses '" + in_output.url + "' alias "\
-             + str(in_output.alias).strip("'") + " as " + in_output.mode + "\n"
-    
+        header += "// {3}\nuses '{0}' alias {1} as {2}\n".format(
+            in_output.url,
+            str(in_output.alias).strip("'"),
+            in_output.mode,
+            in_output.documentation if in_output.documentation is not None else ''
+            )
     return header
 
 def get_mapping_file_groups(structure_map):
     group_buffer = ''
+    # du bundle if ressource found
+    if len(structure_map.group):
+        group_buffer += get_group_bundle_header()
+        for group in structure_map.group:
+            group_buffer += get_group_bundle(group)
+        group_buffer += "}\n\n"
     for group in structure_map.group:
         group_buffer = group_buffer + get_mapping_file_group(group)
     return group_buffer
+
+def get_group_bundle_header():
+    return "group sdohMapping(source src : questionnaireResponse, target bundle : Bundle) {\n\
+            src -> bundle.id = uuid() 'id';\n\
+            //human readable id for test\n\
+            //src -> bundle.id = 'SDOHCC-BundleHungerVitalSignExample';\n\
+            src -> bundle.type = 'transaction' 'type';\n"
+
+
+def get_group_bundle(group):
+    profile = None
+    for in_output in group.input:
+        if in_output.mode == 'target':
+                profile = in_output.type
+    if profile is not None:
+        rule = "src -> bundle.entry as entry, entry.resource = create('{0}') as tgt then {1}(src, {0}) '{1}';\n".format(
+            profile, 
+            group.name
+        )
+        return rule
+    else:
+        print("group {} without target".format(group.name))
 
 
 def get_mapping_file_group(group):
