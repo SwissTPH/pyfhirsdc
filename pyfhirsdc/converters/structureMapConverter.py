@@ -107,17 +107,27 @@ def get_structure_map_structure(profiles, questionnaire_id):
     structures = []
     # generate source strucutre
     structures.append(StructureMapStructure(
-        url = Canonical(  get_resource_url("Questionnaire", questionnaire_id)),
+        url = Canonical('http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaireresponse'),
         mode = Code( 'source'),
-        alias = clean_group_name(questionnaire_id)
+        alias = 'questionnaireResponse',
+        documentation = clean_group_name(questionnaire_id) + ":" + get_resource_url("Questionnaire", questionnaire_id)
 
     ))
+    if len(profiles)>0:
+        structures.append(StructureMapStructure(
+            url = Canonical('http://hl7.org/fhir/StructureDefinition/Bundle'),
+            mode = Code( 'target'),
+            alias = 'Bundle',
+            documentation = "Bundle are require where there is multiple ressource to be mapped"
+        ))
+
     for profile in profiles:
         # generate target structure
         structures.append(StructureMapStructure(
             url = Canonical( get_resource_url("StructureDefinition", profile)),
             mode = Code( 'target'),
-            alias = clean_group_name(profile)
+            alias = clean_group_name(profile),
+            documentation = "target that will be inserted in the bundle"
         ))
     return structures
 
@@ -151,7 +161,7 @@ def get_structure_map_generated_group(profile, questionnaire_name, df_questions)
         input = [StructureMapGroupInput(
             mode = Code( 'source'),
             name = "qr",
-            type = clean_group_name(questionnaire_name)
+            type = 'questionnaireResponse' 
         ),
         StructureMapGroupInput(
             mode = Code( 'target'),
