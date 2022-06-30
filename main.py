@@ -1,4 +1,5 @@
 import sys, getopt
+from pyfhirsdc.services.generateBundle import write_bundle
 from pyfhirsdc.services.generateCodeSystem import generate_anthro_codesystems
 from pyfhirsdc.services.processInputFile import process_input_file
 from pyfhirsdc.services.processLibraries import process_libraries
@@ -51,7 +52,7 @@ if __name__ == "__main__":
         pass
     if bundle:
         # bundle everything
-        pass
+        write_bundle(conf)
     if upload:
         upload_files(conf, bundle)
         
