@@ -1,5 +1,4 @@
 import sys, getopt
-from pyfhirsdc.services.generateCodeSystem import generate_anthro_codesystems
 from pyfhirsdc.services.processInputFile import process_input_file
 from pyfhirsdc.services.processLibraries import process_libraries
 from pyfhirsdc.services.uploadFiles import upload_files
