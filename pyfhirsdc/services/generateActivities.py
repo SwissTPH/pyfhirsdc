@@ -19,10 +19,10 @@ def generate_activities():
 ## generate questinnaire and questionnaire response
 def generate_activity( questionnaire ) :
     # try to load the existing questionnaire
-    fullpath = get_resource_path("Activity", questionnaire["id"])
-    print('processing activity {0}'.format(questionnaire["id"]))
+    fullpath = get_resource_path("ActivityDefinition", questionnaire["id"].lower())
+    print('processing activity {0}'.format(questionnaire["id"].lower()))
     # read file content if it exists
-    activity_definition = init_activity(fullpath, questionnaire["id"])
+    activity_definition = init_activity(fullpath, questionnaire["id"].lower())
         # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
     activity_definition = create_activity(activity_definition,questionnaire)
     # write file

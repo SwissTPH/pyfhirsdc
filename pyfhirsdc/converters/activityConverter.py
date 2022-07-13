@@ -7,21 +7,21 @@ from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, ge
 import pandas as pd
 
 def init_activity(filepath, id):
-    activity_json = read_resource(filepath, "Activity")
-    default =get_defaut_fhir('Activity')
+    activity_json = read_resource(filepath, "ActivityDefinition")
+    default =get_defaut_fhir('ActivityDefinition')
     if activity_json is not None :
         activity = ActivityDefinition.parse_raw( json.dumps(activity_json))  
     elif default is not None:
         # create file from default
         activity = ActivityDefinition.parse_raw(json.dumps(default))
         activity.id= clean_name(id)
-        activity.url=get_resource_url('Activity',id) 
+        activity.url=get_resource_url('ActivityDefinition',id) 
 
     return activity
 
 def create_activity(activity_definition ,questionnaire):
-    activity_definition.id = questionnaire["id"]
-    activity_definition.url = get_fhir_cfg().canonicalBase
+    activity_definition.id = questionnaire["id"].lower()
+    activity_definition.url = get_fhir_cfg().canonicalBase+"ActivityDefinition/"+activity_definition.id
     activity_definition.experimental = False
     activity_definition.useContext = [{
         "code": {
