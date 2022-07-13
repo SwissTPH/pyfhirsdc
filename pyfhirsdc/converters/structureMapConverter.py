@@ -117,7 +117,7 @@ def get_structure_map_structure(profiles, questionnaire_id):
         structures.append(StructureMapStructure(
             url = Canonical('http://hl7.org/fhir/StructureDefinition/Bundle'),
             mode = Code( 'target'),
-            alias = 'Bundle',
+            alias = 'bundle',
             documentation = "Bundle are require where there is multiple ressource to be mapped"
         ))
 
@@ -134,27 +134,38 @@ def get_structure_map_structure(profiles, questionnaire_id):
 def get_structure_map_groups(groups, profiles, questionnaire_name, df_questions):
     out_groups = []
     for profile in profiles:
-        group_tmp = get_structure_map_generated_group(profile, questionnaire_name, df_questions)
+        group_tmp, sub_groups_tmp = get_structure_map_generated_group(profile, questionnaire_name, df_questions)
         # clean fake/merge
-        if len(groups) == 1 and groups[0].name == 'fake':
-             out_groups.append(group_tmp)
-        else:
-            replaced = False
-            for group in groups:           
-                if group.name == group_tmp.name:
+        replaced = False
+        for group in groups:           
+            if group.name == group_tmp.name:
+                #TODO manage group merge ? 
+                group = group_tmp
+                replaced = True
+                out_groups.append(group)
+                break  
+            elif group.name != 'fake':
+                out_groups.append(group)
+        if replaced is False:
+            out_groups.append(group_tmp)
+        # subgroup
+        replaced = False
+        for sub_group_tmp in sub_groups_tmp:
+            for group in groups:     
+                if group.name == sub_group_tmp.name:
                     #TODO manage group merge ? 
-                    group = group_tmp
+                    group = sub_group_tmp
                     replaced = True
                     out_groups.append(group)
                     break  
-                else:
+                elif group.name != 'fake':
                     out_groups.append(group)
             if replaced is False:
-                out_groups.append(group_tmp)
+                out_groups.append(sub_group_tmp)
     return out_groups
 
 def get_structure_map_generated_group(profile, questionnaire_name, df_questions):
-
+    rules, sub_group = get_structure_map_rules(profile, df_questions)
     group = StructureMapGroup(
         name = clean_group_name(profile),
         typeMode = Code('types'),
@@ -168,18 +179,21 @@ def get_structure_map_generated_group(profile, questionnaire_name, df_questions)
             name = "tgt",
             type = clean_group_name(profile)
         )],
-        rule = get_structure_map_rules(profile, df_questions)
+        rule = rules
     )
-    return group
+    return group, sub_group
 
 def get_structure_map_rules(profile, df_questions):
     rules = []
+    sub_groups = []
     questions = df_questions[df_questions['map_profile'] == profile ].to_dict('index')
     for question_name, question in questions.items():
-        rule = get_structure_map_rule(question_name,  question)
+        rule, sub_group = get_structure_map_rule(question_name,  question)
         if rule is not None:
             rules.append(rule)
-    return rules
+        if sub_group is not None:
+            sub_groups.append(sub_group)
+    return rules, sub_groups
 
 def get_structure_map_rule(question_name, question):
     #TODO manage transform evaluate/create
@@ -187,19 +201,40 @@ def get_structure_map_rule(question_name, question):
     # example rule 13 and 14 http://build.fhir.org/ig/HL7/sdc/StructureMap-SDOHCC-StructureMapHungerVitalSign.json.html
     #profileType, element, valiable = explode_map_resource(question['map_resource'])
     rule = None
+    group = None
     #print("Mapping ``{0}`` added".format(fhirmapping))
     if  'map_resource' in question\
         and pd.notna(question['map_resource'])\
         and question['map_resource'] is not None:
-        is_complex = str(question['map_resource']).find(',') != -1\
-            or str(question['map_resource']).find('{') != -1\
-            or str(question['map_resource'][:-1]).find(';') != -1
-        if question['map_resource'][-1:] != ";":
-            question['map_resource'] = question['map_resource'] + " '"+ question_name + "-1';"
-        # if variable on root, element is the resource itself
-        fhirmapping = "item.answer first as a where item.linkId = '"\
-            + question_name + "'  then { "\
-            + question['map_resource'] + " }"
+        use_helper = str(question['map_resource']).find('::') != -1
+        if use_helper:
+            helper_array = str(question['map_resource']).split('::')
+            helper_func = helper_array[0].strip()
+            helper_args = helper_array[1].split('||') if len(helper_array)>1 else []
+            fhirmapping = generate_helper(helper_func, 'main', question_name, *helper_args)
+            group  = StructureMapGroup(
+                name = helper_func,
+                typeMode = Code('types'),
+                input = [StructureMapGroupInput(
+                    mode = Code( 'source'),
+                    name = "src"            
+                ),
+                StructureMapGroupInput(
+                    mode = Code( 'target'),
+                    name = "tgt"                
+                )],
+                rule = [],
+                documentation =generate_helper(helper_func, 'group', question_name, *helper_args)
+                )
+        else:
+            if question['map_resource'].strip()[-1:] != ";":
+                question['map_resource'] = question['map_resource'] + " '"+ question_name + "-1';"
+            # if variable on root, element is the resource itself
+            fhirmapping =  "src.item as item where linkId  = '{0}' -> tgt then {{ item.answer as a -> {1}   }} '{0}-main';".format(
+                question_name ,
+                question['map_resource']
+            )
+        
         fhirmapping = fhirmapping.replace('{{cs_url}}',  get_custom_codesystem_url())
         fhirmapping = fhirmapping.replace('{{canonical_base}}',  get_fhir_cfg().canonicalBase)
         rule = StructureMapGroupRule(
@@ -209,4 +244,45 @@ def get_structure_map_rule(question_name, question):
             )],
             documentation = fhirmapping,  
             )
-    return rule
+    return rule, group
+
+def generate_helper(helper_func, mode, profile, *helper_args):
+    return  globals()[helper_func](mode,clean_group_name(profile) , *helper_args )
+
+def SetOfficalGivenName(mode, profile, *args):
+    if len(args)!= 3:
+        print('Error SetOfficalGivenName{3} must have 3 parameters')
+        return None
+    if mode == 'main':
+        return   "src.item first as item  where linkId =  {0} or linkId =  {1} or linkId =  {2} -> tgt as target,  target.name as name then SetOfficalGivenName{3}(src, name) 'name-main';".format(args[0],args[1],args[2],profile)
+    return "group SetOfficalGivenName{3}(source src, target tgt){{\n\
+        src -> tgt.use = 'official'  then {{\n\
+            src.item as item where linkId  =  {0}   then {{item.answer as a -> tgt.given = a 'f';}} 'first';\n\
+            src.item as item  where linkId = {1}   then {{item.answer as a -> tgt.given = a 'm';}} 'middle';\n\
+            src.item as item  where linkId = {2}  then {{item.answer as a -> tgt.family = a 'fa';}} 'family';\n\
+        }} 'details';\n\
+    }}".format(args[0],args[1],args[2],profile)
+    
+
+def TransformObservationSelect(mode, profile,canonicalBase = 'http://build.fhir.org',observation='Observation', valueSet = []):
+    # check for all valueSet
+    return "group TransformObservationSelect(source src: questionnaireResponse, source answerItem, source system, target observation: {{Observation}}, target entry)\n\
+    {\n\
+    src -> observation.basedOn = src.basedOn; 'careplan'\n\
+    answerItem.answer as answer -> observation.value = create('CodeableConcept') as newCC then {\n\
+        answer.valueCoding as coding -> newCC.coding = coding as newCoding;\n\
+    };\n\
+    answerItem.answer as answer then {\n\
+        answer.valueCoding as Coding where Coding.code == 'yes' -> observation.status = 'final' 'found';\n\
+        answer.valueCoding as Coding where Coding.code == 'no' -> observation.status = 'cancelled' 'not-found';\n\
+    } 'status';\n\
+  };".replace('{{canonical_base}}', canonicalBase).replace('{{Observation}}', observation)
+    
+def get_extension_mapping(canonicalBase = 'http://build.fhir.org', extension = 'Extension'):
+    return "group setExtension{{extension}}( source src, target tgt) {\n\
+        src -> tgt.extension = create('Extension') as ext then {\n\
+            src.answer as a -> ext.url = '{{canonical_base}}Extension/{{extension}}', ext.value = a.value 'set-value';\n\
+        }\n\
+    }".replace('{{canonical_base}}', canonicalBase).replace('{{extension}}', extension)
+    
+    

@@ -17,7 +17,7 @@ import validators
 from pyfhirsdc.converters.utils import clean_name, get_resource_name, get_resource_url
 # allow slice in ID and extention MedicationRequest.medication[x].coding or MedicationRequest.medication[x].extension:notDoneValueSet Observation.modifierExtension:notDone.value[x]
 
-Id.configure_constraints(regex=re.compile(r"^[A-Za-z0-9\-.]+(\[x\](\.[a-zA-Z]+)?)?(:[A-Za-z0-9\-.]+(\[x\](\.[a-zA-Z]+)?)?)?$"))      
+Id.configure_constraints(regex=re.compile(r"^[A-Za-z0-9\-\.]+(\[x\](\.[a-zA-Z]+)?)?(:[A-Za-z0-9\-.]+(\[x\](\.[a-zA-Z]+)?)?)?$"))      
 
 def init_extension_def(element):
     map_extension = element['map_extension'].strip().split('::')

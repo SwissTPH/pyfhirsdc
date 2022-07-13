@@ -1,4 +1,3 @@
-import json
 import os
 from fhir.resources.bundle import Bundle, BundleEntry,BundleEntryRequest
 from fhir.resources.identifier import Identifier
@@ -35,7 +34,7 @@ def write_bundle(conf):
 def add_resource(path,name,bundle):
     file_path = os.path.join(path,name)
     ressource_dict = read_resource(file_path, 'any')
-    if ressource_dict is not None and 'resourceType' in ressource_dict:
+    if ressource_dict is not None and 'resourceType' in ressource_dict and 'url' in ressource_dict:
         
         bundle.entry.append(
             BundleEntry(

@@ -46,7 +46,7 @@ def get_mapping_file_header(structure_map):
     header = "map '" + structure_map.url + "' = '" + structure_map.name + "'\n\n"
     # get the source / Source
     for in_output in structure_map.structure:
-        header += "// {3}\nuses '{0}' alias {1} as {2}\n".format(
+        header += "// {3}\nuses '{0}' alias '{1}' as {2}\n".format(
             in_output.url,
             str(in_output.alias).strip("'"),
             in_output.mode,
@@ -60,17 +60,20 @@ def get_mapping_file_groups(structure_map):
     if len(structure_map.group):
         group_buffer += get_group_bundle_header()
         for group in structure_map.group:
-            group_buffer += get_group_bundle(group)
+            cur_group = get_group_bundle(group)
+            if cur_group is not None:
+                group_buffer += cur_group
         group_buffer += "}\n\n"
     for group in structure_map.group:
-        group_buffer = group_buffer + get_mapping_file_group(group)
+        if len(group.rule) > 0:
+            group_buffer += get_mapping_file_group(group)
+        elif group.documentation is not None:
+            group_buffer += group.documentation + "\n\n"
     return group_buffer
 
 def get_group_bundle_header():
-    return "group sdohMapping(source src : questionnaireResponse, target bundle : Bundle) {\n\
+    return "group bundleMapping(source src : questionnaireResponse, target bundle : Bundle) {\n\
             src -> bundle.id = uuid() 'id';\n\
-            //human readable id for test\n\
-            //src -> bundle.id = 'SDOHCC-BundleHungerVitalSignExample';\n\
             src -> bundle.type = 'transaction' 'type';\n"
 
 
@@ -80,9 +83,9 @@ def get_group_bundle(group):
         if in_output.mode == 'target':
                 profile = in_output.type
     if profile is not None:
-        rule = "src -> bundle.entry as entry, entry.resource = create('{0}') as tgt then {1}(src, {0}) '{1}';\n".format(
+        rule = "src -> bundle.entry as entry, entry.resource = create('{0}') as tgt then {1}(src, tgt) '{1}rule';\n".format(
             profile, 
-            group.name
+            group.name + "group"
         )
         return rule
     else:
@@ -94,7 +97,7 @@ def get_mapping_file_group(group):
     source = ''
     target = ''
     # define 
-    group_buffer =  'group  ' + group.name + "(\n"
+    group_buffer =  'group  ' + group.name + "group" + "(\n"
     i = 1
     for in_output in group.input:
         if in_output.mode is not None\
@@ -113,16 +116,35 @@ def get_mapping_file_group(group):
     group_buffer =  group_buffer + ") {\n"
     # write Items subsection
     if group.rule is not None and group.rule != [] :
-        group_buffer = group_buffer + "\t" + "qr.item as item then {\n"
+        
         # write item mapping
         for rule in group.rule:
             if rule.documentation is not None\
             and rule.name is not None:
-                group_buffer = group_buffer + "\t\t" +  str(rule.documentation) + " '" + rule.name + "';\n"
-        # close Items subsection 
-        group_buffer = group_buffer + "\t} 'items"+ source + "-" + target +"';\n"  
+                group_buffer = group_buffer + "\t\t" +  str(rule.documentation) +  "\n"
+ 
     # close group
     group_buffer = group_buffer + "} \n\n"
         
     
     return group_buffer
+
+
+def get_observation_yes_no_group(mode, canonicalBase = 'http://build.fhir.org',observation='Observation'):
+    
+    return "group TransformObservationYesNo(source src: questionnaireResponse, source answerItem, target observation: Observation, target entry)\n\
+    {\n\
+    src -> observation.basedOn = src.basedOn; 'careplan'\n\
+    answerItem.answer as answer -> observation.value = create('CodeableConcept') as newCC then {\n\
+        answer.valueCoding as coding -> newCC.coding = coding as newCoding;\n\
+    };\n\
+    answerItem.answer as answer then {\n\
+        answer.valueCoding as Coding where Coding.code == 'yes' -> observation.status = 'final' 'found';\n\
+        answer.valueCoding as Coding where Coding.code == 'no' -> observation.status = 'cancelled' 'not-found';\n\
+    } 'status';\n\
+  };"#.format(canonicalBase,observation)
+    #//src -> observation.meta = create('Meta') as newMeta then {\n\
+    #//src -> newMeta.profile = '{0}/StructureDefinition/{1}';\n\
+
+
+
