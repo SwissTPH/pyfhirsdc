@@ -519,6 +519,7 @@ group SetObservation{2}(source src, source a, target tgt, source oid ){{
         tgt.code = create('CodeableConcept') as concept, 
             concept.system = '{1}',
             concept.code = '{0}' 'set-code';  
+    src.item as item where linkId  = 'timestamp', item.answer as a -> tgt.issued = a 'EmCare.A.DE08-main';       
 
     a -> tgt.value = a 'set-value'; 
 }}
@@ -549,7 +550,8 @@ group SetObservation{2}(source src, source a, target tgt, source oid ){{
         tgt.code = create('CodeableConcept') as concept, 
             concept.system = '{1}',
             concept.code = '{0}' 'set-code';  
-    
+    src.item as item where linkId  = 'timestamp', item.answer as a -> tgt.issued = a 'EmCare.A.DE08-main';       
+
     a  where a.value = 'yes' -> tgt.status = 'final' 'set-final';
     a  where a.value = 'no' -> tgt.status = 'cancelled' 'set-nofound'; 
     
@@ -577,9 +579,11 @@ group SetObservation{2}(source src, source a, target tgt, source oid ){{
         tgt.encounter = src.encounter,
         tgt. subject = src. subject,
         tgt.meta = create('Meta') as newMeta, newMeta.profile = '{3}',
+        
         tgt.code = create('CodeableConcept') as concept, 
             concept.system = '{1}',
-            concept.code = '{0}' 'set-code';  
+            concept.code = '{0}' 'set-code';
+    src.item as item where linkId  = 'timestamp', item.answer as a -> tgt.issued = a 'EmCare.A.DE08-main';       
     
     a  where a.value = true -> tgt.status = 'final' 'set-final';
     a  where a.value = false -> tgt.status = 'cancelled' 'set-nofound'; 
