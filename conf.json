@@ -5,6 +5,7 @@
         "excudedWorksheets":[
             "q.new-encounter"
         ],
+
         "skiprows" : 0,
         "skipcols" : 0,
         "scope":"EmCare",
@@ -95,6 +96,7 @@
             }
             
         },
+
         "ActivityDefinition":{
             "outputPath":"resources/activitydefinition",
             "default":{
