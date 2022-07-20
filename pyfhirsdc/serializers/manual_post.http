@@ -1,9 +1,41 @@
 #@host = https://test.ahdis.ch
-@host =https://fhir.dk.swisstph-mis.ch
-
-POST {{host}}/matchbox/fhir/Bundle HTTP/1.1
+@host = http://185.11.167.36:8080
+#@host =https://fhir.dk.swisstph-mis.ch
+#@host=https://fhir.ruler.dk.swisstph-mis.ch/fhir
+#Bundle
+POST {{host}}/matchbox/fhir/ HTTP/1.1
 Content-Type: application/json
-Accept-Encoding: gzip
-Content-Encoding: gzip,deflate
 
-< C:\Users\delcpa\Development\DAK-tools\bundle.json
+< C:\Users\delcpa\Development\DAK-tools\bundle.json 
+###
+
+
+POST https://fhir.cql-translator.dk.swisstph-mis.ch/cql/translator HTTP/1.1
+Content-Type: application/cql
+Accept: application/elm+json
+
+
+< C:\Users\delcpa\Development\smart-emcare\input\cql\anthroBase.cql
+
+###
+
+
+
+PUT {{host}}/matchbox/fhir/Questionnaire/emcareb.registration.e HTTP/1.1
+Content-Type: application/json
+Accept: application/elm+json
+
+
+< C:\Users\delcpa\Development\smart-emcare\input\resources\questionnaire\questionnaire-emcareb.registration.e.json
+
+###
+
+
+PUT {{host}}/matchbox/fhir/StructureMap/emcareb.registration.e HTTP/1.1
+Content-Type: text/fhir-mapping
+Accept: application/fhir+json
+
+
+< C:\Users\delcpa\Development\smart-emcare\input\resources\structuremap\structuremap-emcareb.registration.e.map
+
+###

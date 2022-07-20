@@ -2,7 +2,8 @@
  convert dataframe to to fhir coding system concept
 
 """
-from fhir.resources.codesystem import CodeSystemConcept, CodeSystemConceptProperty
+from fhir.resources.codesystem import CodeSystemConcept
+from pyfhirsdc.converters.utils import get_custom_codesystem_url
 
 from pyfhirsdc.converters.valueSetConverter import get_value_set_additional_data_keyword
 
@@ -35,7 +36,7 @@ def generate_valueset_concept(df_value_set):
             CodeSystemConcept(
                 definition = question["definition"],
                 code = code,
-                display =  question["display"]
+                display =  question["display"],
             )
         )
     return concept

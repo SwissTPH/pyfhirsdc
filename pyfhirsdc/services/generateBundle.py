@@ -25,16 +25,17 @@ def write_bundle(conf):
         ext = ('.json')
         # iterating over directory and subdirectory to get desired result
         for path, dirc, files in os.walk(folderdir):
-            for name in files:
-                if name.endswith(ext):
-                    print(conf, path, dirc, name)  # printing file name
-                    add_resource(path,name,bundle)
+            if "ext_ig" not in path:
+                for name in files:
+                    if name.endswith(ext):
+                        print(conf, path, dirc, name)  # printing file name
+                        add_resource(path,name,bundle)
     write_resource('./bundle.json', bundle)
                     
 def add_resource(path,name,bundle):
     file_path = os.path.join(path,name)
     ressource_dict = read_resource(file_path, 'any')
-    if ressource_dict is not None and 'resourceType' in ressource_dict and 'url' in ressource_dict:
+    if ressource_dict is not None and 'resourceType' in ressource_dict and 'url' in ressource_dict and ressource_dict['resourceType'] !='ImplementationGuide':
         
         bundle.entry.append(
             BundleEntry(

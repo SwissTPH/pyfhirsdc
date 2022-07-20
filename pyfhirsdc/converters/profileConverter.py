@@ -18,6 +18,7 @@ from pyfhirsdc.converters.utils import clean_name, get_resource_name, get_resour
 # allow slice in ID and extention MedicationRequest.medication[x].coding or MedicationRequest.medication[x].extension:notDoneValueSet Observation.modifierExtension:notDone.value[x]
 
 Id.configure_constraints(regex=re.compile(r"^[A-Za-z0-9\-\.]+(\[x\](\.[a-zA-Z]+)?)?(:[A-Za-z0-9\-.]+(\[x\](\.[a-zA-Z]+)?)?)?$"))      
+Id.configure_constraints(max_length=128)      
 
 def init_extension_def(element):
     map_extension = element['map_extension'].strip().split('::')
@@ -168,7 +169,7 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
         if pd.notna(extension) and is_profile:
             if "::" in extension:
                 extension_details =extension.strip().split('::')
-                extension_name= extension_details[0].split('/')[-1]
+                extension_name= extension_details[0].split('/')[-1].strip()
                 extension_min =  extension_details[1].strip()
                 extension_max =  extension_details[2].strip()
             else: 
