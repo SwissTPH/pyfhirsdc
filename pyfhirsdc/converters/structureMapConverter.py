@@ -146,12 +146,12 @@ def get_structure_map_structure(profiles, questionnaire_id):
             alias = base_name,
             documentation = "target that will be inserted in the bundle"
         ))        
-        structures.append(StructureMapStructure(
-            url = Canonical( get_resource_url("StructureDefinition", profile)),
-            mode = Code( 'produced'),
-            alias = clean_group_name(profile),
-            documentation = "profile that will be inserted in the bundle"
-        ))
+        #structures.append(StructureMapStructure(
+        #    url = Canonical( get_resource_url("StructureDefinition", profile)),
+        #    mode = Code( 'produced'),
+        #    alias = clean_group_name(profile),
+        #    documentation = "profile that will be inserted in the bundle"
+        #))
     return structures
 
 # generate tth StructureMap content
@@ -212,7 +212,7 @@ def get_structure_map_generated_group(profile, questionnaire_name, df_questions)
         StructureMapGroupInput(
             mode = Code( 'target'),
             name = "tgt",
-            type = clean_group_name(profile)
+            type = get_base_profile(profile)
         )],
         rule = rules
     )
@@ -430,7 +430,7 @@ def get_group_bundle(group):
             question_name = in_output.documentation
     if profile is not None and question_name is not None:
         base_profile = get_base_profile(profile)
-        action = "create('{0}') as tgt then ".format(get_resource_url('StructureDefinition', profile))
+        action = "create('{0}') as tgt then ".format(base_profile)
         if base_profile == "Observation":
             action +=  '{'+SetObservation('bundle', profile, group.name) + "'obs-rule';} "
         else:
