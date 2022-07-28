@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-pyfhirsdc is a ython library that converts XLS to Fhir SDC ressource.
+pyfhirsdc is a python library that converts XLS to Fhir SDC resource.
 Collect easy.
 """
 

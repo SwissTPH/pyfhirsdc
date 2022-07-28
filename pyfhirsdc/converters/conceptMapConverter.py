@@ -1,5 +1,7 @@
 from fhir.resources.conceptmap import ConceptMap
 from fhir.resources.fhirtypes import Code
+
+# Given a code system, will create a concept map for that code system
 def get_concept_map_for_system(cannonical_base,code_system_label,concept_maps,system_URL):
     concept_map = concept_maps.get(system_URL)
     if concept_map:

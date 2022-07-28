@@ -7,13 +7,12 @@
 
 import json
 import os
-from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg, read_config_file
-from pyfhirsdc.converters.codeSystemConverter import generate_anthro_valueset_concepts, generate_questionnaire_concept, generate_valueset_concept
-from pyfhirsdc.serializers.inputFile import read_tsv_file
+from pyfhirsdc.config import get_defaut_fhir,  get_processor_cfg
+from pyfhirsdc.converters.codeSystemConverter import  generate_questionnaire_concept, generate_valueset_concept
 from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.codesystem import CodeSystem
 from pyfhirsdc.serializers.utils import  get_resource_path 
-from pyfhirsdc.converters.utils import get_custom_codesystem_url, get_resource_name, get_resource_url
+from pyfhirsdc.converters.utils import get_custom_codesystem_url
 
 
 def generate_custom_code_system(dfs_questionnaire, df_value_set):
@@ -43,39 +42,7 @@ def generate_custom_code_system(dfs_questionnaire, df_value_set):
         json_file.write(code_system.json( indent=4))
         #TODO use configuration
 
-        
 
-def generate_anthro_codesystems(conf):
-    # Read the config file
-    config_obj = read_config_file(conf)
-    if config_obj is None:
-        exit()
-    else:
-        df = []
-        anthroPath = get_processor_cfg().anthroPath
-        if anthroPath is not None and os.path.exists(anthroPath):
-            for filename in os.listdir(anthroPath):
-                f = os.path.join(anthroPath, filename)
-                name = filename.split(".")[0]
-                df = read_tsv_file(f)
-                generate_anthro_codesystem(name,df)
-
-
-def  generate_anthro_codesystem(name,df):
-    resource_type = "CodeSystem"
-    ressource_name = get_resource_name("CodeSystem", name)
-    code_system =  CodeSystem(
-        status = "active",
-        content = "complete",
-        url = get_resource_url(resource_type,name),
-        name = ressource_name,
-        id = name,
-        concept = generate_anthro_valueset_concepts(df)
-    )
-    filepath = get_resource_path(resource_type, name)
-    # write file
-    with open(filepath, 'w') as json_file:
-        json_file.write(code_system.json( indent=4))
     
 
 

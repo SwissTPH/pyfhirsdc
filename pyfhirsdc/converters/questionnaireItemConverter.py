@@ -16,24 +16,20 @@ from pyfhirsdc.serializers.json import read_resource
 from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
 import pandas as pd
 
-def convert_df_to_questionitems(questionnaire, questionnaire_response,df_questions, df_value_set, strategy = 'overwrite'):
+def convert_df_to_questionitems(questionnaire,df_questions, df_value_set, strategy = 'overwrite'):
     # create a dict to iterate
     dict_questions = df_questions.to_dict('index')
     # Use first part of the id (before DE) as an ID
     # questionnaire.id = list(dict_questions.keys())[0].split(".DE")[0]
     # delete all item in case of overwrite strategy
     
-    if strategy == "overwrite" or questionnaire.item or questionnaire_response.item is None:
+    if strategy == "overwrite" or questionnaire.item :
         questionnaire.item =[]
-        questionnaire_response.item = []
     # recreate item if draft 
     ressource = questionnaire
-    response = questionnaire_response
     parent = []
-    parent_response =[]
     for id, question in dict_questions.items():
         existing_item = next((ressource.item.pop(index) for index in range(len(ressource.item)) if ressource.item[index].linkId == id), None)
-        existing_item_response = next((response.item.pop(index) for index in range(len(response.item)) if response.item[index].linkId == id), None)
         # manage group
         type, detail_1, detail_2 = get_type_details(question)
         if type is None:
@@ -41,15 +37,12 @@ def convert_df_to_questionitems(questionnaire, questionnaire_response,df_questio
         elif type == "skipped":
             pass
         elif type == "group" and detail_1 == "start":
-            item, item_response = add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy)
-            item_response, item_response = add_questionnaire_response_item_line(existing_item, id, question, df_value_set, strategy)
+            item = add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy)
             if item is not None:
                 # we save the the questionnaire 
                 parent.append(ressource)
-                parent_response.append(ressource)
                 # we save the question as a new ressouce
                 ressource = item
-                response = item 
                 if ressource.item is None:
                     ressource.item =[]
         elif type == "group" and detail_1 == "end":
@@ -58,28 +51,20 @@ def convert_df_to_questionitems(questionnaire, questionnaire_response,df_questio
             else:
                 # we load the the group question
                 temp_ressource = parent.pop()
-                temp_ressource_response = parent_response.pop()
                 temp_ressource.item.append(ressource)
-                temp_ressource_response.item.append(response)
                 ressource = temp_ressource
-                response = temp_ressource_response
 
         else:
             item = add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy)
-            item_response = add_questionnaire_response_item_line(existing_item, id, question, df_value_set, strategy)
             if item is not None:
                 ressource.item.append(item)
-                response.item.append(item_response)
     # close all open groups
     while len(parent) > 0:
         temp_ressource = parent.pop()
-        temp_ressource_response = parent_response.pop()
         print("group id ${0} is not close and the tool reached the end of the quesitonnaire, closing the group".format( ressource.id))
         temp_ressource.item.append(ressource)
         ressource = temp_ressource
-        temp_ressource_response.item.append(response)
-        response = temp_ressource_response
-    return ressource, response
+    return ressource
 
 def add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy):
     # pop the item if it exists
@@ -96,19 +81,6 @@ def add_questionnaire_item_line(existing_item, id, question, df_value_set, strat
         return existing_item
     return None
 
-def add_questionnaire_response_item_line(existing_item, id, question, df_value_set, strategy):
-    # pop the item if it exists
-    
-    # create or update the item based on the strategy
-    if existing_item is None\
-    or strategy in ( "overwriteDraft", "overwriteDraftAddOnly" ):
-        new_question = process_quesitonnaire_response_line(id, question, df_value_set,  existing_item )
-        if new_question is not None:
-            return new_question
-    elif existing_item is not None:
-        #put back the item if no update
-        return existing_item
-    return None
 
 def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
     type = get_question_fhir_type(question)
@@ -127,22 +99,11 @@ def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
                 design_note = "status::draft",
                 definition = get_question_definition(question)
             )
-    if pd.notna(question['description']):
-        new_question.text = question['description']
+    if pd.notna(question['label']):
+        new_question.text = question['label']
     
     return new_question
 
-def process_quesitonnaire_response_line(id, question, df_value_set,  existing_item):
-    type = get_question_fhir_type(question)
-    new_questionResponse = QuestionnaireResponseItemSDC(
-                linkId = id,
-                extension = get_question_extension(question, df_value_set ),
-                definition = get_question_definition(question)
-            )
-    if pd.notna(question['description']):
-        new_questionResponse.text = question['description']
-    
-    return new_questionResponse
 def get_question_fhir_type(question):
     # maps the pyfhirsdc type to real fhir type
     # mapping type are not in questionnaire
@@ -271,21 +232,7 @@ def init_questionnaire(filepath, id):
         # create file from default
         questionnaire = QuestionnaireSDC.parse_raw( json.dumps(default))
         questionnaire.id=clean_name(id)
+        questionnaire.title=id
         questionnaire.url=get_resource_url('Questionnaire',id) 
 
     return questionnaire
-
-def init_questionnaire_response(questionnaire):
-
-
-    #TODO should we have a reference to the subject here with mapping language?
-    #TODO same for encounter, source and author
-    #questionnaire_response_json.subject = ""
-    questionnaire_response = QuestionnaireResponseSDC(
-        resourceType = "QuestionnaireResponse",
-        id = questionnaire.id,
-        #url = get_resource_url('QuestionnaireResponse',questionnaire.id),there is no quesionnaire response urlMust be profile
-        questionnaire = questionnaire.url, 
-        status = "completed"
-    )  
-    return questionnaire_response

@@ -1,7 +1,0 @@
-@host = https://test.ahdis.ch
-
-POST {{host}}/matchbox/fhir/StructureMap HTTP/1.1
-Accept: application/fhir+xml;fhirVersion=4.0
-Content-Type: text/fhir-mapping
-
-< C:\Users\delcpa\Development\smart-emcare\input\resources\structuremap\structuremap-emcareb.registration.e.map
