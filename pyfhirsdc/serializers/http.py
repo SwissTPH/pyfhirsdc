@@ -21,10 +21,14 @@ def post_cql(cql_merged, url):
     response = requests.post(url, data = cql_merged.encode(), headers = headers_map)
     if response.status_code == 200 or response.status_code == 201:
         ##print(response.text[:45])
-        json_strings = re.findall(r'.*({\\\"library\\.*})',response.text)
+        #print(response.text)
+        json_strings = re.findall('(\{\n?[ \t]+\"library(?:.+\\n)+)?--Boundary',response.text)
+
+        #print(json_strings)
         json_library_array = []
         for json_string in json_strings:
-            print(json_string)
+            print("iterating through libraries")
+            print("Json Object", json_string)
             json_data = json.loads(json_string)
             json_library_array.append(json_data)
         print(response.text[:45])

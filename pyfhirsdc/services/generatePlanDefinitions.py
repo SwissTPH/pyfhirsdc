@@ -5,6 +5,7 @@ from pyfhirsdc.converters.utils import clean_name, get_resource_url
 from pyfhirsdc.serializers.json import  read_resource
 from pyfhirsdc.serializers.http import post_cql
 from fhir.resources.plandefinition import PlanDefinition
+from fhir.resources.relatedartifact import RelatedArtifact
 from fhir.resources.library import Library
 from fhir.resources.identifier import Identifier
 import re
@@ -74,25 +75,30 @@ def generate_plandefinition( name,df_actions):
         ## To send multiple different CQL files at once we need to sent is as POST
         ## with a separator and as multipartdata -> here we build it
         multipart_payload = "------WebKitFormBoundary7MA4YWxkTrZu0gW"
-        for cql_file in cql_files:
+
+        ##for cql_file in cql_files:
+            ## Need to check which libraries have references to which libraries
+            ## Multipart request will be read bottom up 
+            ## So the libraries have to go from the least referenced to the most referenced
+
             ## Split string using regex ASSUMPTION: cql files have a line with 
             ## library, one space and the name
-            library_name = re.search(r"[\s\S]*(?<=library )([^\s]+)([\s\S]*)",cql_file ).group(1)
-            multipart_payload += "\n"+\
-                "Content-Disposition: form-data; name={0}".format(library_name)+\
-                    "\n"+cql_file
-        multipart_payload+="\n"+"------WebKitFormBoundary7MA4YWxkTrZu0gW--"
-        libraries = post_cql(multipart_payload, get_fhir_cfg().Library.cql_translator)
-        output_lib_path = os.path.join(
-                get_processor_cfg().outputPath,
-                get_fhir_cfg().Library.outputPath
-            )
-        output_lib_file = os.path.join(
-                output_lib_path,
-                "library-"+ name +  "." + get_processor_cfg().encoding
-            )
-        for library in libraries:
-            write_resource(output_lib_file, library, get_processor_cfg().encoding)
+        #    library_name = re.search(r"[\s\S]*(?<=library )([^\s]+)([\s\S]*)",cql_file ).group(1)
+        #    multipart_payload += "\n"+\
+        #        "Content-Disposition: form-data; name={0}".format(library_name)+\
+        #            "\n"+cql_file
+        #multipart_payload+="\n"+"------WebKitFormBoundary7MA4YWxkTrZu0gW--"
+        #libraries = post_cql(multipart_payload, get_fhir_cfg().Library.cql_translator)
+        #output_lib_path = os.path.join(
+        #        get_processor_cfg().outputPath,
+        #        get_fhir_cfg().Library.outputPath
+        #    )
+        #output_lib_file = os.path.join(
+        #        output_lib_path,
+        #        "library-"+ name +  "." + get_processor_cfg().encoding
+        #    )
+        #for library in libraries:
+        #    write_resource(output_lib_file, library, get_processor_cfg().encoding)
 
 
         # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
