@@ -1,0 +1,13 @@
+{
+    "resourceType": "CodeSystem",
+    "id": "emcare-custom-codes",
+    "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+    "name": "emc-custom-codes",
+    "title": "Extended Codes CodeSystem",
+    "status": "draft",
+    "experimental": false,
+    "description": "Set of codes identified as being needed but not found in existing Code Systems",
+    "caseSensitive": true,
+    "content": "complete",
+    "concept": [ ]
+}

@@ -1,0 +1,13 @@
+{
+    "resourceType": "ValueSet",
+    "id": "emcare-a-de12",
+    "url": "/ValueSet/emc-",
+    "name": "emcare-",
+    "status": "draft",
+    "experimental": false,
+    "description": "Codes representing possible values for the Provide an estimated age or estimated date of birth element",
+    "immutable": true,
+    "compose": {
+      "include": []
+    }
+}

@@ -1,3 +1,4 @@
+import json
 import os
 from pyfhirsdc.serializers.json import read_json
 
@@ -32,7 +33,10 @@ def get_fhir_cfg():
     return fhir_cfg
 
 def get_defaut_fhir(resource):
-    return dict_cfg['fhir'][resource]['default']
+    default_file_path =  os.path.join(dict_cfg['processor']['default_resource_path'],resource+'.json')
+    if os.path.exists(default_file_path):
+        json_str = read_json(default_file_path, "dict") 
+        return json_str
 
 def get_defaut_path(resource, default):
     if not resource in dict_cfg['fhir'] or dict_cfg['fhir'][resource]['outputPath'] is None:
