@@ -4,9 +4,8 @@ Convert XLSsdc quesitonnair to structureMap
 
 """
 
-
-
 import json
+import re
 
 import pandas as pd
 from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg
@@ -34,6 +33,7 @@ def get_structure_map_bundle(questionnaire_name, df_questions):
         "StructureMap", 
         sm_name
     )
+    
     structure_map = init_structure_map(filepath, profiles, questionnaire_name)
     if structure_map is not None:
         map_filepath = get_resource_path("StructureMap", sm_name, "map")
@@ -110,6 +110,12 @@ FHIR_BASE_PROFILES = [
     "CommunicationRequest"
 ]
 
+FHIR_ONELINER_PROFILES = [
+    "Condition",
+    "Observation",
+]
+
+
 
 def get_base_profile(profile):
     for base_profile in FHIR_BASE_PROFILES:
@@ -146,20 +152,19 @@ def get_structure_map_structure(profiles, questionnaire_id):
             alias = base_name,
             documentation = "target that will be inserted in the bundle"
         ))        
-        #structures.append(StructureMapStructure(
-        #    url = Canonical( get_resource_url("StructureDefinition", profile)),
-        #    mode = Code( 'produced'),
-        #    alias = clean_group_name(profile),
-        #    documentation = "profile that will be inserted in the bundle"
-        #))
+        structures.append(StructureMapStructure(
+            url = Canonical( get_resource_url("StructureDefinition", profile)),
+            mode = Code( 'produced'),
+            alias = clean_group_name(profile),
+            documentation = "profile that will be inserted in the bundle"
+        ))
     return structures
 
 # generate tth StructureMap content
 def get_structure_map_groups(groups, profiles, questionnaire_name, df_questions):
     out_groups = []
     for profile in profiles:
-        base_profile = get_base_profile(profile)
-        if base_profile == "Observation":
+        if is_oneliner_profile(profile):
             group_tmp, sub_groups_tmp = get_structure_map_rules(profile, df_questions)
             group_tmp = None
         else:
@@ -270,9 +275,10 @@ def get_structure_map_rule(question_name, question):
             if question['map_resource'].strip()[-1:] != ";":
                 question['map_resource'] = question['map_resource'] + " '"+ question_name + "-1';"
             # if variable on root, element is the resource itself
-            fhirmapping =  "src.item as item where linkId  = '{0}' -> tgt then {{ item.answer as a -> {1}   }} '{0}-main';".format(
+            fhirmapping =  "src.item as item where linkId  = '{0}'  then {{ {2} -> {1}   }} '{0}-main';".format(
                 question_name ,
-                question['map_resource']
+                question['map_resource'],
+                "item.answer first as a, a.value as val" if re.match("= *val[^\d]*",question['map_resource']) else "item.answer as a"
             )
         
         if fhirmapping is not None:
@@ -290,44 +296,11 @@ def get_structure_map_rule(question_name, question):
 
 def generate_helper(helper_func, mode, profile, *helper_args):
     return  globals()[helper_func](mode,clean_group_name(profile) , *helper_args )
-
-def SetOfficalGivenName(mode, profile, *args):
-    if len(args)!= 3:
-        print('Error SetOfficalGivenName{3} must have 3 parameters')
-        return None
-    if mode == 'main':
-        return   "src.item first as item  where linkId =  {0} or linkId =  {1} or linkId =  {2} -> tgt as target,  target.name as name then SetOfficalGivenName{3}(src, name) 'name-main';".format(args[0],args[1],args[2],profile)
-    return "group SetOfficalGivenName{3}(source src, target tgt){{\n\
-        src -> tgt.use = 'official'  then {{\n\
-            src.item as item where linkId  =  {0}   then {{item.answer as a -> tgt.given = a 'f';}} 'first';\n\
-            src.item as item  where linkId = {1}   then {{item.answer as a -> tgt.given = a 'm';}} 'middle';\n\
-            src.item as item  where linkId = {2}  then {{item.answer as a -> tgt.family = a 'fa';}} 'family';\n\
-        }} 'details';\n\
-    }}".format(args[0],args[1],args[2],profile)
-    
-
-def TransformObservationSelect(mode, profile,canonicalBase = 'http://build.fhir.org',observation='Observation', valueSet = []):
-    # check for all valueSet
-    return "group TransformObservationSelect(source src: questionnaireResponse, source answerItem, source system, target observation: {{Observation}}, target entry)\n\
-    {\n\
-    src -> observation.basedOn = src.basedOn; 'careplan'\n\
-    answerItem.answer as answer -> observation.value = create('CodeableConcept') as newCC then {\n\
-        answer.valueCoding as coding -> newCC.coding = coding as newCoding;\n\
-    };\n\
-    answerItem.answer as answer then {\n\
-        answer.valueCoding as Coding where Coding.code == 'yes' -> observation.status = 'final' 'found';\n\
-        answer.valueCoding as Coding where Coding.code == 'no' -> observation.status = 'cancelled' 'not-found';\n\
-    } 'status';\n\
-  };".replace('{{canonical_base}}', canonicalBase).replace('{{Observation}}', observation)
-    
-def get_extension_mapping(canonicalBase = 'http://build.fhir.org', extension = 'Extension'):
-    return "group setExtension{{extension}}( source src, target tgt) {\n\
-        src -> tgt.extension = create('Extension') as ext then {\n\
-            src.answer as a -> ext.url = '{{canonical_base}}Extension/{{extension}}', ext.value = a.value 'set-value';\n\
-        }\n\
-    }".replace('{{canonical_base}}', canonicalBase).replace('{{extension}}', extension)
-    
-    
+def is_oneliner_profile(profile):
+    base_profile = get_base_profile(profile)
+    if base_profile in FHIR_ONELINER_PROFILES:
+        return True
+  
 def write_mapping_file(filepath, structure_map, update_map = True):
 
     buffer = get_mapping_file_header(structure_map)\
@@ -355,7 +328,6 @@ def write_mapping_file(filepath, structure_map, update_map = True):
     return structure_map
 
 
-
 def get_mapping_file_header(structure_map):
 
     # structure map def
@@ -375,15 +347,16 @@ def get_mapping_file_groups(structure_map):
     # du bundle if ressource found
     if len(structure_map.group):
         group_buffer += get_group_bundle_header()
-        group_buffer += get_group_bundle_uid(structure_map.group)
+        #group_buffer += get_group_bundle_uid(structure_map.group)
         group_buffer += get_groups_bundle(structure_map.group)
-        group_buffer += "\t}'gen-ids';\n"
+        #group_buffer += "\t}'gen-ids';\n"
         group_buffer += "}\n\n"
     for group in structure_map.group:
         if len(group.rule) > 0:
             group_buffer += get_mapping_file_group(group)
         elif group.documentation is not None:
             group_buffer += group.documentation + "\n\n"
+
     return group_buffer
 
 def get_group_bundle_header():
@@ -393,23 +366,58 @@ group bundleMapping(source src : questionnaireResponse, target bundle : Bundle) 
     src -> bundle.type = 'batch' 'type';
     """
 
-def get_group_bundle_uid(groups):
-    ret =  " src -> "
-    for group in groups:
-        if group is not None :
-            ret_group = get_group_uid(group)
-            if ret_group is not None:
-                ret += ret_group
-    return ret[:-1]+ " then {"
+def SetOfficalGivenName(mode, profile, *args):
+    if len(args)!= 3:
+        print('Error SetOfficalGivenName{3} must have 3 parameters')
+        return None
+    if mode == 'main':
+        return   "src.item first as item  where linkId =  {0} or linkId =  {1} or linkId =  {2} -> tgt as target,  target.name as name then SetOfficalGivenName{3}(src, name) 'name-main';".format(args[0],args[1],args[2],profile)
+    return "group SetOfficalGivenName{3}(source src, target tgt){{\n\
+        src -> tgt.use = 'official'  then {{\n\
+            src.item as item where linkId  =  {0}   then {{item.answer as a -> tgt.given = a 'f';}} 'first';\n\
+            src.item as item  where linkId = {1}   then {{item.answer as a -> tgt.given = a 'm';}} 'middle';\n\
+            src.item as item  where linkId = {2}  then {{item.answer as a -> tgt.family = a 'fa';}} 'family';\n\
+        }} 'details';\n\
+    }}".format(args[0],args[1],args[2],profile)
+    
+
+def get_fullurl(profile):
+    base_profile = get_base_profile(profile)
+    return """
+    group getId{0}(source src, target ressource){{
+        src.item first as item where linkId  =  '{0}id'then {{ item.answer first as a, a.value as val ->  ressource = val 'i{0}1';}} 'i{0}';
+    }}   
+
+    group getFullUrl{0}(source src,  target ressource){{
+        src.item first as item where linkId  =  '{0}id' then {{ item.answer first as a, a.value as val ->  ressource = append("urn:uuid:", val) 'fu{0}1';}} 'fu{0}';
+    }}
+    
+    group getUrl{0}(source src,  target ressource){{
+        src.item first as item where linkId  =  '{0}id' then {{ item.answer first as a, a.value as val ->  ressource =  append("{1}/", val)  'u{0}1';}} 'u{0}';
+    }}
+    """.format(profile, base_profile)
+    
+
+
+
+
+#def get_group_bundle_uid(groups):
+#    ret =  " src -> "
+#    for group in groups:
+#        if group is not None :
+#            ret_group = get_group_uid(group)
+#            if ret_group is not None:
+#                ret += ret_group
+#    return ret[:-1]+ " then {"
         
-def get_group_uid(group):     
-    if group is not None and group.name is not None:
-        profile = None
-        for in_output in group.input:
-            if in_output.mode == 'target':
-                    profile = in_output.type
-        if profile is not None:
-            return "uuid() as {}id,".format(group.name)
+#def get_group_uid(group):     
+#    if group is not None and group.name is not None:
+#        profile = None
+#        for in_output in group.input:
+#            if in_output.mode == 'target':
+#                    profile = in_output.type
+#        if profile is not None:
+#            return "uuid() as {}id,".format(group.name)
     
 def get_groups_bundle(groups):
     group_buffer =''
@@ -429,30 +437,53 @@ def get_group_bundle(group):
         if in_output.mode == 'source':
             question_name = in_output.documentation
     if profile is not None and question_name is not None:
-        base_profile = get_base_profile(profile)
-        action = "create('{0}') as tgt then ".format(base_profile)
-        if base_profile == "Observation":
-            action +=  '{'+SetObservation('bundle', profile, group.name) + "'obs-rule';} "
+        if is_oneliner_profile(profile):
+            return get_one_liner_rule(profile, group)
         else:
-            action += "{0}group(src, tgt, {0}id)".format(group.name)
-    # group name is the clean profile name so  get_base_profile should work
-        rule = """
-        src -> 
-            bundle.entry as entry,
-            entry.fullUrl = append("urn:uuid:",{0}id), 
-            entry.request as request, 
-            request.method = "PUT", 
-            request.url = append("{1}/", {0}id),
-            entry.resource = {2} '{0}grouprule';
-            """.format(
-            group.name,
-            get_base_profile(group.name),
-            action
-        )
-        return rule
+            return get_rule(profile, group)
     else:
         print("group {} without target".format(group.name))
 
+        
+def get_one_liner_rule(profile, group):
+    base_profile = get_base_profile(profile)
+    action = "create('{0}') as tgt then ".format(base_profile)
+    if base_profile == "Observation":
+        action +=  '{'+SetObservation('bundle', profile, group.name) + "'obs-rule';} "
+    else:
+        action += "{0}group(src, tgt)".format(group.name)# group name is the clean profile name so  get_base_profile should work
+    rule = """
+    src -> 
+        bundle.entry as entry,
+        entry.request as request, 
+        request.method = "POST", 
+        entry.resource = {1} '{0}grouprule';
+        """.format(
+        group.name,
+        action
+    )
+    return rule
+  
+def get_rule(profile,group):       
+    base_profile = get_base_profile(profile)
+    action = "create('{0}') as tgt then ".format(base_profile)
+    action += "{0}group(src, tgt)".format(group.name)
+# group name is the clean profile name so  get_base_profile should work
+    
+    rule = """
+    src -> 
+        bundle.entry as entry then {{
+            
+            src -> entry.fullUrl as fullurl then getFullUrl{0}(src, fullurl) 'fullurl';
+            src -> entry.request as request, request.method = "PUT", request.url as url then getUrl{0}(src, url) 'url';
+            src -> entry.resource = {1} '{0}trans';
+        }} '{0}entry';
+        """.format(
+        profile,
+        action
+    )
+    return rule
+    
 
 def get_mapping_file_group(group):
     # execute (in case of bundle)
@@ -474,10 +505,11 @@ def get_mapping_file_group(group):
             elif in_output.mode == 'target':
                 target = in_output.type
         i+=1
-    
-    group_buffer =  group_buffer + ",  source resid ) {\n"
+    base_profile = get_base_profile(target)
+    group_buffer =  group_buffer + " ) {\n"
     # write Items subsection
-    group_buffer += "src -> tgt.id = resid , tgt.meta = create('Meta') as newMeta, newMeta.profile = '{0}' 'set-uuid';\n".format(get_resource_url('StructureDefinition',target))
+    group_buffer += "src -> tgt.id as id then getId{0}(src,id) 'setid';".format(target)
+    group_buffer += "src -> tgt.meta = create('Meta') as newMeta, newMeta.profile = '{0}' 'set-uuid';\n".format(get_resource_url('StructureDefinition',target))
     if group.rule is not None and group.rule != [] :
         
         # write item mapping
@@ -488,6 +520,9 @@ def get_mapping_file_group(group):
  
     # close group
     group_buffer = group_buffer + "} \n\n"
+    
+    if not is_oneliner_profile(target):
+        group_buffer = group_buffer + get_fullurl(target)
         
     
     return group_buffer
@@ -497,23 +532,20 @@ def SetObservation(mode, profile, *args):
     if len(args)!= 1:
         print('Error SetObservation must have 1 parameters')
         return None
-    if mode == 'bundle':
-        return   "src.item first as item  where linkId =  '{0}' -> item.answer as a then SetObservation{1}(src, a, tgt , {1}id) ".format(args[0], clean_group_name(args[0]))
     elif mode == 'group':
         return """
-group SetObservation{2}(source src, source a, target tgt, source oid ){{
+group SetObservation{2}(source src, source a, target tgt){{
 
-    oid ->  tgt.id = oid,
-            tgt.identifier = create('Identifier') as CodeID, 
+    oid ->  tgt.identifier = create('Identifier') as CodeID, 
             CodeID.system = 'http://hl7.org/fhir/namingsystem-identifier-type',
             CodeID.use =  'official',
             CodeID.value = 'uuid',
-            CodeID.id = oid
+            CodeID.id = uuid()
             'set-id';
     src -> 
         tgt.basedOn = src.basedOn,
         tgt.encounter = src.encounter,
-        tgt. subject = src. subject,
+        tgt.subject = src.subject,
         tgt.meta = create('Meta') as newMeta, newMeta.profile = '{3}',
         tgt.status = 'final',
         tgt.code = create('CodeableConcept') as concept, 
@@ -530,22 +562,19 @@ def SetObservationYesNo(mode, profile, *args):
     if len(args)!= 1:
         print('Error SetObservation must have 1 parameters')
         return None
-    if mode == 'bundle':
-        return   "src.item first as item  where linkId =  '{0}' -> tgt as target then SetObservation{2}(src, item.answer, target , {1}id) ".format(args[0], clean_group_name(profile))
-    elif mode == 'group':
+     elif mode == 'group':
         return """
-group SetObservation{2}(source src, source a, target tgt, source oid ){{
-    oid ->  tgt.id = oid,
-            tgt.identifier = create('Identifier') as CodeID, 
+group SetObservation{2}(source src, source a, target tgt ){{
+    oid ->  tgt.identifier = create('Identifier') as CodeID, 
             CodeID.system = 'http://hl7.org/fhir/namingsystem-identifier-type',
             CodeID.use =  'official',
             CodeID.value = 'uuid',
-            CodeID.id = oid
+            CodeID.id = uuid()
             'set-id';
 
     src -> tgt.basedOn = src.basedOn,
         tgt.encounter = src.encounter,
-        tgt. subject = src. subject,
+        tgt.subject = src.subject,
         tgt.meta = create('Meta') as newMeta, newMeta.profile = '{3}',
         tgt.code = create('CodeableConcept') as concept, 
             concept.system = '{1}',
@@ -562,22 +591,19 @@ def SetObservationBoolean(mode, profile, *args):
     if len(args)!= 1:
         print('Error SetObservation must have 1 parameters')
         return None
-    if mode == 'bundle':
-        return   "src.item first as item  where linkId =  '{0}' -> tgt as target then SetObservation{2}(src, item.answer, target , {1}id) ".format(args[0], clean_group_name(profile))
     elif mode == 'group':
         return """
-group SetObservation{2}(source src, source a, target tgt, source oid ){{
-    oid ->  tgt.id = oid,
-            tgt.identifier = create('Identifier') as CodeID, 
+group SetObservation{2}(source src, source a, target tgt ){{
+    oid ->  tgt.identifier = create('Identifier') as CodeID, 
             CodeID.system = 'http://hl7.org/fhir/namingsystem-identifier-type',
             CodeID.use =  'official',
             CodeID.value = 'uuid',
-            CodeID.id = oid
+            CodeID.id = uuid()
             'set-id';
 
     src -> tgt.basedOn = src.basedOn,
         tgt.encounter = src.encounter,
-        tgt. subject = src. subject,
+        tgt.subject = src.subject,
         tgt.meta = create('Meta') as newMeta, newMeta.profile = '{3}',
         
         tgt.code = create('CodeableConcept') as concept, 
