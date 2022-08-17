@@ -45,3 +45,8 @@ def get_resources_files(resource_type):
         json_obj = json.loads(p.read_text())
         resources.append(json_obj)
     return resources
+
+def reindent(s, numSpaces):
+    arr = [y for y in (x.rstrip() for x in s.splitlines()) if y]
+    arr = [(numSpaces * ' ') + line for line in arr]
+    return "\n".join(arr)
