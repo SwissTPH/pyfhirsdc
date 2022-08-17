@@ -86,6 +86,12 @@ def get_checkbox_ext():
                 display = "Check-box")],
             text ="Check-box")
     )
+    
+def get_hidden_ext():
+    return Extension(
+    url ="http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+    valueBoolean = True
+    )
 
 def convert_reference_to_firepath(expression):
     return re.sub(pattern = r'\$\{([^}]+)\}', repl = r"%resource.repeat(item).where(linkId='\1').answer.value", string = expression )
