@@ -9,8 +9,7 @@
 import json
 import numpy
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
-from pyfhirsdc.models.questionnaireResponseSDC import QuestionnaireResponseItemSDC, QuestionnaireResponseSDC
-from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_initial_expression_ext
+from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_hidden_ext, get_initial_expression_ext
 from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
 from pyfhirsdc.serializers.json import read_resource
 from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
@@ -25,9 +24,14 @@ def convert_df_to_questionitems(questionnaire,df_questions, df_value_set, strate
     
     if strategy == "overwrite" or questionnaire.item :
         questionnaire.item =[]
+    if questionnaire.item is None:
+       questionnaire.item =[]
     # recreate item if draft 
     ressource = questionnaire
     parent = []
+    # add timestamp
+    ressource.item.append(get_timestamp_item())
+    # FIXME add the profile id
     for id, question in dict_questions.items():
         existing_item = next((ressource.item.pop(index) for index in range(len(ressource.item)) if ressource.item[index].linkId == id), None)
         # manage group
@@ -64,7 +68,17 @@ def convert_df_to_questionitems(questionnaire,df_questions, df_value_set, strate
         print("group id ${0} is not close and the tool reached the end of the quesitonnaire, closing the group".format( ressource.id))
         temp_ressource.item.append(ressource)
         ressource = temp_ressource
+    
     return ressource
+
+def get_timestamp_item():
+    return QuestionnaireItemSDC(
+                linkId = 'timestamp',
+                type = 'dateTime',
+                required= False,
+                extension = [get_initial_expression_ext("now()"), get_hidden_ext()],
+                #design_note = "status::draft"            
+                )
 
 def add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy):
     # pop the item if it exists
@@ -158,6 +172,9 @@ def get_question_extension(question, df_value_set ):
         extensions.append(get_calculated_expression_ext(question["calculatedExpression"]))
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
         extensions.append(get_initial_expression_ext(question["initialExpression"]))
+    if isinstance(question["display"], str) and question["display"].lower() == "hidden":
+        extensions.append(get_hidden_ext())
+
     return extensions
 
 def get_question_valueset(question, df_value_set):
