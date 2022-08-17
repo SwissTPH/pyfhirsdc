@@ -57,7 +57,7 @@ def process_libraries(conf):
     if config_obj is None:
         exit()
     else:
-        lib_path = get_defaut_path('Library', 'ressources/library')
+        lib_path = get_defaut_path('Library', '/ressources/library')
         arr_lib_file_path = os.listdir(lib_path)
         for file in arr_lib_file_path:
             if file.endswith(".json"):
