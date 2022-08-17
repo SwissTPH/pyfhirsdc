@@ -18,3 +18,13 @@ def get_custom_codesystem_url():
             'CodeSystem', 
             get_processor_cfg().scope+"-custom-codes"
             )
+def get_codableconcept_code(system, code, display = None):
+    return CodeableConcept(
+            coding= [get_code(system, code, display)]
+    )
+def get_code(system, code, display = None ):
+    return Coding(                
+                system = system,
+                code = code,
+                display = display
+                )

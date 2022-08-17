@@ -1,10 +1,12 @@
 import json
-import numpy
-from fhir.resources.activitydefinition import ActivityDefinition
-from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg, get_fhir_cfg
+from fhir.resources.activitydefinition import ActivityDefinition, ActivityDefinitionDynamicValue
+from fhir.resources.usagecontext import  UsageContext 
+from fhir.resources.expression import  Expression
+from fhir.resources.extension import Extension
+from pyfhirsdc.config import get_defaut_fhir
+from .extensionsConverter import append_unique
 from pyfhirsdc.serializers.json import read_resource
-from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
-import pandas as pd
+from pyfhirsdc.converters.utils import clean_name, get_codableconcept_code, get_code, get_custom_codesystem_url, get_resource_url
 
 def init_activity(filepath, id):
     activity_json = read_resource(filepath, "ActivityDefinition")
@@ -20,38 +22,30 @@ def init_activity(filepath, id):
     return activity
 
 def create_activity(activity_definition ,questionnaire):
-    activity_definition.id = questionnaire["id"].lower()
-    activity_definition.url = get_fhir_cfg().canonicalBase+"ActivityDefinition/"+activity_definition.id
-    activity_definition.experimental = False
-    activity_definition.useContext = [{
-        "code": {
-            "system": "http://terminology.hl7.org/CodeSystem/usage-context-type",
-            "code": "task",
-            "display": "Workflow Task"
-    },
-    "valueCodeableConcept": {
-      "coding": [ {
-        "system": get_fhir_cfg().CodeSystem.default.url,
-        "code": questionnaire["id"],
-        "display": "TOCHANGE"}]}
-    }]
-    activity_definition.code = {
-    "coding" : [
-      {
-        "system" : "http://hl7.org/fhir/uv/cpg/CodeSystem/cpg-activity-type",
-        "code" : "collect-information",
-        "display" : "Collect information"
-      }
+    activity_definition.useContext = [
+      UsageContext( 
+        code = get_code(
+          "http://terminology.hl7.org/CodeSystem/usage-context-type", 
+          "task"),
+        valueCodeableConcept = get_codableconcept_code(
+          get_custom_codesystem_url(), 
+          questionnaire["id"],
+          "Collect infornation with questionnaire {}".format(questionnaire['title'])))
     ]
-    }
-    activity_definition.dynamicValue = [
-    {
-      "path" : "input",
-      "expression" : {
-        "language" : "text/cql-expression",
-        "expression" : "{ type: code, value: extension('http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-collectWith').value }"
-      }
-    }
-    ]
-    
+    activity_definition.code = get_codableconcept_code(
+      "http://hl7.org/fhir/uv/cpg/CodeSystem/cpg-activity-type",
+      "collect-information",
+      "Collect information")
+    # could nbe splitted into input.code / input.value
+    activity_definition.dynamicValue = [ ActivityDefinitionDynamicValue(
+        path = "input",
+        expression = Expression(
+            language = "text/cql-expression",
+            expression = "{ type: code, value: extension('http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-collectWith').value }"
+      )
+    )]
+    new_ext = Extension(
+        url = "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-collectWith",
+        valueCanonical = questionnaire['url'])
+    append_unique(activity_definition.extension, new_ext, True)
     return activity_definition

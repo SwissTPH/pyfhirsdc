@@ -67,14 +67,18 @@ def get_structure_map_extension(extentions, uri):
         if extentions is None or len(extentions) == 0:
             return [sm_ext]
         else:
-            nofound = True
-            for ext in extentions:
-                if ext.valueCanonical == uri and ext.url == "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-targetStructureMap":
-                    nofound = False
-            if nofound:
-                extentions.append(sm_ext)
+            append_unique(extentions, sm_ext, True)
     return extentions
 
+def append_unique(extentions, new_ext, replace = False):
+    nofound = True
+    for ext in extentions:
+        if replace and ext.url == new_ext.url:
+            extentions.remove(ext)
+        elif ext == new_ext:
+            nofound = False
+    if nofound:
+        extentions.append(new_ext) 
 
 def get_checkbox_ext():
     return Extension(
