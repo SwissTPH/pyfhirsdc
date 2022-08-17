@@ -5,7 +5,6 @@
     Will be used in the plandefinition to call the respective questionnaires
 """
 
-from pyfhirsdc.converters.structureMapConverter import add_structure_maps_url, get_structure_map_bundle
 from pyfhirsdc.config import  get_processor_cfg
 from pyfhirsdc.converters.activityConverter import init_activity, create_activity
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource, get_resources_files
