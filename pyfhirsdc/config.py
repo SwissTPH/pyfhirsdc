@@ -36,8 +36,8 @@ def get_defaut_fhir(resource):
 
 def get_defaut_path(resource, default):
     if not resource in dict_cfg['fhir'] or dict_cfg['fhir'][resource]['outputPath'] is None:
-        return get_processor_cfg().outputPath + default
-    return get_processor_cfg().outputPath + dict_cfg['fhir'][resource]['outputPath']
+        return os.path.join(get_processor_cfg().outputPath, default)
+    return os.path.join(get_processor_cfg().outputPath, dict_cfg['fhir'][resource]['outputPath'])
 
 def add_tail_slashes(fhir):
     if hasattr(fhir,  'canonicalBase'):
