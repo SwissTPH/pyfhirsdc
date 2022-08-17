@@ -8,7 +8,6 @@
 from pyfhirsdc.config import  get_processor_cfg
 from pyfhirsdc.converters.activityConverter import init_activity, create_activity
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource, get_resources_files
-import numpy as np
 
 def generate_activities():
     questionnaires = get_resources_files('questionnaire')
