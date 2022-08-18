@@ -31,7 +31,6 @@ def convert_df_to_questionitems(questionnaire,df_questions, df_value_set, strate
     parent = []
     # add timestamp
     ressource.item.append(get_timestamp_item())
-    # FIXME add the profile id
     for id, question in dict_questions.items():
         existing_item = next((ressource.item.pop(index) for index in range(len(ressource.item)) if ressource.item[index].linkId == id), None)
         # manage group
