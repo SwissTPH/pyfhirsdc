@@ -116,8 +116,9 @@ def get_value_set_excludes(excludes, name, df_value_set_in):
     for value_set_filter in value_set_filters:
         # add a line for the system fully excluded
         if len(df_value_set_in[df_value_set_in['valueSet'] == value_set_filter]['code'])==0:
-            line = {'scope': value_set_filter, } 
-            df_value_set_in = df_value_set_in.append(line, ignore_index = True)
+            line = pd.Series([{'scope': value_set_filter, }])
+            df_value_set_in = pd.concat([df_value_set_in, line], ignore_index=True)
+            #df_value_set_in = df_value_set_in.append(line, ignore_index = True)
 
     df_value_set = df_value_set_in[df_value_set_in['scope'].isin(value_set_filters)]
     return get_value_set_in_ex_cludes(excludes, df_value_set)
