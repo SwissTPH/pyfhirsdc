@@ -1,7 +1,8 @@
 {
     "processor":{
-        "inputFile":"PLACEHOLDER",
-        "outputPath":"output/",
+        "cql_translator": "https://fhir.cql-translator.dk.swisstph-mis.ch/cql/translator",
+        "mapping_translator": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureMap",
+        "default_resource_path":"./default_resources",
         "excudedWorksheets":[
             "q.new-encounter"
         ],
@@ -18,6 +19,10 @@
         "activity":{
             "CodeSystem": "http://fhir.org/guides/who/anc-cds/CodeSystem/activity-codes"
         },
+        "external_libraries" : {
+            "FHIRHelpers" : "http://fhir.org/guides/who/anc-cds/Library/FHIRHelpers|4.0.1"
+        }
+        ,
         "usageContext":{
             "CodeSystem": "http://terminology.hl7.org/CodeSystem/usage-context-type",
             "Code": "task",
@@ -28,9 +33,6 @@
             "planDefinitionType":{
                 "CodeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
                 "Code": "eca-rule"
-            },
-            "default":{
-                "status":"active"
             }
         },
         "Extensions":{
@@ -40,96 +42,12 @@
             "outputPath":"profiles"
         },
         "Questionnaire":{
-            "outputPath":"resources/questionnaire",
-            "default":{
-                "status":"active",
-                "meta": {
-                    "profile":[
-                        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire"
-                    ]
-                },
-                "extension": [{
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
-                    "valueCode": "shareable"
-                  }, {
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
-                    "valueCode": "computable"
-                  }, {
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
-                    "valueCode": "publishable"
-                  }, {
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeRepresentationLevel",
-                    "valueCode": "structured"
-                  }],
-                  "subjectType": [
-                    "Patient"
-                  ],
-                  "experimental": false,
-                  "resourceType": "Questionnaire"
-            }
-            
+            "outputPath":"resources/questionnaire"
         },
-        "QuestionnaireResponse":{
-            "outputPath":"resources/questionnaireresponse",
-            "default":{
-                "status":"active",
-                "meta": {
-                    "profile":[
-                        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaireresponse"
-                    ]
-                },
-                "extension": [{
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
-                    "valueCode": "shareable"
-                  }, {
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
-                    "valueCode": "computable"
-                  }, {
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
-                    "valueCode": "publishable"
-                  }, {
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeRepresentationLevel",
-                    "valueCode": "structured"
-                  }],
-                  "experimental": false,
-                  "resourceType": "QuestionnaireResponse"
-            }
-            
-        },
-
         "ActivityDefinition":{
-            "outputPath":"resources/activitydefinition",
-            "default":{
-                "status":"active",
-                "extension": [{
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
-                    "valueCode": "shareable"
-                  }, {
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
-                    "valueCode": "computable"
-                  }, {
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeCapability",
-                    "valueCode": "publishable"
-                  }, {
-                    "url": "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-knowledgeRepresentationLevel",
-                    "valueCode": "structured"
-                  }],
-                  "experimental": false,
-                  "resourceType": "ActivityDefinition",
-                  "code" : {
-                    "coding" : [
-                      {
-                        "system" : "http://hl7.org/fhir/uv/cpg/CodeSystem/cpg-activity-type",
-                        "code" : "collect-information",
-                        "display" : "Collect information"
-                      }
-                    ]
-                  }
-            }
+            "outputPath":"resources/activitydefinition"
         },
         "Library":{
-            "cql_translator": "https://fhir.cql-translator.dk.swisstph-mis.ch/cql/translator", 
-            "status":"active",
             "outputPath":"resources/library/"
         },
         "Bundle":{
@@ -139,61 +57,10 @@
             "outputPath":"/pagecontent/"
         },"CodeSystem":
         {
-            "outputPath":"vocabulary/codesystem/",
-            "default":{
-                "resourceType": "CodeSystem",
-                "id": "emcare-custom-codes",
-                "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
-                "name": "emc-custom-codes",
-                "title": "Extended Codes CodeSystem",
-                "status": "draft",
-                "experimental": false,
-                "description": "Set of codes identified as being needed but not found in existing Code Systems",
-                "caseSensitive": true,
-                "content": "complete",
-                "concept": [ ]
-            }
-        },"StructureMap":
-        {
-            "outputPath":"resources/structuremap/",
-            "default":{
-                "resourceType": "StructureMap",
-                "id": "default",
-                "url": "http://hl7.org/fhir/StructureMap/example",
-                "name": "default",
-                "status": "draft",
-                "group": [{
-                    "name":"fake",
-                    "typeMode":"none",
-                    "input":[{
-                        "name":"fake",
-                        "mode":"source"
-                    }],
-                    "rule":[{
-                        "name":"fake",
-                         "source":[{
-                             "context":"fake"
-                         }]
-                        }]
-
-                }]
-            }
+            "outputPath":"vocabulary/codesystem/"
         },"ValueSet":
         {
-            "outputPath":"vocabulary/valueset/",
-            "default":{
-                "resourceType": "ValueSet",
-                "id": "emcare-a-de12",
-                "url": "/ValueSet/emc-",
-                "name": "emcare-",
-                "status": "draft",
-                "experimental": false,
-                "description": "Codes representing possible values for the Provide an estimated age or estimated date of birth element",
-                "immutable": true,
-                "compose": {
-                  "include": []
-                }
-            }
+            "outputPath":"vocabulary/valueset/"
         }
     }
 

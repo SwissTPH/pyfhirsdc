@@ -6,7 +6,7 @@ import pandas as pd
 
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import get_structure_map_extension
-from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
+from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_custom_codesystem_url, get_resource_url
 from pyfhirsdc.models.mapping import Mapping, MappingGroup, MappingGroupIO, MappingIO, MappingRule
 from pyfhirsdc.serializers.mappingSerializer import write_mapping_file
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
@@ -115,7 +115,7 @@ def get_post_bundle_profile_rule(profile, question_name, row):
         sub_rule =  get_obs_call_rule( question_name, row)
     else:
         sub_rule =  MappingRule(  
-            expression = "src -> {0}{1}group(src, tgt)".format(profile, question_name),
+            expression = "src -> {0}{1}(src, tgt)".format(profile, question_name),
             name = 'act-{0}'.format(question_name))
     return MappingRule(
         expression =   """
@@ -137,6 +137,7 @@ def get_obs_call_rule( question_name, row):
 
 def get_put_bundle_profile_rule(profile):
     rule_name = clean_group_name(profile)
+    base_profile = get_base_profile(profile)
     return MappingRule(
         expression =   "src -> bundle.entry as entry",
         name = 'put-{0}'.format(rule_name),
@@ -148,7 +149,7 @@ def get_put_bundle_profile_rule(profile):
                 expression = 'src -> entry.request as request, request.method = "PUT", request.url as url then getUrl{0}(src, url)'.format(rule_name),
                 name = 'u{0}'.format(rule_name)),
             MappingRule(
-                expression = 'src -> entry.resource = create("{0}") as tgt then {0}group(src, tgt)'.format(rule_name),
+                expression = 'src -> entry.resource = create("{0}") as tgt then {1}(src, tgt)'.format(base_profile, rule_name),
                 name = 'c{0}'.format(rule_name),
             )
         ]
@@ -205,7 +206,7 @@ def get_mapping_details(profile, df_questions):
 
 def get_mapping_detail(question_name, question):
     #TODO manage transform evaluate/create
-    # item that have childer item are created then the children rule will create the children Items
+    # item that have childen item are created then the children rule will create the children Items
     # example rule 13 and 14 http://build.fhir.org/ig/HL7/sdc/StructureMap-SDOHCC-StructureMapHungerVitalSign.json.html
     #profileType, element, valiable = explode_map_resource(question['map_resource'])
     rule = None
@@ -225,10 +226,12 @@ def get_mapping_detail(question_name, question):
             if question['map_resource'].strip()[-1:] != ";":
                 question['map_resource'] = question['map_resource'] + " '"+ question_name + "-1';"
             # if variable on root, element is the resource itself
-            fhirmapping =  "src.item as item where linkId  = '{0}'  then {{ {2} -> {1}   }}".format(
+            match =  re.search("[ =]*val(?:[^\w]|$)",question['map_resource'])
+            
+            fhirmapping =  "src.item as item where linkId  = '{0}'  -> tgt then {{ {2} -> {1}   }}".format(
                 question_name ,
                 question['map_resource'],
-                "item.answer first as a, a.value as val" if re.match("= *val[^\d]*",question['map_resource']) else "item.answer as a"
+                "item.answer first as a, a.value as val" if match is not None else "item.answer as a"
             )
         if fhirmapping is not None:
             fhirmapping = fhirmapping.replace('{{cs_url}}',  get_custom_codesystem_url())
@@ -275,8 +278,6 @@ def generate_helper(helper_func, mode, profile, *helper_args):
     return  globals()[helper_func](mode,clean_group_name(profile) , *helper_args )        
 
 
-def clean_group_name(name):
-    return clean_name(name).replace('-','').replace('.','').replace('/','').strip()
 ##### mapping snippet
 
 
@@ -413,15 +414,15 @@ def SetOfficalGivenName(mode, profile, *args):
                 rules = [
                     MappingRule(
                         name = 'f{}'.format(rule_name),      
-                        expression = "src.item as item where linkId  =  {0} then {{item.answer as a -> tgt.given = a 'f';}}".format(args[0])
+                        expression = "src.item as item where linkId  =  {0} -> tgt then {{item.answer as a -> tgt.given = a 'f';}}".format(args[0])
                     ),
                     MappingRule(
                         name = 'm{}'.format(rule_name),      
-                        expression = "src.item as item where linkId  =  {0} then {{item.answer as a -> tgt.given = a 'f';}}".format(args[1])
+                        expression = "src.item as item where linkId  =  {0} -> tgt then {{item.answer as a -> tgt.given = a 'f';}}".format(args[1])
                     ),
                     MappingRule(
                         name = 'l{}'.format(rule_name),      
-                        expression = "src.item as item where linkId  =  {0} then {{item.answer as a -> tgt.family = a 'f';}}".format(args[2])
+                        expression = "src.item as item where linkId  =  {0} -> tgt then {{item.answer as a -> tgt.family = a 'f';}}".format(args[2])
                     )                   
                 ]
             )

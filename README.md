@@ -33,13 +33,13 @@ maturitiy:0
   - outputPath
   - scope
   - encoding
+  - default_resource_path : path where the default ressource are located
 - fhir
   - version : FHIR version
   - canonicalBase :  base url for the definiton
   - guideBase : base url for the IG
   - [RessourceName] : Fhir resource configuration
     - outputPath : where the resource output need to be saved
-    - default : Default FHIR resource content in json format
 
 
 
@@ -56,8 +56,9 @@ maturitiy:1
 - planDefinition
 
 
-### CarePlan 
-maturitiy:0
+
+### pd. : PlanDefinition
+maturitiy:1
 
 This sheet define the main object that contain the SDC data capture
 the idea will be to create an Encounter planDefinition that will contain standardized activities
@@ -73,15 +74,26 @@ example of activities:
 
 each activity is expected to be trigger by the L4 application (one the Encounter planDefinition will be loaded )
 
+several lines will be merged if they follow those conditions:
+- being one after the others (,several lines could be merged but two lines seperated by urelated line won't be merged)
+- having the same title
+- having the same canonical Definition
+  
+each line will generate a "CQL" identifer in the related library for:
+- start condition
+- stop condition
+- applicability
+
+
 inside each activity, a [SDC Modular questionnaire](ttps://build.fhir.org/ig/HL7/sdc/branches/master/StructureDefinition-sdc-questionnaire-modular.html) will be linked (using [cpg-collectWith](http://hl7.org/fhir/uv/cpg/StructureDefinition-cpg-collectWith.json.html) extension )
 
 
-### pd. : PlanDefinition
-maturitiy:0
-
-this sheet defined how the questionnaires are sequences using multiple plan definition, in the cql-tooling it was based on Decision Tables
 #### parentActionId
-<text> identifier of the parent actions 
+<text> identifier of the parent actions, 
+
+can also be {{snipet}} to document pure cql rule
+
+
 #### id
  <text> identifier of the actions 
 #### title

@@ -8,6 +8,7 @@ requires = [
     "pydantic",
     "validators",
     "odfpy",
-    "ocldev"
+    "ocldev",
+    "requests-toolbelt",
 ]
 build-backend = "setuptools.build_meta"

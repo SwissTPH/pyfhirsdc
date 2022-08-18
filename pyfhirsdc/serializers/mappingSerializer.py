@@ -1,5 +1,6 @@
 import json
 import requests
+from ..config import add_tail_slash, get_processor_cfg
 
 from pyfhirsdc.converters.utils import  get_resource_url
 from pyfhirsdc.serializers.utils import  reindent, write_resource
@@ -17,7 +18,7 @@ def write_mapping_file(filepath, mapping, update_map = True):
     structure_map = None
     if update_map:
         
-        url_map= get_resource_url('StructureMap', mapping.name)
+        url_map=   add_tail_slash(get_processor_cfg().mapping_translator) + mapping.name
         print("Sending the mapping file {0}".format(url_map))
         headers_map = {'Content-type': 'text/fhir-mapping', 'Accept': 'application/fhir+json;fhirVersion=4.0'}
         response = requests.put(url_map, data = buffer, headers = headers_map) 

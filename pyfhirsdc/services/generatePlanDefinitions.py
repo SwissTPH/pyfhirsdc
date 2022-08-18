@@ -1,17 +1,18 @@
 
 
 from pyfhirsdc.config import get_defaut_path, get_fhir_cfg, get_processor_cfg, get_defaut_fhir
-from pyfhirsdc.converters.utils import clean_name, get_resource_url
+from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_resource_url
 from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.plandefinition import PlanDefinition
-from fhir.resources.library import Library
 from fhir.resources.identifier import Identifier
 
 from pyfhirsdc.converters.planDefinitionConverter import   \
-      write_plan_definition_index, processDecisionTable
-from pyfhirsdc.converters.libraryConverter import  generate_plan_defnition_lib, write_library_CQL
+      process_decisiontable
+
 import os
 import json
+from pyfhirsdc.serializers.librarySerializer import generate_plan_defnition_lib, write_cql_pd, write_cql_df, write_library_CQL
+from pyfhirsdc.serializers.planDefinitionIndexSerializer import write_plan_definition_index
 
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
 
@@ -48,7 +49,7 @@ def generate_plandefinition( name,df_actions):
     dict_actions = df_actions.to_dict('index')
 
     ## generate libraries, plandefinitions and libraries
-    planDefinitionId = clean_name(name)
+    planDefinitionId = clean_group_name(name)
     pd_df.title = planDefinitionId
     identifier = Identifier.construct()
     identifier.use = "official"
@@ -58,12 +59,12 @@ def generate_plandefinition( name,df_actions):
 
     pd_df.name = planDefinitionId
     pd_df.url = get_resource_url("PlanDefinition", planDefinitionId)
-    planDefinition = processDecisionTable(pd_df, df_actions)
+    planDefinition = process_decisiontable(pd_df, df_actions)
      
     if planDefinition is not None:
-        cql, library = generate_plan_defnition_lib(planDefinition)
+        library = generate_plan_defnition_lib(planDefinition,df_actions)
         # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
-        #plan_definition = processDecisionTable(plandefinitions, dict_actions)
+        #plan_definition = process_decisiontable(plandefinitions, dict_actions)
         # write file
         write_resource(filepath, planDefinition, get_processor_cfg().encoding)
         output_lib_path = os.path.join(
@@ -72,9 +73,12 @@ def generate_plandefinition( name,df_actions):
             )
         output_lib_file = os.path.join(
                 output_lib_path,
-                "library-"+ name +  "." + get_processor_cfg().encoding
+                "library-"+ planDefinitionId +  "." + get_processor_cfg().encoding
             )
         write_resource(output_lib_file, library, get_processor_cfg().encoding)
+
+        cql = write_cql_df(planDefinition, df_actions)
+        # = get_cql_df(df_actions)
         cql_path = get_defaut_path('CQL', 'cql')
         write_library_CQL(cql_path, library, cql)
 

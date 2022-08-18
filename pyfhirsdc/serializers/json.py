@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import json
 import os
 
-def read_json(filepath, type = "object"):
+def read_file(filepath, type = "object"):
     json_str = None
     try:
         file = open(filepath, 'r',  encoding="utf-8")
@@ -22,7 +22,7 @@ def read_json(filepath, type = "object"):
     return json_str
 
 def read_resource(filepath, resource):
-    resource_dict = read_json(filepath, 'dict') if os.path.exists(filepath) else None
+    resource_dict = read_file(filepath, 'dict') if os.path.exists(filepath) else None
 
     # check if the resource has the right type 
     if resource_dict is not None and 'resourceType' in resource_dict\

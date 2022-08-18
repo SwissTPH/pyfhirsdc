@@ -1,6 +1,6 @@
 import json
 import os
-from pyfhirsdc.serializers.json import read_json
+from pyfhirsdc.serializers.json import read_file
 
 
 processor_cfg = None
@@ -10,8 +10,8 @@ def read_config_file(filepath):
     global processor_cfg
     global fhir_cfg
     global dict_cfg
-    obj_conf=read_json(filepath, "object")
-    dict_cfg=read_json(filepath, "dict")
+    obj_conf=read_file(filepath, "object")
+    dict_cfg=read_file(filepath, "dict")
        # ensure the output directoy exist
     if obj_conf.processor.outputPath is None:
         obj_conf.processor.outputPath = "./output"
@@ -35,7 +35,7 @@ def get_fhir_cfg():
 def get_defaut_fhir(resource):
     default_file_path =  os.path.join(dict_cfg['processor']['default_resource_path'],resource+'.json')
     if os.path.exists(default_file_path):
-        json_str = read_json(default_file_path, "dict") 
+        json_str = read_file(default_file_path, "dict") 
         return json_str
 
 def get_defaut_path(resource, default):
