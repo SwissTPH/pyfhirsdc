@@ -221,31 +221,47 @@ def get_mapping_detail(question_name, question):
             helper_func = helper_array[0].strip()
             helper_args = helper_array[1].split('||') if len(helper_array)>1 else []
             fhirmapping = generate_helper(helper_func, 'main', question_name, *helper_args)
+            if fhirmapping is not None:
+                fhirmapping= inject_config(fhirmapping)
+                rule = MappingRule(
+                    name = clean_group_name(question_name),
+                    expression = fhirmapping,
+                    )
             group  =  generate_helper(helper_func, 'group', question_name, *helper_args)
+
         else:
-            if question['map_resource'].strip()[-1:] != ";":
-                question['map_resource'] = question['map_resource'] + " '"+ question_name + "-1';"
+            rule_name = clean_group_name(question_name)
+            if question['map_resource'].strip()[-1:] == ";":
+                print("Warning, the map ressource must not end with ;")
+
             # if variable on root, element is the resource itself
             match =  re.search("[ =]*val(?:[^\w]|$)",question['map_resource'])
-            
-            fhirmapping =  "src.item as item where linkId  = '{0}'  -> tgt then {{ {2} -> {1}   }}".format(
-                question_name ,
-                question['map_resource'],
-                "item.answer first as a, a.value as val" if match is not None else "item.answer as a"
-            )
-        if fhirmapping is not None:
-            fhirmapping = fhirmapping.replace('{{cs_url}}',  get_custom_codesystem_url())
-            fhirmapping = fhirmapping.replace('{{canonical_base}}',  get_fhir_cfg().canonicalBase)
             rule = MappingRule(
-                name = clean_group_name(question_name),
-                expression = fhirmapping,
+                    name = rule_name,
+                    expression =  "src.item as item where linkId  = '{0}'".format(question_name),
+                    rules = [ get_val_rule(rule_name, question['map_resource']) if match else get_ans_rule(rule_name, question['map_resource'])]
                 )
+
     return rule, group
 
 
-
+def inject_config(value):
+    return value.replace('{{cs_url}}',  get_custom_codesystem_url()).replace('{{canonical_base}}',  get_fhir_cfg().canonicalBase)
  
-
+def get_val_rule(rule_name, expression):
+    return MappingRule(
+        expression  = "item.answer first as a",
+        name = 'a'+rule_name,
+        rules = [ MappingRule( 
+            expression  = "a.value as val -> {0}".format(inject_config(expression)),
+            name = 'a'+rule_name
+        )]
+    )
+def get_ans_rule(rule_name, expression):
+    return MappingRule( 
+            expression  = "item.answer first as a -> {0}".format(inject_config(expression)),
+            name = 'a'+rule_name
+    )
 ##### helpers 
 
 def is_oneliner_profile(profile):

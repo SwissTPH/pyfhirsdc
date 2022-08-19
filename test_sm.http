@@ -1,0 +1,19 @@
+@host =https://fhir.dk.swisstph-mis.ch/matchbox/fhir/
+
+### update the SM 
+
+POST {{host}}StructureMap HTTP/1.1
+Content-Type: "text/fhir-mapping; charset=utf-8; fhirVersion=4.0"
+
+
+
+< C:\Users\delcpa\Development\smart-emcare\input\resources\structuremap\structuremap-emcareb.registration.e.map
+
+###
+
+### Test SM against QR
+POST {{host}}StructureMap/$transform?source=https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureMap/emcarea.registration.p
+Accept: application/fhir+json;fhirVersion=4.0
+Content-Type: application/fhir+json;fhirVersion=4.0
+
+< C:\Users\delcpa\Development\smart-emcare\input\resources\structuremap\test-qr-emcareb.registration.e.json
