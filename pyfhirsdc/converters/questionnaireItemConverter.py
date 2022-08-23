@@ -240,7 +240,8 @@ def get_type_details(question):
         return type_arr[0], None, None
 
 def init_questionnaire(filepath, id):
-    questionnaire_json = read_resource(filepath, "Questionnaire")
+    #commented to force re-generation questionnaire_json = read_resource(filepath, "Questionnaire")
+    questionnaire_json = None
     default =get_defaut_fhir('Questionnaire')
     if questionnaire_json is not None :
         questionnaire = QuestionnaireSDC.parse_raw( json.dumps(questionnaire_json))  
@@ -249,6 +250,7 @@ def init_questionnaire(filepath, id):
         questionnaire = QuestionnaireSDC.parse_raw( json.dumps(default))
         questionnaire.id=clean_name(id)
         questionnaire.title=id
+        questionnaire.name=id
         questionnaire.url=get_resource_url('Questionnaire',id) 
 
     return questionnaire

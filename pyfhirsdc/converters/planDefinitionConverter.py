@@ -99,7 +99,7 @@ def get_triggers(row):
 def get_conditions(row):
     condition = []
     for exp in ROW_EXPRESSIONS:
-        if pd.notna(row[exp['name']]):
+        if exp['name'] in row and pd.notna(row[exp['name']]):
             condition.append( PlanDefinitionActionCondition(
                 kind = Code(exp['kind']),
                 expression = Expression(
