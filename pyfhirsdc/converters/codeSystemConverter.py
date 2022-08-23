@@ -29,6 +29,12 @@ def generate_valueset_concept(df_value_set):
     value_set = df_value_set[~df_value_set['code'].isin(
         get_value_set_additional_data_keyword()
         )]
+    len_origin = len(value_set)
+    # Drop duplicate 
+    value_set = value_set.drop_duplicates(subset='code', keep="last")
+    len_cleanned = len(value_set)
+    if len_origin !=len_cleanned:
+        print("{} value were removed from the value set because other line have the same code".format(len_origin-len_cleanned))
     value_set = value_set.dropna(axis=0, subset=['code']).set_index('code').to_dict('index')
     # remove the line without id
     for code, question in value_set.items():
