@@ -6,6 +6,15 @@ from pyfhirsdc.serializers.json import read_file
 processor_cfg = None
 fhir_cfg = None
 dict_cfg = None
+dict_df = None
+
+def set_dict_df(dict_in):
+    global dict_df
+    dict_df = dict_in
+
+def get_dict_df():
+    return dict_df
+
 def read_config_file(filepath):
     global processor_cfg
     global fhir_cfg
