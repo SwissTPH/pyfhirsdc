@@ -1,0 +1,86 @@
+@host=https://fhir.ruler.dk.swisstph-mis.ch/fhir
+#@host=https://fhir.dk.swisstph-mis.ch/matchbox/fhir
+
+
+### cql execution json data
+POST {{host}}/$cql
+content-type: application/json
+
+{
+    "resourceType": "Parameters",
+    "parameter": [
+    {"name":"expression", "valueExpression":"uuid()"},
+    {"name":"subject", "valueUrl":"http://fhir.dk.swisstph-mis.ch/matchbox/fhir/Patient/1452"},
+    {"name":"library.url", "valueUrl":"http://http://fhir.dk.swisstph-mis.ch/matchbox/fhir/Library/emcaredt01"}
+    ]
+}
+
+### cql execution POSt data
+POST {{host}}/$cql
+content-type: text/html
+
+
+expression=uuid()&subject=http://fhir.dk.swisstph-mis.ch/matchbox/fhir/Patient/1452&library.url=http://http://fhir.dk.swisstph-mis.ch/matchbox/fhir/Library/emcaredt01
+    
+### cql execution POST with get data
+POST {{host}}/$cql?expression=uuid()&subject=http://fhir.dk.swisstph-mis.ch/matchbox/fhir/Patient/1452&library.url=http://fhir.dk.swisstph-mis.ch/matchbox/fhir/Library/emcaredt01
+
+
+
+### evaluate
+
+POST {{host}}/Library/emcaredt01/$evaluate?subject=/Patient/1452
+
+### Data requirements
+
+GET {{host}}/Library/emcaredt01/$data-requirements
+
+### Send FHIRhelper
+PUT {{host}}/Library/FHIRHelpers
+content-type: application/json
+
+< C:\Users\delcpa\Development\smart-emcare\input\resources\library\library-fhirhelpers.json
+
+###
+
+GET {{host}}/Library/?url=http://fhir.org/guides/who/anc-cds/Library/FHIRHelpers
+### Send emcarepd lib
+PUT {{host}}/Library/emcaredt01
+content-type: application/json
+
+< C:\Users\delcpa\Development\smart-emcare\input\resources\library\library-emcaredt01.json
+###
+GET {{host}}/Library/FHIRHelpers
+
+###
+GET https://fhir.ruler.dk.swisstph-mis.ch/fhir/Library/SimpleR4Library
+
+###
+GET https://fhir.ruler.dk.swisstph-mis.ch/fhir/Library/emcaredt01
+###
+
+POST https://fhir.ruler.dk.swisstph-mis.ch/fhir/$cql
+content-type: application/json
+
+
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "parameters",
+      "resource": {
+        "resourceType": "Parameters",
+        "parameter": [
+          {
+            "name": "%inputDate",
+            "valueDate": "2019-11-01"
+          }
+        ]
+      }
+    },
+    {
+      "name": "expression",
+      "valueString": "Uuid()"
+    }
+  ]
+}

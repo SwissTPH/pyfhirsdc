@@ -1,7 +1,8 @@
 import os
 import re
 import pandas as pd
-from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
+from pyfhirsdc.config import get_defaut_path, get_fhir_cfg, get_processor_cfg
+from pyfhirsdc.converters.extensionsConverter import add_library_extentions
 from pyfhirsdc.converters.mappingConverter import inject_config
 from pyfhirsdc.converters.utils import clean_name, get_codableconcept_code, get_resource_url
 from fhir.resources.library import Library
@@ -11,7 +12,7 @@ from fhir.resources.identifier import Identifier
 from fhir.resources.parameterdefinition  import ParameterDefinition 
 from fhir.resources.identifier import Identifier
 from fhir.resources.datarequirement  import DataRequirement, DataRequirementCodeFilter
-from .utils import reindent
+from .utils import reindent, write_resource
 
 ### Function that creates the constant part of cql files 
 
@@ -45,13 +46,27 @@ def generate_plan_defnition_lib(resource, df_actions, type = 'pd'):
         dataRequirement= get_lib_data_requirement(df_actions, type)
 
     )
-    libraryCanonical = Canonical(library.url)
-    if hasattr(resource, 'library') and resource.library is None: 
-        resource.library = []    
-        resource.library.append(libraryCanonical)
+    cql =write_cql_df(resource, df_actions)
+    if len(cql)>1:
+        output_lib_path = os.path.join(
+                get_processor_cfg().outputPath,
+                get_fhir_cfg().Library.outputPath
+            )
+        output_lib_file = os.path.join(
+                output_lib_path,
+                "library-"+ resource.id +  "." + get_processor_cfg().encoding
+            )
+        write_resource(output_lib_file, library, get_processor_cfg().encoding)
+        cql_path = get_defaut_path('CQL', 'cql')
+        write_library_CQL(cql_path, library, cql)
+        libraryCanonical = Canonical(library.url)
+        if hasattr(resource, 'library') and resource.library is None: 
+            resource.library = []    
+            resource.library.append(libraryCanonical)
+        else:
+            resource = add_library_extentions(resource, library.id)
 
-    
-    return  library
+        return  library
 
 def get_lib_parameters(df_in, type = "pd"):
     parameters = []
@@ -150,19 +165,33 @@ def check_expression_keyword(row, keword):
         if exp['name'] in row and pd.notna(row[exp['name']]) and keword in row[exp['name']]:
             return True
     
-def writeLibraryHeader(resource, includeBase = False):
-    return """
-library {1}
-using FHIR version {0}
-include FHIRHelpers version '{0}'
-{3}nclude {2}Base called Base
-//i nclude {2}Concepts called Cx
-//i nclude {2}DataElements called Dx
+def writeLibraryHeader(resource, libs = None):
+    return """library {1}
+using FHIR version '{0}'
+include FHIRHelpers version '4.0.1' called FHIRHelpers 
+{3}
 context Patient
 
-""".format(get_fhir_cfg().version, resource.id, get_processor_cfg().scope,"i" if includeBase else "//i "  )
+""".format(
+    get_fhir_cfg().version, 
+    resource.id, 
+    get_processor_cfg().scope,
+    get_include_lib(libs))
 
-  
+
+# libs is a list {name='', version='', alias = ''}
+def get_include_lib(libs):
+    ret = ''
+    for lib in libs:
+        if 'name' in lib and lib['name'] is not None and len(lib['name'])>0:
+            ret+="include {}".format(lib['name'])
+            if 'version' in lib and lib['version'] is not None and len(lib['version'])>0:
+               ret+=" version '{}'".format(lib['version'])
+            if 'alias' in lib and lib['alias'] is not None and len(lib['alias'])>0:
+               ret+=" called {}".format(lib['alias'])   
+            ret+="\n"
+    return ret
+
 def write_library_CQL(output_path, lib, cql):
     if cql is not None and len(cql)>1:
         output_file_path = os.path.join(output_path,  lib.name + ".cql")
@@ -202,12 +231,25 @@ def write_action_condition(action):
                     "  false" + "\n\n "
     return cql    
 
+
+
 def write_cql_df(resource, df_actions,  includeBase = False):
     cql = {}
+    libs = []
     i = 0
     oi = i
     if len(df_actions)>0:
         for index, row in df_actions.iterrows():
+            if index == "{{library}}" or "id" in row and pd.notna(row['id']) and row['id'] == "{{library}}":
+                details =  row['description'].split("::")
+                name = details[0]
+                version = details[2] if len(details)>2 else None
+                alias = details[1] if len(details)>1 else None
+                libs.append({
+                    'name':name,
+                    'version':version,
+                    'alias':alias
+                })
             # PlanDefinition CQL
             # applicability -> "id" : cql
             # start -> "start::id" : cql
@@ -222,18 +264,17 @@ def write_cql_df(resource, df_actions,  includeBase = False):
                 cql[i] = write_cql_action(row['id'], row['description'], '', row['applicabilityExpressions'])
                 i += 1
                 # add the wrapper name -> id
-                cql[i] = write_cql_action(row['description'], '', '','"'+row['id']+'"')
+                cql[i] = write_cql_action(row['description'], '', '',row['id'])
                 i += 1
-            ## questionnaire initial expression in CQL
-            if 'initialExpression' in row and pd.notna(row['initialExpression']):
+            ## questionnaire initial expression in CQL, FIXMDe
+            if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()):
                 cql[i] = write_cql_action(index, row['description'], '', row['initialExpression'])
                 i += 1
             if i > oi :
                 # FIXME, need better way to detect Base
-                includeBase = True
                 cql[i-1] = inject_config(cql[i-1].replace("PatientHas", "Base.PatientHas"))
             oi = i
-    cql['header'] = writeLibraryHeader(resource, includeBase)
+    cql['header'] = writeLibraryHeader(resource, libs)
     return cql
 
 def write_cql_action(id, name, prefix, expression):

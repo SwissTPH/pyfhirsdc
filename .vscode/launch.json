@@ -6,16 +6,17 @@
     "configurations": [
 
         {
-            "name": "Python: OCL",
+            "name": "Python: O l b ",
             "type": "python",
             "request": "launch",
-            "program": "ocl_map/process_df.py",
+            "program": "main.py",
             "console": "integratedTerminal",
             "args": [
-                "-i",
-                "C:\\Users\\delcpa\\switchdrive\\DHU\\Projects\\WHO DAK\\Stage 1\\Em Care - Stage 1 - Core Data Dictionary.xlsx",
-                "-s",
-                "ICD-11\\nVer 05/2021\\nCode|WHO|ICD-11-WHO|05/2021"
+                "-c",
+                "conf.json",
+                "-o",
+                "-l",
+                "-b"
             ],
             "justMyCode": true
         },

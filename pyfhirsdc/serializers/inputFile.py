@@ -3,6 +3,8 @@ import pandas as pd
 
 import re
 
+from pyfhirsdc.config import get_dict_df, set_dict_df
+
 def clean_str(str):
     tmp = re.sub(r'(\[\w+\])|(\([^\)]+\))','',str.lower())
     tmp2 = re.sub(r'( +)|(\\ *)|(: *)|(\n *)|(/ *)|(\. *)','_',tmp.strip())
@@ -66,6 +68,14 @@ def parse_sheets(input_file, excudedWorksheets):
                     df_cql = df
                 else:
                     break
+    set_dict_df({
+        "questionnaires" : dfs_questionnaire,
+        "decisions_tables" : dfs_decision_table,
+        "valueset" : df_value_set,
+        "profile" : df_profile,
+        "extension" : df_extension,
+        "cql" : df_cql
+    })
     return dfs_questionnaire, dfs_decision_table, df_value_set, df_profile, df_extension, df_cql
 
 def validate_questionnaire_sheet(df):

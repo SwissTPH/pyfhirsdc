@@ -87,7 +87,9 @@ each line will generate a "CQL" identifer in the related library for:
 
 inside each activity, a [SDC Modular questionnaire](ttps://build.fhir.org/ig/HL7/sdc/branches/master/StructureDefinition-sdc-questionnaire-modular.html) will be linked (using [cpg-collectWith](http://hl7.org/fhir/uv/cpg/StructureDefinition-cpg-collectWith.json.html) extension )
 
-
+#### add library:
+id = {{library}}
+description = [name]::[alias]::[version] e.g FHIRHelper::FHIRHelper::4.01
 #### parentActionId
 <text> identifier of the parent actions, 
 
@@ -230,6 +232,10 @@ where a2.length <= 20 -> tgt.a2 = a||check a2.length <= 20 -> tgt.a2 = a
 use the create custom profiles and to create the structure map Questionnaire - Profile
 the details of the profile to the mapped will be in the profile tab
 
+#### add library:
+id = {{library}}
+description = [name]::[alias]::[version] e.g FHIRHelper::FHIRHelper::4.01
+type = mapping 
 
 ### valueSet
 maturitiy:2

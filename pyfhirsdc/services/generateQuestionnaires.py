@@ -7,6 +7,7 @@
 """
 
 import os
+from pyfhirsdc.converters.extensionsConverter import add_library_extentions
 from pyfhirsdc.converters.mappingConverter import add_mapping_url, get_questionnaire_mapping
 from pyfhirsdc.config import  get_defaut_path, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.questionnaireItemConverter import convert_df_to_questionitems, init_questionnaire
@@ -36,26 +37,15 @@ def generate_questionnaire( name ,df_questions, df_value_set ) :
     #structure_maps = get_structure_map_bundle(name, df_questions)
     #structure_maps = get_structure_maps(name, df_questions)
     mapping = get_questionnaire_mapping(name, df_questions)
-    questionnaire = add_mapping_url(questionnaire, mapping) 
+    questionnaire = add_mapping_url(questionnaire, mapping)
+    library = generate_plan_defnition_lib(questionnaire,df_questions,'q')
+
     # write file
     write_resource(fullpath, questionnaire, get_processor_cfg().encoding)
     
     
     #CQL files 
-    library = generate_plan_defnition_lib(questionnaire,df_questions,'q')
-    cql =write_cql_df(questionnaire, df_questions)
-    if len(cql)>1:
-        output_lib_path = os.path.join(
-                get_processor_cfg().outputPath,
-                get_fhir_cfg().Library.outputPath
-            )
-        output_lib_file = os.path.join(
-                output_lib_path,
-                "library-"+ questionnaire.id +  "." + get_processor_cfg().encoding
-            )
-        write_resource(output_lib_file, library, get_processor_cfg().encoding)
-        cql_path = get_defaut_path('CQL', 'cql')
-        write_library_CQL(cql_path, library, cql)
+
 
     
 

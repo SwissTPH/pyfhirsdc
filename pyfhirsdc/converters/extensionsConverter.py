@@ -5,6 +5,9 @@ from fhir.resources.coding import Coding
 from fhir.resources.fhirtypes import Canonical
 from distutils.util import strtobool
 import re
+
+from pyfhirsdc.config import get_fhir_cfg
+from pyfhirsdc.converters.utils import clean_name
 def get_dropdown_ext():
  return Extension(
     url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -98,7 +101,12 @@ def get_hidden_ext():
     )
 
 def convert_reference_to_firepath(expression):
-    return re.sub(pattern = r'\$\{([^}]+)\}', repl = r"%resource.repeat(item).where(linkId='\1').answer.value", string = expression )
+    # replace value check
+    expression = re.sub(pattern = r'\$\{([^}]+)\} *!?= *\{\}', repl = r"%resource.repeat(item).where(linkId='\1').answer != {}", string = expression )
+    
+
+    # other value
+    return  re.sub(pattern = r'\$\{([^}]+)\}', repl = r"%resource.repeat(item).where(linkId='\1').answer.first().value", string = expression.replace('"',"'") )
 
 
 def get_enable_when_expression_ext(expression, desc = None ):
@@ -123,5 +131,25 @@ def get_initial_expression_ext(expression, desc = None ):
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
         valueExpression = ExpressionType(
                 description = desc,
-                language = "text/fhirpath",
+                language = "text/cql-expression",
                 expression = convert_reference_to_firepath(expression)))
+
+def get_initial_expression_identifier_ext(quesiton_id, desc = None ):
+    return Extension(
+        url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+        valueExpression = ExpressionType(
+                description = desc,
+                language = "text/cql-identifier",
+                expression = clean_name(quesiton_id)))
+   
+def get_questionnaire_library(library):
+    if not re.search("$https?\:\/\/", library):
+        library = get_fhir_cfg().canonicalBase + "Library/{}".format(clean_name(library))
+    return Extension(
+        url ="http://hl7.org/fhir/StructureDefinition/cqf-library",
+        valueCanonical  = library)
+        
+def add_library_extentions(resource, library):
+    if resource.extension == None:
+        resource.extension = []
+    resource.extension.append(get_questionnaire_library(library))

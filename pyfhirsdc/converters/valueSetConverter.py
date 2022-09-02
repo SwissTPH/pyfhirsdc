@@ -4,7 +4,7 @@ from fhir.resources.valueset import  ValueSetCompose,\
      ValueSetComposeIncludeConceptDesignation
 import numpy
 import pandas as pd
-from pyfhirsdc.config import get_processor_cfg
+from pyfhirsdc.config import get_dict_df, get_processor_cfg
 
 from pyfhirsdc.converters.utils import get_custom_codesystem_url
 
@@ -132,11 +132,26 @@ def get_value_set_title(vs, line):
     return vs
 
 
-def get_value_set_additional_data_keyword():
-    return [
+METADATA_CODES =  [
         '{{title}}',
         '{{exclude}}',
         '{{include}}',
         '{{choiceColumn}}',
         '{{url}}'
          ]
+
+def get_value_set_additional_data_keyword():
+    return METADATA_CODES
+
+def get_valueset_df(valueset_name, filtered = False):
+    dict_df = get_dict_df()
+    if "valueset" in dict_df:
+        df_valueset = dict_df['valueset']
+        if filtered :
+            df_valueset = df_valueset[~ df_valueset.code.isin(METADATA_CODES)] 
+        return df_valueset[df_valueset.valueSet == valueset_name]
+    
+    
+
+        
+        

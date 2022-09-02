@@ -44,7 +44,7 @@ def refresh_content(lib):
                     
         return dependencies, out_content
                  
-    return None
+    return None, None
 
 def get_lib_url(id):
     ext_libs = get_fhir_cfg().external_libraries
@@ -66,6 +66,7 @@ def update_eml_content(cql, id):
     # add dependencies recursivly
     multipart = {}
     build_multipart_cql(cql,id,multipart)
+    print("sending cql {}".format(id))
     data = post_multipart(multipart, get_processor_cfg().cql_translator)
     if data is not None:
         return data.parts

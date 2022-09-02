@@ -68,22 +68,6 @@ def generate_plandefinition( name,df_actions):
         # write file
         write_resource(filepath, planDefinition, get_processor_cfg().encoding)
 
-
-        cql = write_cql_df(planDefinition, df_actions)
-        if len(cql)>1:
-            output_lib_path = os.path.join(
-                get_processor_cfg().outputPath,
-                get_fhir_cfg().Library.outputPath
-                )
-            output_lib_file = os.path.join(
-                output_lib_path,
-                "library-"+ planDefinitionId +  "." + get_processor_cfg().encoding
-                )
-            write_resource(output_lib_file, library, get_processor_cfg().encoding)
-            # = get_cql_df(df_actions)
-            cql_path = get_defaut_path('CQL', 'cql')
-            write_library_CQL(cql_path, library, cql)
-
     return planDefinition
 
 

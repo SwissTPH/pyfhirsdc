@@ -4,9 +4,10 @@
 import re
 import pandas as pd
 
-from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
-from pyfhirsdc.converters.extensionsConverter import get_structure_map_extension
+from pyfhirsdc.config import get_dict_df, get_fhir_cfg, get_processor_cfg
+from pyfhirsdc.converters.extensionsConverter import get_questionnaire_library, get_structure_map_extension
 from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_custom_codesystem_url, get_resource_url
+from pyfhirsdc.converters.valueSetConverter import get_valueset_df
 from pyfhirsdc.models.mapping import Mapping, MappingGroup, MappingGroupIO, MappingIO, MappingRule
 from pyfhirsdc.serializers.mappingSerializer import write_mapping_file
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
@@ -24,8 +25,10 @@ FHIR_BASE_PROFILES = [
 FHIR_ONELINER_PROFILES = [
     "Condition",
     "Observation",
+    "CommunicationRequest"
 ]
 
+VAL_REGEX = "[ =]*val(?:[^\w]|$)"
 
 def get_questionnaire_mapping(questionnaire_name, df_questions):
     structure_maps = []
@@ -97,8 +100,8 @@ def get_bundle_rules(df_questions):
         rule = None
         if is_oneliner_profile(profile):
             questions =  get_question_profiles_detail(df_questions, profile)
-            for question_name, row in questions.items():
-                rule = get_post_bundle_profile_rule(profile,question_name, row )
+            for question_id, row in questions.items():
+                rule = get_post_bundle_profile_rule(profile,question_id, row )
                 if rule is not None:
                     rules.append(rule)
         else:
@@ -108,54 +111,86 @@ def get_bundle_rules(df_questions):
 
     return rules     
         
-def get_post_bundle_profile_rule(profile, question_name, row):
+def get_post_bundle_profile_rule(profile, question_id, row):
     base_profile = get_base_profile(profile)
-    action = "create('{0}') as tgt ".format(base_profile)
-    if base_profile == "Observation":
-        sub_rule =  get_obs_call_rule( question_name, row)
+    rule_name = clean_group_name(profile)
+    if base_profile in ('Patient', 'Encounter'):
+        expression =  "src where src.item.where(linkId='{0}').exists()".format(question_id)
     else:
-        sub_rule =  MappingRule(  
-            expression = "src -> {0}{1}(src, tgt)".format(profile, question_name),
-            name = 'act-{0}'.format(question_name))
+        expression =  "src where src.item.where(linkId='{0}').exists() and src.item.where(linkId='{1}id').first().answer.exists()".format(question_id, rule_name )
+    group_name = clean_group_name(profile+question_id)
     return MappingRule(
-        expression =   """
-    src -> bundle.entry as entry,
-        entry.request as request, 
-        request.method = "POST", 
-        entry.resource = {0}
-    """.format(action),
-    name = 'post-{0}'.format(question_name),
-    rules = [sub_rule]
+        name = rule_name,
+        expression = expression,
+        rules = [MappingRule(
+            name = 'act-{0}'.format(question_id),
+            expression = "src -> bundle.entry as entry, entry.request as request, request.method = 'POST', entry.resource = create('{0}') as tgt then {1}(src,tgt)".format(
+                base_profile,
+                group_name))]
     )
-
-def get_obs_call_rule( question_name, row):
-    # in case of value observation, an empty 
-    return MappingRule( 
-        expression = "src.item first as item  where linkId =  '{0}' -> item.answer as a then SetObservation{1}(src, a, tgt) ".format(question_name, clean_group_name(question_name)), 
-        name = 'obs-{0}'.format(question_name))
+    
+        
+    
 
 
 def get_put_bundle_profile_rule(profile):
     rule_name = clean_group_name(profile)
     base_profile = get_base_profile(profile)
-    return MappingRule(
-        expression =   "src -> bundle.entry as entry",
+    rule =  MappingRule(
+        expression = get_rule_entry_expression(base_profile, rule_name) ,
         name = 'put-{0}'.format(rule_name),
         rules = [
-            MappingRule(
-                expression = 'src -> entry.fullUrl as fullurl then getFullUrl{0}(src, fullurl)'.format(rule_name),
-                name = 'fu{0}'.format(rule_name)),
-            MappingRule(
-                expression = 'src -> entry.request as request, request.method = "PUT", request.url as url then getUrl{0}(src, url)'.format(rule_name),
-                name = 'u{0}'.format(rule_name)),
-            MappingRule(
-                expression = 'src -> entry.resource = create("{0}") as tgt then {1}(src, tgt)'.format(base_profile, rule_name),
-                name = 'c{0}'.format(rule_name),
-            )
+            get_request_rule(base_profile, rule_name),
+            MappingRule(expression = 'src -> entry.resource = create("{0}") as tgt'.format(base_profile),
+                rules = [MappingRule(expression = 'src -> tgt then {0}(src, tgt)'.format(rule_name)),
+                get_id_rule(base_profile,rule_name)] )
         ]
     )
+    if  base_profile == 'Encounter':
+        rule.rules[1].rules.append(MappingRule(expression = 'src.subject as sub -> tgt.subject = sub'))
 
+    return rule
+
+def get_rule_entry_expression(base_profile, cleanned_profile):
+    if base_profile in  ('Patient', 'Encounter'):
+        return "src -> bundle.entry as entry"
+    else:
+        return "src where src.item.where(linkId='{}id').answer.exists()-> bundle.entry as entry".format(cleanned_profile)
+
+
+def get_request_rule(base_profile, cleanned_profile):
+    if base_profile == 'Patient':
+       return MappingRule( expression = 'src.subject as subject', 
+            rules = [MappingRule(expression = 'subject.identifier as identifier',
+                    rules = [MappingRule(expression = "identifier.value as value  -> entry.request as request, request.method = 'PUT', request.url = append('/Patient/',value)")])])
+    if base_profile == 'Encounter':
+        return MappingRule( expression = 'src.encounter as encounter', 
+            rules = [MappingRule(expression = 'encounter.identifier as identifier',
+                    rules = [MappingRule(expression = "identifier.value as value  -> entry.request as request, request.method = 'PUT', request.url = append('/Encounter/',value)")])])
+    else:
+        return MappingRule(
+                expression = "src.item first as item where linkId  =  '{0}id' -> entry.request as request, request.method = 'PUT'".format(cleanned_profile),
+                rules = [MappingRule( 
+                            expression  ="item.answer first as a ->  request", 
+                            rules = [MappingRule(expression="a.value as val ->  request.url = append('/RelatedPerson/', val)")])])
+        
+       # return MappingRule( expression = 'src -> entry then getFullUrl{0}(src, entry)'.format(group_sufix))
+        
+
+def get_id_rule(base_profile, group_sufix):
+    if base_profile == 'Patient':
+        return MappingRule( expression = 'src.subject as subject', 
+            rules = [MappingRule(expression = 'subject.identifier as identifier',
+                    rules = [MappingRule(expression = 'identifier.value as value  -> tgt.id = value')])])
+    if base_profile == 'Encounter':
+        return MappingRule( expression = 'src.encounter as encounter', 
+            rules = [MappingRule(expression = 'encounter.identifier as identifier',
+                    rules = [MappingRule(expression = 'identifier.value as value  -> tgt.id = value')])])
+    else:
+        return MappingRule( expression = 'src -> entry then getId{0}(src, tgt)'.format(group_sufix))
     
+    
+        
 def get_mapping_groups(questionnaire_name, df_questions):
     profiles = get_question_profiles(df_questions)
     out_groups = [get_bundle_group(df_questions)]
@@ -202,6 +237,11 @@ def get_mapping_details(profile, df_questions):
             rules.append(rule)
         if group is not None:
             groups.append(group)
+            if group.groups is not None:
+                group_groups = group.groups
+                group.groups = []
+                groups += group_groups
+            
     return rules, groups
 
 def get_mapping_detail(question_name, question):
@@ -220,14 +260,14 @@ def get_mapping_detail(question_name, question):
             helper_array = str(question['map_resource']).split('::')
             helper_func = helper_array[0].strip()
             helper_args = helper_array[1].split('||') if len(helper_array)>1 else []
-            fhirmapping = generate_helper(helper_func, 'main', question_name, *helper_args)
+            fhirmapping = generate_helper(helper_func, 'main', question['map_profile'], question_name, *helper_args)
             if fhirmapping is not None:
                 fhirmapping= inject_config(fhirmapping)
                 rule = MappingRule(
                     name = clean_group_name(question_name),
                     expression = fhirmapping,
                     )
-            group  =  generate_helper(helper_func, 'group', question_name, *helper_args)
+            group  =  generate_helper(helper_func, 'group', question['map_profile'], question_name, *helper_args)
 
         else:
             rule_name = clean_group_name(question_name)
@@ -235,7 +275,7 @@ def get_mapping_detail(question_name, question):
                 print("Warning, the map ressource must not end with ;")
 
             # if variable on root, element is the resource itself
-            match =  re.search("[ =]*val(?:[^\w]|$)",question['map_resource'])
+            match =  re.search(VAL_REGEX,question['map_resource'])
             rule = MappingRule(
                     name = rule_name,
                     expression =  "src.item as item where linkId  = '{0}'".format(question_name),
@@ -282,6 +322,7 @@ def add_mapping_url(resource, mapping):
             )
     return resource
 
+
 def get_question_profiles(df_questions):
     profiles = df_questions['map_profile'].dropna().unique()
     return profiles
@@ -290,32 +331,10 @@ def get_question_profiles_detail(df_questions, profile):
     return df_questions[df_questions['map_profile'] == profile ].to_dict('index')
 
 
-def generate_helper(helper_func, mode, profile, *helper_args):
-    return  globals()[helper_func](mode,clean_group_name(profile) , *helper_args )        
+def generate_helper(helper_func, mode, profile, question_id, *helper_args):
+    return  globals()[helper_func](mode,profile , question_id, *helper_args )        
 
 
-##### mapping snippet
-
-
-#ObservationDefinition::'EmCare.B6.DE01'||Quantity
-def SetGenericObservation( profile, question_name,spe_rules):
-    rule_name = clean_group_name(question_name)
-    return MappingGroup (
-        name = 'SetObservation' + rule_name,
-        sources = [
-            MappingGroupIO(name = 'src'), # type questionnaireResponse
-            MappingGroupIO(name = 'a')# type questionItem
-        ],
-        targets = [
-            MappingGroupIO(name = 'tgt') # type Observation / emacareObservation
-        ],
-        rules = [
-            get_rand_identifier_rule(rule_name),
-            get_obs_meta_rule(profile, question_name, rule_name),
-            get_timestamp_rule(rule_name),
-            *spe_rules
-        ]
-    )
 
         
 def get_timestamp_rule(rule_name):
@@ -324,7 +343,7 @@ def get_timestamp_rule(rule_name):
         name = 'timestamp-{}'.format(rule_name)
     )
 
-def get_obs_meta_rule(profile, question_name, rule_name):
+def get_obs_meta_rule(profile, code, rule_name):
     return  MappingRule(
         expression = """
     src -> tgt.basedOn = src.basedOn,
@@ -334,7 +353,21 @@ def get_obs_meta_rule(profile, question_name, rule_name):
         tgt.code = create('CodeableConcept') as concept, 
             concept.system = '{1}',
             concept.code = '{0}'
-    """.format(question_name,get_custom_codesystem_url(),get_resource_url('StructureDefinition',profile)),
+    """.format(code,get_custom_codesystem_url(),get_resource_url('StructureDefinition',profile)),
+        name = 'code-{}'.format(rule_name)
+    )
+
+def get_code_obs_meta_rule(profile, rule_name):
+    return  MappingRule(
+        expression = """
+    code -> tgt.basedOn = src.basedOn,
+        tgt.encounter = src.encounter,
+        tgt.subject = src.subject,
+        tgt.meta = create('Meta') as newMeta, newMeta.profile = '{1}',
+        tgt.code = create('CodeableConcept') as concept, 
+            concept.system = '{0}',
+            concept.code = code
+    """.format(get_custom_codesystem_url(),get_resource_url('StructureDefinition',profile)),
         name = 'code-{}'.format(rule_name)
     )
 
@@ -349,12 +382,130 @@ def get_rand_identifier_rule(rule_name):
     """,
         name = 'id-{}'.format(rule_name)
     )
+
+##### mapping snippet
+
+ ####### SetObservationMultiple :  works only with valueset, will generate an obs for all, cancelled is not selected but for the one with value none   ###### 
+# args[0] : valueSet name
+def SetObservationMultiple(mode, profile, question_id, *args):
+    if len(args)!= 1:
+        print('Error SetObservation must have 1 parameters')
+        return None
+    elif mode == 'group':
+        df = get_valueset_df(args[0], True)
+        
+        return get_base_obs_muli_group(profile, question_id, df)
+        
+
+
+def get_base_obs_muli_group(profile, question_id, df):
+    rule_name = clean_group_name(profile+question_id)
+    groups, rules = get_base_obs_muli_rules(profile, question_id, df)
+    return MappingGroup(
+        name = rule_name,
+        sources = [
+            MappingGroupIO(name = 'src')], # type questionnaireResponse        
+        targets = [
+            MappingGroupIO(name = 'tgt') # type Observation / emacareObservation
+        ],
+        rules = rules,
+        groups = groups
+    )
     
-def get_obs_value_rules(rule_name):
-    return [MappingRule(
-        expression = "a   -> tgt.value = a, tgt.status = 'final'",
-        name = 'final-{}'.format(rule_name)
-    )]
+
+def get_base_obs_muli_rules(profile, question_id,df):
+    rules = []
+    groups = []
+    
+    #src where src.item.where(linkId='EmCare.A.DE16').answer.exists(value.code = 'EmCare.A.DE17')=false -> tgt.gender = 'male' 'emcareade17';
+    for index, row in df.iterrows():
+        row_id = row['code'] 
+        rule_name = clean_group_name( question_id + row_id + 't')
+        rules.append(MappingRule(
+            name = rule_name,
+            expression = "src where src.item.where(linkId='{0}').answer.exists(value.code = '{1}') then {2}(src,tgt)".format(question_id, row_id,rule_name)
+        ))
+        groups.append(
+            set_generic_observation_v2(profile, rule_name, row_id, [MappingRule(expression = "src -> tgt.status = 'final'",name = 'f-{}'.format(row_id))])
+        )
+        rule_name = clean_group_name( question_id + row_id + 'f')
+        rules.append(MappingRule(
+            name = rule_name,
+            expression = "src where src.item.where(linkId='{0}').answer.exists(value.code = '{1}')=false then {2}(src,tgt)".format(question_id, row_id, rule_name)
+        
+        ))
+        groups.append(
+            set_generic_observation_v2(profile, rule_name, row_id, [MappingRule(expression = "src -> tgt.status = 'cancelled'",name = 'f-{}'.format(row_id))])
+        )
+    return groups, rules
+        
+
+def set_generic_observation_v2(profile, rule_name, code ,spe_rules):
+    profile = clean_group_name(profile)
+    return MappingGroup (
+        name = clean_group_name(profile+code),
+        sources = [
+            MappingGroupIO(name = 'src'), # type questionnaireResponse
+        ],
+        targets = [
+            MappingGroupIO(name = 'tgt') # type Observation / emacareObservation
+        ],
+        rules = [
+            get_rand_identifier_rule(rule_name),
+            get_obs_meta_rule(profile, code, rule_name),
+            get_timestamp_rule(rule_name),
+            MappingRule(name = 'patient', expression = "src ->   tgt.subject = src.subject "),
+            *spe_rules
+        ]
+    )
+
+            
+
+def get_generic_obs_cancelled_group():
+    pass
+
+
+ ####### SetObservation :  set the value of an observation, obs will never be cancelled  ###### 
+ #args[0]: question name
+ # 
+def SetObservation(mode,  profile, question_id, *args):
+    if len(args)!= 1:
+        print('Error SetObservation must have 1 parameters')
+        return None
+    elif mode == 'group':
+        code = args[0] if len(args) == 1 else question_id
+        rule_name = clean_group_name(question_id)
+        return set_generic_observation_v2( profile, rule_name, code, get_obs_value_rules(code))
+
+def get_obs_value_rules(question_id):
+    rule_name = clean_group_name(question_id)
+    return [ wrapin_first_answers_rules(rule_name, question_id, [MappingRule(
+                expression = "a   -> tgt.value = a, tgt.status = 'final'",
+                name = 'val-{}'.format(rule_name)
+            )])]
+            
+    
+def wrapin_first_answers_rules(rule_name, question_id, rules):
+    return MappingRule(
+        expression = "src.item first as item  where linkId =  '{}'".format(question_id),
+        name = 'it-{}'.format(rule_name),
+        rules = [MappingRule(
+            expression = "item.answer first as a",
+            name = 'an-{}'.format(rule_name),
+            rules = rules
+        )]
+    )
+
+ ####### SetObservationNotFound :  if yes, set the related obs to cancelled  ###### 
+ #args[0]: question name 
+def SetObservationNotFound(mode, profile, question_id, *args):
+    if len(args)> 1:
+        print('Error SetObservation must have 1 or 0 parameters')
+        return None
+    elif mode == 'group':
+        code = args[0] if len(args) == 1 else question_id
+        rule_name = clean_group_name(question_id)
+        return set_generic_observation_v2( profile, rule_name, code,get_obs_value_rules(get_notfound_rules(code)))
 
 def get_notfound_rules(rule_name):
     return [MappingRule(
@@ -362,82 +513,77 @@ def get_notfound_rules(rule_name):
         name = 'notfound-{}'.format(rule_name)
     )]  
 
-
-def SetObservation(mode, profile, *args):
+ ####### SetObservationYesNo :  set an  observation from yes/no, No result in obs beeing cancelled  ######
+  #args[0]: question name
+def SetObservationYesNo(mode, profile, question_id, *args):
     if len(args)!= 1:
         print('Error SetObservation must have 1 parameters')
         return None
     elif mode == 'group':
-        return SetGenericObservation( profile, args[0],get_obs_value_rules(clean_group_name(args[0])))
+        code = args[0] if len(args) == 1 else question_id
+        rule_name = clean_group_name(question_id)
+        return set_generic_observation_v2( profile, rule_name, code, get_obs_yes_no_rules(code))
+    
 
-def SetObservationNotFound(mode, profile, *args):
-    if len(args)!= 1:
-        print('Error SetObservation must have 1 parameters')
-        return None
-    elif mode == 'group':
-        return SetGenericObservation( profile, args[0],get_obs_value_rules(get_notfound_rules(args[0])))
-
-def get_obs_yes_no_rules(rule_name):
-    return [MappingRule(
+    
+def get_obs_yes_no_rules(question_id):
+    rule_name = clean_group_name(question_id)
+    return [ wrapin_first_answers_rules(rule_name, question_id, [MappingRule(
         expression = "a  where a.value = 'yes' -> tgt.status = 'final' ",
         name = 'final-{}'.format(rule_name)
     ),MappingRule(
         expression = " a  where a.value = 'no' -> tgt.status = 'cancelled' ",
         name = 'notfound-{}'.format(rule_name)
-    )]
-    
-def SetObservationYesNo(mode, profile, *args):
+    )])]
+
+
+ ####### SetObservationBoolean :  set an  observation from boolean, false result in obs beeing cancelled  ###### 
+ #args[0]: question name
+def SetObservationBoolean(mode, profile, question_id, *args):
     if len(args)!= 1:
         print('Error SetObservation must have 1 parameters')
         return None
     elif mode == 'group':
-        return SetGenericObservation( profile, args[0],get_obs_yes_no_rules(clean_group_name(args[0])))
-    
-def get_obs_bool_rules(rule_name):
-    return [MappingRule(
+        code = args[0] if len(args) == 1 else question_id
+        rule_name = clean_group_name(question_id)
+        return set_generic_observation_v2( profile, rule_name, code,get_obs_bool_rules(code))
+
+def get_obs_bool_rules(question_id):
+    rule_name = clean_group_name(question_id)
+    return [ wrapin_first_answers_rules(rule_name, question_id, [MappingRule(
         expression = "a  where a.value = true -> tgt.status = 'final'",
         name = 'final-{}'.format(rule_name)
     ),MappingRule(
         expression = "a  where a.value = false -> tgt.status = 'cancelled'",
         name = 'notfound-{}'.format(rule_name)
-    )]
-    
+    )])]
 
- 
-def SetObservationBoolean(mode, profile, *args):
-    if len(args)!= 1:
-        print('Error SetObservation must have 1 parameters')
-        return None
-    elif mode == 'group':
-        return SetGenericObservation( profile, args[0],get_obs_bool_rules(clean_group_name(args[0])))
-
-
-def SetOfficalGivenName(mode, profile, *args):
+####### SetOfficalGivenName :  to have all the name under a single "official" ###### 
+#args[0]: question name given
+#args[1]: question name mid
+#args[2]: question name lasst
+def SetOfficalGivenName(mode, profile, question_id, *args):
+    rule_name = clean_group_name(profile)
     if len(args)!= 3:
-        print('Error SetOfficalGivenName{3} must have 3 parameters')
+        print('Error SetOfficalGivenName must have 3 parameters')
         return None
     if mode == 'main':
-        return   "src.item first as item  where linkId =  {0} or linkId =  {1} or linkId =  {2} -> tgt as target,  target.name as name then SetOfficalGivenName{3}(src, name)".format(args[0],args[1],args[2],profile)
-    rule_name = clean_group_name(profile)
+        return   "src.item first as item  where linkId =  {0} or linkId =  {1} or linkId =  {2} -> tgt as target,  target.name as name then SetOfficalGivenName{3}(src, name)".format(args[0],args[1],args[2],rule_name)
     return MappingGroup(
         name = 'SetOfficalGivenName{}'.format(rule_name),
         sources = [MappingGroupIO(name = 'src')],
         targets = [MappingGroupIO(name = 'tgt')],
         rules = [
             MappingRule(
-                name= 'sgn{}'.format(rule_name), 
                 expression = "src -> tgt.use = 'official'",
                 rules = [
-                    MappingRule(
-                        name = 'f{}'.format(rule_name),      
+                    MappingRule(    
                         expression = "src.item as item where linkId  =  {0} -> tgt then {{item.answer as a -> tgt.given = a 'f';}}".format(args[0])
                     ),
                     MappingRule(
-                        name = 'm{}'.format(rule_name),      
                         expression = "src.item as item where linkId  =  {0} -> tgt then {{item.answer as a -> tgt.given = a 'f';}}".format(args[1])
                     ),
                     MappingRule(
-                        name = 'l{}'.format(rule_name),      
                         expression = "src.item as item where linkId  =  {0} -> tgt then {{item.answer as a -> tgt.family = a 'f';}}".format(args[2])
                     )                   
                 ]
@@ -445,35 +591,183 @@ def SetOfficalGivenName(mode, profile, *args):
         ]
     )
 
+
+####### MapValueSetExtCode :  to avoid concept maps when the system is predefined ###### 
+#args[0]: valueset
+#args[1]: path to map
+def MapValueSetExtCode(mode, profile,question_id, *args):
+    rule_name = clean_group_name(question_id)
+    if mode == 'main':
+        return   "src.item as item where linkId =  '{0}' then {{ item.answer first as a then MapValueSetExtCode{1}(a, tgt) '{1}d'; }}".format(question_id,rule_name)
+    if len(args)!= 2:
+        print('Error SetOfficalGivenName must have 2 parameters, valueset name and mappath')
+    # get Value set df
+    maprules = get_valueset_map_source(args[0], args[1])
+    if maprules is not None:
+        return MappingGroup(
+            name = 'MapValueSetExtCode{}'.format(rule_name),
+            sources = [MappingGroupIO(name = 'src')],
+            targets = [MappingGroupIO(name = 'tgt')],
+            rules = [
+                MappingRule(
+                    expression = "src -> tgt",
+                    rules = [maprules]
+                )
+            ]
+        )
+
+def get_valueset_map_source(valueset_name, map_path):
+    sub_rules = []
+    df = get_valueset_df(valueset_name, True)
+    if df is not None:
+        map_path_list =  get_map_path_list(map_path)
+        for index, row in df.iterrows():
+            if pd.notna(row['map_concept'])  :
+                map_concepts = row['map_concept'].split('||')
+                for mapping in map_concepts:
+                    mapping_details = mapping.split('::')
+                    if len(mapping_details)-1>0:
+                        to_code = mapping_details[len(mapping_details)-1]
+                        sub_rules.append(MappingRule(
+                                expression = "src where value.code = '{0}' -> {1} = '{2}'".format(row['code'],map_path_list[len(map_path_list)-1] ,to_code)
+                            ))
+        return get_map_path_rule(map_path_list, sub_rules)
+        
+
+
+
+####### WalkMap :  to avoid concept maps when the system is predefined ###### 
+#args[0]: path to map " assing ex " parent.childlvl1.childlvl2 = val
+def MapWalk(mode, profile, question_id,*args):
+    # TODO support slicing and create
+    val_a = "val" if  re.search(VAL_REGEX,args[0]) else "a"
+    rule_name = clean_group_name(question_id)
+    if mode == 'main':
+        if val_a == 'val':
+            return   "src.item as item where linkId =  '{0}' then {{ item.answer first as a then {{ a.value as val then MapWalk{1}(val, tgt) '{1}d'; }} '{1}dval'; }}".format(profile,rule_name)
+        else:
+            return   "src.item as item where linkId =  '{0}' then {{ item.answer first as a then MapWalk{1}(a, tgt) '{1}d'; }}".format(question_id,rule_name)
+    if len(args)!= 1:
+        print('Error MapWalk must have 1 parameters, valueset name and mappath')
+    # get Value set df
+    map_path_list =  get_map_path_list(args[0])
+    
+    rules = MappingRule(
+        name = 'asgn',
+        expression = map_path_list[-1]
+        ) 
+    map_path_list = map_path_list[:-1]
+    return MappingGroup(
+            name = 'MapWalk{}'.format(rule_name),
+            sources = [MappingGroupIO(name = 'src')],
+            targets = [MappingGroupIO(name = 'tgt')],
+            rules = [get_map_path_rule(map_path_list, rules, val_a)]
+        )
+
+def get_map_path_list(map_path):
+    map_path_list = map_path.split('.')
+    # merge the last 2 element
+    if len(map_path_list)>1:
+        map_path_list[len(map_path_list)-2] = '.'.join(map_path_list[-2:])
+        map_path_list.pop()
+    return map_path_list
+
+def get_map_path_rule(map_path_list, rules, src_name = "src"):
+    if len(rules) == 0 or len(map_path_list) == 0 :
+        return None
+    elif len(map_path_list) == 1:
+        if len(rules) == 1:
+            return rules[0]
+        else:
+            last_map = map_path_list[0].split('.')[0]
+            return MappingRule(
+                name = "mapbase",
+                expression = "{0} -> {1}".format(src_name,last_map),
+                rules = rules
+            )
+    else:
+        return MappingRule(
+                name = "map"+len(map_path_list),
+                expression = "{0} -> {1}.{2} as {2}".format(src_name, map_path_list[0],map_path_list[1]),
+                rules = [get_map_path_rule(map_path_list[1:], rules)]
+            )
+
+
+
+
 def get_ref_groups(profile):
     base_profile = get_base_profile(profile)
     rule_name= clean_group_name(profile)
     return [
+
         MappingGroup(
             name = 'getId{}'.format(rule_name),
             sources = [MappingGroupIO(name = 'src')],
             targets = [MappingGroupIO(name = 'tgt')],
-            rules = [MappingRule(
-                name='i{}'.format(rule_name), 
-                expression = "src.item first as item where linkId  =  '{0}id'".format(profile),
-                rules = [MappingRule(name='id'+rule_name, expression  ="item.answer first as a, a.value as val ->  ressource = val")])]
+            rules = [MappingRule( 
+                expression = "src.item first as item where linkId  =  '{0}id' -> tgt".format(rule_name),
+                rules = [MappingRule(
+                    expression  ="item.answer first as a ->  tgt ", 
+                        rules = [MappingRule(expression="a.value as val ->  tgt.id = val")])])]
         ),
         MappingGroup(
             name = 'getFullUrl{}'.format(rule_name),
             sources = [MappingGroupIO(name = 'src')],
             targets = [MappingGroupIO(name = 'tgt')],
-            rules = [MappingRule(
-                name='fu{}'.format(rule_name), 
-                expression = "src.item first as item where linkId  =  '{0}id'".format(profile),
-                rules = [MappingRule(name='fu'+rule_name, expression  ="item.answer first as a, a.value as val ->  ressource = append('urn:uuid:', val)")])]
+            rules = [MappingRule( 
+                expression = "src.item first as item where linkId  =  '{0}id' -> tgt".format(rule_name),
+                rules = [MappingRule(expression  ="item.answer first as a -> tgt", 
+                        rules = [MappingRule(expression="a.value as val ->  tgt.fullUrl = append('urn:uuid:', val)")])])]
         ),
         MappingGroup(
             name = 'getUrl{}'.format(rule_name),
             sources = [MappingGroupIO(name = 'src')],
             targets = [MappingGroupIO(name = 'tgt')],
             rules = [MappingRule(
-                name='u{}'.format(rule_name), 
-                expression = "src.item first as item where linkId  =  '{0}id'".format(profile),
-                rules = [MappingRule(name='u'+rule_name, expression  ="item.answer first as a, a.value as val ->  ressource =  append('{0}/', val)".format(base_profile))])]
+                expression = "src.item first as item where linkId  =  '{0}id' -> tgt".format(rule_name),
+                rules = [MappingRule( 
+                            expression  ="item.answer first as a ->  tgt", 
+                            rules = [MappingRule(expression="a.value as val ->  ref.reference = append('/{0}/', val)".format(base_profile))])])]
         )
     ]
+
+### create related person
+# args[0] linkid for relatedPerson
+# args[1]  reference of PD 
+def SetCommunicationRequest(mode, profile, question_id,*args):
+    rule_name = clean_group_name(profile+question_id)
+    id_prefix = clean_group_name(profile)
+    if mode == 'main':
+        return  None
+    elif mode == 'group':
+        
+        return MappingGroup(
+            name = rule_name,
+            sources = [MappingGroupIO(name = 'src')],
+            targets = [MappingGroupIO(name = 'tgt')],
+            rules = [
+                #MappingRule(name = 'cat', expression = "src -> tgt.category = cc('http://terminology.hl7.org/CodeSystem/communication-category', 'notification')"),
+                MappingRule(expression = "src ->  tgt.category = create('CodeableConcept') as cc, cc.coding = create('Coding') as c, c.system ='http://hl7.org/fhir/ValueSet/communication-category', c.code = 'notification'"),
+                #MappingRule(name = 'pd', expression = "src -> tgt.status = 'active', tgt.basedOn = src.basedOn".format( inject_config(args[0]))),
+                MappingRule(name = 'quest', expression = "src.questionnaire as q ->   tgt.about = q"),
+                MappingRule(expression = "src.subject as subject ->   tgt.subject = subject "),
+                MappingRule(expression = "src ->   tgt.recipient =create('Reference') as ref ",
+                    rules = [
+                        MappingRule( expression = "src -> ref.type = 'RelatedPerson'" ),
+                        MappingRule(
+                expression = "src.item first as item where linkId  =  '{0}' -> tgt".format(args[0]),
+                rules = [MappingRule( 
+                            expression  ="item.answer first as a ->  tgt", 
+                            rules = [MappingRule(expression="a.value as val ->  ref.reference = append('/RelatedPerson/', val)")])])
+                    ])
+                
+            ]
+    )    
+
+### create related person
+# args[0] linkid for relatedPerson
+# args[1] linkid for patient
+# args[2] linkid relationship
+  
+def SetRelatedPerson():
+    pass

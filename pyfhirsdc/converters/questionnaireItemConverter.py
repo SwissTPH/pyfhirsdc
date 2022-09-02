@@ -9,7 +9,8 @@
 import json
 import numpy
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
-from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_hidden_ext, get_initial_expression_ext
+from fhir.resources.questionnaire import QuestionnaireItemInitial
+from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_hidden_ext, get_initial_expression_identifier_ext
 from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
 from pyfhirsdc.serializers.json import read_resource
 from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
@@ -75,7 +76,7 @@ def get_timestamp_item():
                 linkId = 'timestamp',
                 type = 'dateTime',
                 required= False,
-                extension = [get_initial_expression_ext("now()"), get_hidden_ext()],
+                extension = [get_calculated_expression_ext("now()"), get_hidden_ext()],
                 #design_note = "status::draft"            
                 )
 
@@ -102,20 +103,29 @@ def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
             question['required']=1
         else : question['required']=0
     else : question['required']=0
+    if type is not None:
+        new_question = QuestionnaireItemSDC(
+                    linkId = id,
+                    type = type,
+                    required= question['required'],
+                    extension = get_question_extension(question, df_value_set, id),
+                    answerValueSet = get_question_valueset(question, df_value_set),
+                    design_note = "status::draft",
+                    definition = get_question_definition(question),
+                    initial = get_initial_uuid(question)
+                )
+        if pd.notna(question['label']):
+            new_question.text = question['label']
+        
+        return new_question
 
-    new_question = QuestionnaireItemSDC(
-                linkId = id,
-                type = type,
-                required= question['required'],
-                extension = get_question_extension(question, df_value_set ),
-                answerValueSet = get_question_valueset(question, df_value_set),
-                design_note = "status::draft",
-                definition = get_question_definition(question)
-            )
-    if pd.notna(question['label']):
-        new_question.text = question['label']
-    
-    return new_question
+def get_initial_uuid(question): #TODO remove when uuid will be supported in cal/fhirpath
+    if "initialExpression" in question and pd.notna(question["initialExpression"]):
+        if question["initialExpression"].strip() == "uuid()":
+            return [QuestionnaireItemInitial(
+                valueString = "uuid()"
+            )]
+
 
 def get_question_fhir_type(question):
     # maps the pyfhirsdc type to real fhir type
@@ -127,7 +137,8 @@ def get_question_fhir_type(question):
     if fhir_type == 'phone':
         fhir_type = 'string'
     elif fhir_type == 'mapping':
-        fhir_type = 'reference'
+        # mapping should not create a question
+        fhir_type = None
     elif fhir_type in ("select_one", "select_multiple"):
         fhir_type = "choice"
     elif fhir_type == "checkbox":
@@ -155,7 +166,7 @@ def get_question_fhir_data_type(question_type):
     return switcher_data_types.get(question_type)
 
 
-def get_question_extension(question, df_value_set ):
+def get_question_extension(question, df_value_set, question_id ):
     extensions = []
     type, detail_1, detail_2 = get_type_details(question)
     # TODO support other display than drop down
@@ -170,7 +181,8 @@ def get_question_extension(question, df_value_set ):
     if "calculatedExpression" in question and pd.notna(question["calculatedExpression"]):
         extensions.append(get_calculated_expression_ext(question["calculatedExpression"]))
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
-        extensions.append(get_initial_expression_ext(question["initialExpression"]))
+        if not question["initialExpression"].strip() == "uuid()": #TODO remove when uuid will be supported
+            extensions.append(get_initial_expression_identifier_ext(question_id))
     if isinstance(question["display"], str) and question["display"].lower() == "hidden":
         extensions.append(get_hidden_ext())
 
