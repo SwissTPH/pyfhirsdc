@@ -102,7 +102,7 @@ def get_hidden_ext():
 
 def convert_reference_to_firepath(expression):
     # replace value check
-    expression = re.sub(pattern = r'\$\{([^}]+)\}\.(?!code)', repl = r"%resource.repeat(item).where(linkId='\1').answer != {}", string = expression )
+    expression = re.sub(pattern = r'\$\{([^}]+)\}\.(?!code)', repl = r"%resource.repeat(item).where(linkId='\1').answer.", string = expression )
     
 
     # other value
