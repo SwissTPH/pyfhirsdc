@@ -192,8 +192,9 @@ def get_question_valueset(question, df_value_set):
     # split question type and details
      
     type, detail_1, detail_2 = get_type_details(question)
+    display = question["display"].lower() if "display" in question and pd.notna(question["display"]) else None
     # split each deatil
-    if "select_" in type:
+    if "select_" in type and display != 'candidateexpression':
         if detail_1 == "url":
             return  (detail_2)
         elif detail_2 is None  :
