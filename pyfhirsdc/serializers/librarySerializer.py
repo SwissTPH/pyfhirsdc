@@ -4,7 +4,7 @@ import pandas as pd
 from pyfhirsdc.config import get_defaut_path, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import add_library_extentions
 from pyfhirsdc.converters.mappingConverter import inject_config
-from pyfhirsdc.converters.utils import clean_name, get_codableconcept_code, get_resource_url
+from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_codableconcept_code, get_resource_url
 from fhir.resources.library import Library
 from fhir.resources.attachment import Attachment
 from fhir.resources.fhirtypes import Canonical
@@ -174,7 +174,7 @@ context Patient
 
 """.format(
     get_fhir_cfg().version, 
-    resource.id, 
+    clean_group_name(resource.id), 
     get_processor_cfg().scope,
     get_include_lib(libs))
 
@@ -256,6 +256,7 @@ def write_cql_df(resource, df_actions,  includeBase = False):
             # end -> "end::id" : cql
             if 'stopExpressions' in row and pd.notna(row['stopExpressions']):
                 cql[i] = write_cql_action(row['id'], row['description'], 'stop::', row['stopExpressions'])
+                
                 i += 1
             if 'startExpressions' in row and pd.notna(row['startExpressions']):
                 cql[i] = write_cql_action(row['id'], row['description'], 'start::', row['startExpressions'])

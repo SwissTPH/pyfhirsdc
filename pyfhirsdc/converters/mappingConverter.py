@@ -181,11 +181,11 @@ def get_id_rule(base_profile, group_sufix):
     if base_profile == 'Patient':
         return MappingRule( expression = 'src.subject as subject', 
             rules = [MappingRule(expression = 'subject.identifier as identifier',
-                    rules = [MappingRule(expression = 'identifier.value as value  -> tgt.id = value')])])
+                    rules = [MappingRule(expression = 'identifier.value as value  -> tgt.id = (value.toString())')])])
     if base_profile == 'Encounter':
         return MappingRule( expression = 'src.encounter as encounter', 
             rules = [MappingRule(expression = 'encounter.identifier as identifier',
-                    rules = [MappingRule(expression = 'identifier.value as value  -> tgt.id = value')])])
+                    rules = [MappingRule(expression = 'identifier.value as value  -> tgt.id = (value.toString())')])])
     else:
         return MappingRule( expression = 'src -> entry then getId{0}(src, tgt)'.format(group_sufix))
     
@@ -749,7 +749,7 @@ def SetCommunicationRequest(mode, profile, question_id,*args):
                 #MappingRule(name = 'cat', expression = "src -> tgt.category = cc('http://terminology.hl7.org/CodeSystem/communication-category', 'notification')"),
                 MappingRule(expression = "src ->  tgt.category = create('CodeableConcept') as cc, cc.coding = create('Coding') as c, c.system ='http://hl7.org/fhir/ValueSet/communication-category', c.code = 'notification'"),
                 #MappingRule(name = 'pd', expression = "src -> tgt.status = 'active', tgt.basedOn = src.basedOn".format( inject_config(args[0]))),
-                MappingRule(name = 'quest', expression = "src.questionnaire as q ->   tgt.about = q"),
+                MappingRule(name = 'quest', expression = "src.questionnaire as q ->   tgt.about = create('Reference') as ref, ref.type ='Questionnaire', ref.reference = q"),
                 MappingRule(expression = "src.subject as subject ->   tgt.subject = subject "),
                 MappingRule(expression = "src ->   tgt.recipient =create('Reference') as ref ",
                     rules = [
