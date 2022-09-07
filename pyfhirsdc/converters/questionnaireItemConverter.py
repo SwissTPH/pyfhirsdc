@@ -183,7 +183,7 @@ def get_question_extension(question, df_value_set, question_id ):
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
         if not question["initialExpression"].strip() == "uuid()": #TODO remove when uuid will be supported
             extensions.append(get_initial_expression_identifier_ext(question_id))
-    if isinstance(question["display"], str) and question["display"].lower() == "hidden":
+    if "display" in question and pd.notna(question["display"]) and question["display"].lower() == "hidden":
         extensions.append(get_hidden_ext())
 
     return extensions
