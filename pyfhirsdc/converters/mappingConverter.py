@@ -161,12 +161,10 @@ def get_rule_entry_expression(base_profile, cleanned_profile):
 def get_request_rule(base_profile, cleanned_profile):
     if base_profile == 'Patient':
        return MappingRule( expression = 'src.subject as subject', 
-            rules = [MappingRule(expression = 'subject.identifier as identifier',
-                    rules = [MappingRule(expression = "identifier.value as value  -> entry.request as request, request.method = 'PUT', request.url = append('/Patient/',value)")])])
+            rules = [MappingRule(expression = "subject.id as idval -> entry.request as request, request.method = 'PUT', request.url = append('/Patient/',idval)")])
     if base_profile == 'Encounter':
         return MappingRule( expression = 'src.encounter as encounter', 
-            rules = [MappingRule(expression = 'encounter.identifier as identifier',
-                    rules = [MappingRule(expression = "identifier.value as value  -> entry.request as request, request.method = 'PUT', request.url = append('/Encounter/',value)")])])
+            rules = [MappingRule(expression = "encounter.id as idval  -> entry.request as request, request.method = 'PUT', request.url = append('/Encounter/',idval)")])
     else:
         return MappingRule(
                 expression = "src.item first as item where linkId  =  '{0}id' -> entry.request as request, request.method = 'PUT'".format(cleanned_profile),
@@ -180,12 +178,10 @@ def get_request_rule(base_profile, cleanned_profile):
 def get_id_rule(base_profile, group_sufix):
     if base_profile == 'Patient':
         return MappingRule( expression = 'src.subject as subject', 
-            rules = [MappingRule(expression = 'subject.identifier as identifier',
-                    rules = [MappingRule(expression = 'identifier.value as value  -> tgt.id = (value.toString())')])])
+            rules = [MappingRule(expression = 'subject.id as idval  -> tgt.id = idval')])
     if base_profile == 'Encounter':
         return MappingRule( expression = 'src.encounter as encounter', 
-            rules = [MappingRule(expression = 'encounter.identifier as identifier',
-                    rules = [MappingRule(expression = 'identifier.value as value  -> tgt.id = (value.toString())')])])
+            rules = [MappingRule(expression = 'encounter.identifier as idval-> tgt.id = idval')])
     else:
         return MappingRule( expression = 'src -> entry then getId{0}(src, tgt)'.format(group_sufix))
     
