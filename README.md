@@ -167,20 +167,39 @@ set to True to make sure the question is required
 
 #### display
 
+can be a list separated by || (double pipe)
+
 - dropdown : only for select_one / select_multiple
 
 - checkbox: only for booleans
 
+- hidden : hide the question
+
 - candidateExpression : to use the candidate expression defined in the valueset
 
+- unit::code     # code from that value set https://build.fhir.org/valueset-ucum-units.html
 
-#### enableWhenExpression (optionnal)
+### parentId
 
-cql (or fhirpath) code that will be added on the SDC enableWhenExpression extention
+used to add subItem or/and cql details
+### expression
 
-#### calculatedExpression (optionnal)
+Expression can be written on several lines to clarify the sub line must refer to the parent line through the parentId column
 
-cql (or fhirpath) code that will be added on the SDC calculatedExpression extention
+several line with the same parentId will be joined with an OR
+each set of subline is joined to the parent with an AND
+only the first line may not have expression but then it must have '{{cql}}' in it in order to triger the conversion to library
+##### initialExpression (optionnal)
+
+ fhirpath/cal code that will be executed by the api with the $populate opearation
+
+##### enableWhenExpression (optionnal)
+
+ fhirpath code that will be added on the SDC enableWhenExpression extention
+
+##### calculatedExpression (optionnal)
+
+fhirpath code that will be added on the SDC calculatedExpression extention
 
 #### map_extension 
   

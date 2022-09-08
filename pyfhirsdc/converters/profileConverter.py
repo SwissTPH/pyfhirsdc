@@ -10,7 +10,7 @@ import re
 from fhir.resources.elementdefinition import ElementDefinitionType
 from fhir.resources.fhirtypes import StructureDefinitionContextType
 from fhir.resources.elementdefinition import ElementDefinition
-from pyfhirsdc.converters.questionnaireItemConverter import get_question_fhir_data_type
+from pyfhirsdc.converters.questionnaireItemConverter import get_display, get_question_fhir_data_type
 import pandas as pd
 import validators
 
@@ -231,7 +231,8 @@ def extend_profile(name, profile, grouped_profile, df_valueset):
                 ## Check if the name after slelect_one starts with a capital or not.
                 ## if it has candidateExpression as display we consider it a reference to a profile
                 ##Regex to get the name of the resource :(?:\/[^\/]+)*\/([^\?]+).*
-                if row['display'] =='candidateExpression':
+                question_display = get_display(row)
+                if 'candidateexpression' in question_display :
                     add_reference = True
                     element_type = 'Reference'
                 else:

@@ -98,14 +98,14 @@ def get_triggers(row):
         
 def get_conditions(row):
     condition = []
-    for exp in ROW_EXPRESSIONS:
-        if exp['name'] in row and pd.notna(row[exp['name']]):
+    for name, exp in ROW_EXPRESSIONS.items():
+        if name is not 'id' and name in row and pd.notna(row[name]):
             condition.append( PlanDefinitionActionCondition(
                 kind = Code(exp['kind']),
                 expression = Expression(
                     language = "text/cql-expression",
                     expression = exp['prefix']+row['id'],
-                    description =    row[exp['name']].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)     
+                    description =    row[name].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)     
                 )
             ))
     if len(condition)>0:
@@ -125,9 +125,9 @@ def process_decisiontable(planDefinition, df):
 
 def get_actions(parent_action_id, df):
     if parent_action_id is not None and pd.notna(parent_action_id):
-        df_actions = df[df['parentActionId'] == parent_action_id]
+        df_actions = df[df['parentId'] == parent_action_id]
     else:
-        df_actions = df[df['parentActionId'].isna()]
+        df_actions = df[df['parentId'].isna()]
     actions = []
     if len(df_actions)>0:
         #planDefinition.action = get_actions(parent_action_id, df)

@@ -181,7 +181,7 @@ def get_id_rule(base_profile, group_sufix):
             rules = [MappingRule(expression = 'subject.id as idval  -> tgt.id = idval')])
     if base_profile == 'Encounter':
         return MappingRule( expression = 'src.encounter as encounter', 
-            rules = [MappingRule(expression = 'encounter.identifier as idval-> tgt.id = idval')])
+            rules = [MappingRule(expression = 'encounter.id as idval-> tgt.id = idval')])
     else:
         return MappingRule( expression = 'src -> entry then getId{0}(src, tgt)'.format(group_sufix))
     

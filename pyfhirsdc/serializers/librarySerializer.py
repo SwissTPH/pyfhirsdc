@@ -46,7 +46,7 @@ def generate_plan_defnition_lib(resource, df_actions, type = 'pd'):
         dataRequirement= get_lib_data_requirement(df_actions, type)
 
     )
-    cql =write_cql_df(resource, df_actions)
+    cql=write_cql_df(resource, df_actions, type)
     if len(cql)>1:
         output_lib_path = os.path.join(
                 get_processor_cfg().outputPath,
@@ -68,29 +68,38 @@ def generate_plan_defnition_lib(resource, df_actions, type = 'pd'):
 
         return  library
 
-def get_lib_parameters(df_in, type = "pd"):
+def get_lib_parameters_list(df_in, type = "pd"):
     parameters = []
     df = filter_df(df_in,type)
 
     for index, row in df.iterrows():
+        name = row['id'] if 'id' in row else index
+        if name is not None and pd.notna(name):
+            desc = row['description'].replace(u'\xa0', u' ').replace('  ',' ') if 'description' in row and pd.notna(row['description']) else None
+            parameters.append({'name': name, 'type':'boolean'})
+            if row['description'] is not None:
+                parameters.append({'name':desc, 'type':'boolean'})
+    #TODO add observation, condition and Zscore function parsing here   maybe using {{paramter}}  
+
+    return parameters
+        
+        
+def get_lib_parameters(df_in, type = "pd"):
+    parameters = []
+    parameters_in = get_lib_parameters_list(df_in,type)
+    for param in  parameters_in:
         parameters.append(ParameterDefinition(
             use = 'out',
-            name = row['id'] if 'id' in row else index ,
-            type = "boolean"
+            name = param["name"] ,
+            type = param["type"]
         ))
-        if 'description' in row and pd.notna(row['description']):
-            parameters.append(ParameterDefinition(
-                use = 'out',
-                name = row['description'].replace(u'\xa0', u' ').replace('  ',' '),
-                type = "boolean"
-            ))
-        #TODO add observation, condition and Zscore function parsing here     
+
     if len(parameters)>0:
         return parameters
     
 def filter_df(df_in,type):    
     if type == "pd":
-        df = df_in[df_in.parentActionId != "{{library}}"]
+        df = df_in[df_in.parentId != "{{library}}"]
     elif type == "q":
         df = df_in[df_in.initialExpression.notna() ]
     return df
@@ -139,9 +148,9 @@ def get_lib_data_requirement(df_in, type = 'pd'):
 def get_patient_observation_codes(row):
     list_list = []
     codes = []
-    for exp in ROW_EXPRESSIONS:
-        if exp['name'] in row and pd.notna(row[exp['name']]):
-            matches = re.findall("PatientHas\w*Observation\w*\(P<list>[\[\{]([^\]\})]+)[\]\})]",row[exp['name']] )
+    for name, exp in ROW_EXPRESSIONS.items():
+        if name in row and pd.notna(row[name]):
+            matches = re.findall("Has\w*Obs\w*\(P<list>[\[\{]([^\]\})]+)[\]\})]",row[name] )
             for match in matches:
                 list_list.append( match.groupdict()['list'])
     for code_list in list_list:
@@ -151,32 +160,41 @@ def get_patient_observation_codes(row):
                 codes.append(code)
     return codes
     
-ROW_EXPRESSIONS = [
+ROW_EXPRESSIONS = {
     
-    {'name':'startExpressions', 'prefix':'start::', 'kind':'start'},
-    {'name':'stopExpressions', 'prefix':'stop::', 'kind':'stop'},
-    {'name':'applicabilityExpressions', 'prefix':'', 'kind':'applicability'},
-    {'name':'initialExpression', 'prefix':'', 'kind':''}
+    'startExpressions': {'col':'startExpressions', 'prefix':'start::', 'kind':'start'},
+    'stopExpressions':{'col':'stopExpressions', 'prefix':'stop::', 'kind':'stop'},
+    'applicabilityExpressions':{'col':'applicabilityExpressions', 'prefix':'', 'kind':'applicability'},
+    'initialExpression':{'col':'initialExpression', 'prefix':'', 'kind':''},
+    'id':{'col':'description', 'prefix':'', 'kind':''}
     
-]
+}
+
+
+    
 
 def check_expression_keyword(row, keword):
-    for exp in ROW_EXPRESSIONS:
-        if exp['name'] in row and pd.notna(row[exp['name']]) and keword in row[exp['name']]:
+    for name, exp in ROW_EXPRESSIONS.items():
+        if name in row and pd.notna(row[name]) and keword in row[name]:
             return True
     
-def writeLibraryHeader(resource, libs = None):
+    
+# libs [{name,version,alias}]
+# parameters [{name,type}]
+def writeLibraryHeader(resource, libs = [], parameters = []):
     return """library {1}
 using FHIR version '{0}'
 include FHIRHelpers version '4.0.1' called FHIRHelpers 
 {3}
+{4}
 context Patient
 
 """.format(
     get_fhir_cfg().version, 
     clean_group_name(resource.id), 
     get_processor_cfg().scope,
-    get_include_lib(libs))
+    get_include_lib(libs),
+    '')#get_include_parameters(parameters))
 
 
 # libs is a list {name='', version='', alias = ''}
@@ -191,6 +209,13 @@ def get_include_lib(libs):
                ret+=" called {}".format(lib['alias'])   
             ret+="\n"
     return ret
+
+def get_include_parameters(parameters):
+    ret = ''
+    for param in parameters:
+        ret += "parameter '{}' : {}\n".format(param['name'], param['type'])
+
+    return ret    
 
 def write_library_CQL(output_path, lib, cql):
     if cql is not None and len(cql)>1:
@@ -233,13 +258,15 @@ def write_action_condition(action):
 
 
 
-def write_cql_df(resource, df_actions,  includeBase = False):
+def write_cql_df(resource, df_actions,  type):
     cql = {}
     libs = []
     i = 0
     oi = i
+    df_main = df_actions.dropna(axis=0, subset='id')
     if len(df_actions)>0:
-        for index, row in df_actions.iterrows():
+        for index, row in df_main.iterrows():
+            ref = row['id'] if 'id' in row else index 
             if index == "{{library}}" or "id" in row and pd.notna(row['id']) and row['id'] == "{{library}}":
                 details =  row['description'].split("::")
                 name = details[0]
@@ -255,33 +282,74 @@ def write_cql_df(resource, df_actions,  includeBase = False):
             # start -> "start::id" : cql
             # end -> "end::id" : cql
             if 'stopExpressions' in row and pd.notna(row['stopExpressions']):
-                cql[i] = write_cql_action(row['id'], row['description'], 'stop::', row['stopExpressions'])
+                cql[i] = write_cql_action(ref, row,'stopExpressions', df_actions)
                 
                 i += 1
             if 'startExpressions' in row and pd.notna(row['startExpressions']):
-                cql[i] = write_cql_action(row['id'], row['description'], 'start::', row['startExpressions'])
+                cql[i] = write_cql_action(ref, row,'startExpressions', df_actions)
                 i += 1
             if 'applicabilityExpressions' in row and pd.notna(row['applicabilityExpressions']):
-                cql[i] = write_cql_action(row['id'], row['description'], '', row['applicabilityExpressions'])
+                cql[i] = write_cql_action(ref, row,'applicabilityExpressions', df_actions)
                 i += 1
                 # add the wrapper name -> id
-                cql[i] = write_cql_action(row['description'], '', '',row['id'])
+                cql[i] = write_cql_action(row['description'], row, 'id', df_actions)
                 i += 1
             ## questionnaire initial expression in CQL, FIXMDe
             if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()):
-                cql[i] = write_cql_action(index, row['description'], '', row['initialExpression'])
+                cql[i] = write_cql_action(ref, row,'initialExpression',df_actions)
                 i += 1
             if i > oi :
                 # FIXME, need better way to detect Base
                 cql[i-1] = inject_config(cql[i-1].replace("PatientHas", "Base.PatientHas"))
             oi = i
-    cql['header'] = writeLibraryHeader(resource, libs)
+    cql['header'] = writeLibraryHeader(resource, libs, get_lib_parameters_list(df_actions, type ))
     return cql
 
-def write_cql_action(id, name, prefix, expression):
-    return  """
+def write_cql_action(id, row, expression_column, df):
+    
+    cql_exp = row[expression_column] if row[expression_column].strip() != '{{cql}}' else ''
+    prefix = ROW_EXPRESSIONS[expression_column]['prefix']
+    # to create the reverse rule
+    name = row['description'] if  row['description']!= id  else row['id']
+    ret =   """
 /* {1}{0} : {2}*/
 define "{1}{0}":
-{3}
-""".format(id, prefix, name,reindent(expression,4))
+
+""".format(id, prefix, name,reindent(cql_exp,4))
+    sub =  get_additionnal_cql(id,df,expression_column)
+    if len(sub)>0 and cql_exp != '':
+        ret +=reindent("({})\n AND\n ({})\n".format(cql_exp,sub),4)
+    elif len(sub)>0:
+        ret +=reindent("{}\n".format(sub),4)
+    elif cql_exp != '':    
+        ret +=reindent("{}\n".format(cql_exp),4)
+    return ret
+    
+
+def get_additionnal_cql(id,df,expression_column ):
+    ret = ''
+    
+    if 'parentId' in df and 'type' in df:
+        df_details = df[(df['type'] == '{{cql}}') & (df['parentId'] == id)]
+        len_df =  len(df_details)
+        count_i = 0
+        if len_df>0:
+            for index, row in df_details.iterrows():
+                if expression_column in row and pd.notna(row[expression_column]):
+                    cql_exp = row[expression_column] if row[expression_column].strip() != '{{cql}}' else ''
+                    if count_i>0:
+                        ret += " OR \n" 
+                    sub =  get_additionnal_cql(row['id'],df,expression_column)
+                    if len(sub)>0:
+                        ret +=reindent("({})\n AND\n ({})\n".format(cql_exp,sub),4)
+                    else:
+                        ret +=reindent("{}\n".format(cql_exp),4)
+                    count_i += 1
+
+    
+
+
+    return ret
+
+
 

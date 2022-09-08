@@ -7,10 +7,11 @@
 
 
 import json
+import re
 import numpy
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
 from fhir.resources.questionnaire import QuestionnaireItemInitial
-from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_hidden_ext, get_initial_expression_identifier_ext
+from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_hidden_ext, get_initial_expression_identifier_ext, get_unit_ext
 from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
 from pyfhirsdc.serializers.json import read_resource
 from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
@@ -168,14 +169,23 @@ def get_question_fhir_data_type(question_type):
 
 def get_question_extension(question, df_value_set, question_id ):
     extensions = []
+    display= get_display(question)
+    
+    regex_unit = re.compile("^unit::.*")
+    unit = list(filter(regex_unit.match, display)) 
+    
     type, detail_1, detail_2 = get_type_details(question)
     # TODO support other display than drop down
-    if type.lower() == 'boolean' and isinstance(question["display"], str) and question["display"].lower() == "checkbox":
+    if type.lower() == 'boolean' and  "checkbox" in display:
         extensions.append(get_checkbox_ext())
-    elif "select_" in type and isinstance(question["display"], str) and question["display"].lower() == "dropdown" :
+    if "select_" in type and "dropdown"  in display :
         extensions.append(get_dropdown_ext())
-    elif "select_" in type and  isinstance(question["display"], str) and question["display"].lower() == "candidateExpression":
+    if type.lower() in ('decimal','integer','number') and len(unit) == 1 :
+        extensions.append(get_unit_ext(unit[0]))
+    if "select_" in type and   "candidateexpression"  in display:
         extensions = get_question_choice_column(extensions, detail_1, df_value_set)
+    if "hidden"  in display:
+        extensions.append(get_hidden_ext())
     if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]):
         extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"]))
     if "calculatedExpression" in question and pd.notna(question["calculatedExpression"]):
@@ -183,18 +193,24 @@ def get_question_extension(question, df_value_set, question_id ):
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
         if not question["initialExpression"].strip() == "uuid()": #TODO remove when uuid will be supported
             extensions.append(get_initial_expression_identifier_ext(question_id))
-    if "display" in question and pd.notna(question["display"]) and question["display"].lower() == "hidden":
-        extensions.append(get_hidden_ext())
+
 
     return extensions
 
+def get_display(question):
+    display_str = question["display"].lower() if "display" in question and pd.notna(question["display"]) else None
+    if display_str is not None:
+        return display_str.split('||')
+    else:
+        return []
+
+
 def get_question_valueset(question, df_value_set):
     # split question type and details
-     
+    display= get_display(question)
     type, detail_1, detail_2 = get_type_details(question)
-    display = question["display"].lower() if "display" in question and pd.notna(question["display"]) else None
     # split each deatil
-    if "select_" in type and display != 'candidateexpression':
+    if "select_" in type and 'candidateexpression' not in display :
         if detail_1 == "url":
             return  (detail_2)
         elif detail_2 is None  :
@@ -226,8 +242,9 @@ def get_question_choice_column(extensions, candidate_expression, df_value_set):
     return extensions
 
 def get_question_definition(question):
+    display = get_display(question)
     # if definition == scope then build def based on canonical base, if not take the def from the xls if any
-    if  question['display'] is not None and pd.notna(question['definition']):
+    if  question['label'] is not None and pd.notna(question['definition']):
         if str(question['definition']).lower() == get_processor_cfg().scope.lower():
             return get_custom_codesystem_url()
         elif len(str(question['definition']))>5:  
