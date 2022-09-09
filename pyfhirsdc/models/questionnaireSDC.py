@@ -9,7 +9,7 @@ from pydantic import Field, root_validator
 from pydantic.types import StrBytes
 from pathlib import Path
 from fhir.resources import fhirtypes, fhirtypesvalidators
-from fhir.resources.fhirabstractmodel import FHIRAbstractModel
+from fhir.resources.core.fhirabstractmodel import FHIRAbstractModel
 from fhir.resources.fhirtypesvalidators import MODEL_CLASSES, fhir_model_validator
 import typing
 from typing import Union

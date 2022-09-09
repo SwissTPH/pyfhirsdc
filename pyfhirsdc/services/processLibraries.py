@@ -27,7 +27,7 @@ def refresh_content(lib):
     out_content = [x for x in lib.content if not is_content_to_update(x, lib)]
     if len (out_content) < len(lib.content):
         # get CQL file "ig-loader"
-        cql = read_file(os.path.join(get_defaut_path('CQL', 'cql'), lib.id + '.cql') ,'str')
+        cql = read_file(os.path.join(get_defaut_path('CQL', 'cql'), lib.title + '.cql') ,'str')
         out_content.append(get_cql_content(cql, lib.id))
         
         emls = update_eml_content(cql, lib.id)

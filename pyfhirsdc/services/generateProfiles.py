@@ -5,7 +5,7 @@
         - q.X
 """
 
-from tkinter.font import names
+#from tkinter.font import names
 
 from pyfhirsdc.config import  get_processor_cfg
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
