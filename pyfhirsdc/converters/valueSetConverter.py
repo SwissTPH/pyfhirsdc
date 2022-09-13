@@ -2,9 +2,8 @@ from fhir.resources.fhirtypes import  Code, Uri
 from fhir.resources.valueset import  ValueSetCompose,\
      ValueSetComposeInclude, ValueSetComposeIncludeConcept,\
      ValueSetComposeIncludeConceptDesignation
-import numpy
 import pandas as pd
-from pyfhirsdc.config import get_dict_df, get_processor_cfg
+from pyfhirsdc.config import get_dict_df, get_processor_cfg, set_dict_df
 
 from pyfhirsdc.converters.utils import get_custom_codesystem_url
 
@@ -150,6 +149,31 @@ def get_valueset_df(valueset_name, filtered = False):
         if filtered :
             df_valueset = df_valueset[~ df_valueset.code.isin(METADATA_CODES)] 
         return df_valueset[df_valueset.valueSet == valueset_name]
+    
+# scope	valueSet	code	display	definition
+
+
+def add_concept_in_valueset_df(list_name ,concepts):
+    values = []
+    dict_df = get_dict_df()
+    if "valueset" in dict_df:
+        df_valueset = dict_df['valueset']  
+        for concept in concepts:
+            if len(df_valueset[(df_valueset.code == concept.code) & (df_valueset.valueSet == list_name)]) == 0:             
+                values.append({
+                    'scope':get_processor_cfg().scope,
+                    'valueSet':list_name,
+                    'code': concept.code ,
+                    'display': concept.display,
+                    'definition': concept.definition
+                })
+            # ADD VALUE TO DF
+        df_dictionary = pd.DataFrame(values)
+        df_valueset = pd.concat([df_valueset, df_dictionary], ignore_index=True)
+        dict_df['valueset'] =  df_valueset
+        set_dict_df(dict_df)  
+
+
     
     
 

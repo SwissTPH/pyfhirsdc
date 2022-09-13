@@ -8,18 +8,21 @@
 
 
 from pyfhirsdc.converters.mappingConverter import add_mapping_url, get_questionnaire_mapping
-from pyfhirsdc.config import   get_processor_cfg
+from pyfhirsdc.config import   get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.questionnaireItemConverter import convert_df_to_questionitems, init_questionnaire
 from pyfhirsdc.serializers.librarySerializer import generate_plan_defnition_lib
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
 import numpy as np
 
-def generate_questionnaires(dfs_questionnaire, df_value_set):
+def generate_questionnaires():
+    dfs_questionnaire = get_dict_df()['questionnaires']
+
     for name, questions in dfs_questionnaire.items():
-        generate_questionnaire(name ,questions, df_value_set)
+        generate_questionnaire(name ,questions)
 
 ## generate questinnaire and questionnaire response
-def generate_questionnaire( name ,df_questions, df_value_set ) :
+def generate_questionnaire( name ,df_questions) :
+    
     # try to load the existing questionnaire
     fullpath = get_resource_path("Questionnaire", name)
     print('processing quesitonnaire {0}'.format(name))
@@ -32,7 +35,7 @@ def generate_questionnaire( name ,df_questions, df_value_set ) :
     df_questions_lib = df_questions
 
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
-    questionnaire = convert_df_to_questionitems(questionnaire, df_questions_item,  df_value_set, strategy = 'overwriteDraft')
+    questionnaire = convert_df_to_questionitems(questionnaire, df_questions_item, strategy = 'overwriteDraft')
     #### StructureMap ####
     #structure_maps = get_structure_map_bundle(name, df_questions)
     #structure_maps = get_structure_maps(name, df_questions)

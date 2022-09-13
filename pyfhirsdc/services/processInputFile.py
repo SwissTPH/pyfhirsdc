@@ -1,7 +1,7 @@
 from pyfhirsdc.serializers.inputFile import read_input_file, parse_sheets
 from pyfhirsdc.config import *
 from pyfhirsdc.services.generateActivities import generate_activities
-from pyfhirsdc.services.generateCodeSystem import generate_custom_code_system
+from pyfhirsdc.services.generateCodeSystem import generate_custom_code_system, generate_observation_valueset_libs
 from pyfhirsdc.services.generateValueSet import generate_value_sets
 from .generateQuestionnaires import generate_questionnaires
 from .generatePlanDefinitions import generate_plandefinitions
@@ -26,15 +26,19 @@ def process_input_file(conf):
             input_file.close()
             print(len(dfs_questionnaire))
             # generate questionnaire
-            generate_questionnaires(dfs_questionnaire, df_value_set)
+            generate_questionnaires()
 
-            # generate profiles
-            generate_profiles(dfs_questionnaire, df_profile, df_value_set)
 
             # generate the CodeSystem
             generate_custom_code_system(dfs_questionnaire, df_value_set)   
+            #Generate obs lib and valueset
+            generate_observation_valueset_libs()
+            
             # generate the valueSet
-            generate_value_sets(df_value_set)
+            generate_value_sets()
+            # generate profiles
+            generate_profiles()
+
             # generate conceptMap
 
             # generate the DE CQL 

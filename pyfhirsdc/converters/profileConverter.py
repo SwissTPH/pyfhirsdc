@@ -1,20 +1,20 @@
 from importlib.resources import path
-from pyfhirsdc.config import get_fhir_cfg
+from pyfhirsdc.config import get_dict_df, get_fhir_cfg
 from fhir.resources.structuredefinition import StructureDefinition
 from fhir.resources.structuredefinition import StructureDefinitionDifferential
 from fhir.resources.fhirtypes import Id
 from fhir.resources.fhirtypes import Uri
 from fhir.resources.fhirtypes import Code
-from fhir.resources.extension import Extension
 import re
 from fhir.resources.elementdefinition import ElementDefinitionType
 from fhir.resources.fhirtypes import StructureDefinitionContextType
 from fhir.resources.elementdefinition import ElementDefinition
+from pyfhirsdc.converters.mappingConverter import get_base_profile
 from pyfhirsdc.converters.questionnaireItemConverter import get_display, get_question_fhir_data_type
 import pandas as pd
 import validators
 
-from pyfhirsdc.converters.utils import clean_name, get_resource_name, get_resource_url
+from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_resource_name, get_resource_url
 # allow slice in ID and extention MedicationRequest.medication[x].coding or MedicationRequest.medication[x].extension:notDoneValueSet Observation.modifierExtension:notDone.value[x]
 
 Id.configure_constraints(regex=re.compile(r"^[A-Za-z0-9\-\.]+(\[x\](\.[a-zA-Z]+)?)?(:[A-Za-z0-9\-.]+(\[x\](\.[a-zA-Z]+)?)?)?$"))      
@@ -106,59 +106,65 @@ def init_extension_def(element):
     return None
 
 
-def convert_df_to_profiles(df_questions, df_profile, df_valueset):
+def convert_df_to_profiles():
     profiles = []
     names = []
     q_idx = []
+    dfs_questionnaire = get_dict_df()['questionnaires']
+    all_questionnaires = pd.concat(dfs_questionnaire, ignore_index=True)
+
+    df_profile  = get_dict_df()['profile'].dropna(axis=0, subset=['title'])
+    
+    all_questionnaires.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id')
     #Grouping rows based on the profiles, so that we can go through the different groups and create
     # the corresponding profiles with the right attributes
-    grouped_profiles = df_questions.groupby('map_profile')
+
+    
     #for key, item in grouped_profiles:
     #    print("Profile: ", key)
     #    print(grouped_profiles.get_group(key), "\n\n")
-
     for idx, row in df_profile.iterrows():
-        profile, name = init_profile_def(row)
-        if name in grouped_profiles.groups:
-            names.append(name)
-            profile = extend_profile(name,profile, grouped_profiles.get_group(name), df_valueset)
-            profiles.append(profile)
+        profile = init_profile_def(row)
+        names.append(profile.name)
+        df = all_questionnaires[all_questionnaires.map_profile == profile]
+        profile = extend_profile(profile, df )
+        profiles.append(profile)
     return profiles,names
 
 
 def init_profile_def(element):
-    path = element['baseProfile']
-    structure_def_name_list = element['title'].split(' ',1)
-    structure_def_name = ' '.join(structure_def_name_list)
-    structure_def_scaffold = {
-        "resourceType" : "StructureDefinition",
-        "kind" : Code('complex-type'),
-        "title" : structure_def_name,
-        "abstract" : False,
-        "name" : structure_def_name,
-        "status" : Code('draft'), 
-        "type" : structure_def_name_list[-1],
-        "url" : get_resource_url('StructureDefinition', Id(structure_def_name.replace(' ', '-')))
-    }
-    if pd.notna(path):
-        structure_def_scaffold['baseDefinition'] = Uri(path)
-        structure_def_scaffold["derivation"] = "constraint"
-    structure_def = StructureDefinition.parse_obj(structure_def_scaffold)
-    structure_def.id = clean_name(structure_def_name)
-    structure_def.experimental = False
-    structure_def.fhirVersion = get_fhir_cfg().version
-    structure_def.description = element['description']
-    return structure_def, structure_def_name
+    profile_id = clean_name(element['title'])
+    
+    structure_def= StructureDefinition(
+        id = profile_id,
+        kind= Code('complex-type'),
+        title = element['title'],
+        name = element['title'],
+        abstract = False,
+        status = Code('active'),
+        type = get_base_profile(element['title']),
+        url = get_resource_url('StructureDefinition', Id(profile_id)),
+        baseDefinition = Uri(element['baseProfile']),
+        derivation = "constraint",
+        experimental = False,
+        fhirVersion = get_fhir_cfg().version,
+        description = element['description'] if pd.notna(element['description']) else None
+    )
+    
 
-def extend_profile(name, profile, grouped_profile, df_valueset):
-    resource_type = name.split(' ', 1 )[-1].strip()
+    return structure_def
+
+def extend_profile(profile, all_questionnaires):
+    resource_type = get_base_profile(profile.name)
     element_list = []
     element_list.append({
         "id": clean_name(resource_type),
         "path": resource_type
     })
-    print('Processing Profile: {0}'.format(name))
-    for idx, row in grouped_profile.iterrows():
+    print('Processing Profile: {0}'.format(profile.name))
+    df_valueset = get_dict_df()['valueset']
+    
+    for idx, row in all_questionnaires.iterrows():
         # if there is a map_extension then we have to link it to the extension and 
         # add a slice name
         extension = row["map_extension"]

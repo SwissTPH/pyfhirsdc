@@ -12,12 +12,11 @@ import numpy
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
 from fhir.resources.questionnaire import QuestionnaireItemInitial
 from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_hidden_ext, get_initial_expression_identifier_ext, get_unit_ext
-from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
-from pyfhirsdc.serializers.json import read_resource
+from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
 import pandas as pd
 
-def convert_df_to_questionitems(questionnaire,df_questions, df_value_set, strategy = 'overwrite'):
+def convert_df_to_questionitems(questionnaire,df_questions, strategy = 'overwrite'):
     # create a dict to iterate
     dict_questions = df_questions.to_dict('index')
     # Use first part of the id (before DE) as an ID
@@ -42,7 +41,7 @@ def convert_df_to_questionitems(questionnaire,df_questions, df_value_set, strate
         elif type == "skipped":
             pass
         elif type == "group" and detail_1 == "start":
-            item = add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy)
+            item = add_questionnaire_item_line(existing_item, id, question,  strategy)
             if item is not None:
                 # we save the the questionnaire 
                 parent.append(ressource)
@@ -60,7 +59,7 @@ def convert_df_to_questionitems(questionnaire,df_questions, df_value_set, strate
                 ressource = temp_ressource
 
         else:
-            item = add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy)
+            item = add_questionnaire_item_line(existing_item, id, question,  strategy)
             if item is not None:
                 ressource.item.append(item)
     # close all open groups
@@ -81,14 +80,14 @@ def get_timestamp_item():
                 #design_note = "status::draft"            
                 )
 
-def add_questionnaire_item_line(existing_item, id, question, df_value_set, strategy):
+def add_questionnaire_item_line(existing_item, id, question,  strategy):
     # pop the item if it exists
     
     # create or update the item based on the strategy
     if existing_item is None\
     or strategy in ( "overwriteDraft", "overwriteDraftAddOnly" ) and\
         (existing_item.design_note is not None and "status::draft"  in existing_item.design_note):
-        new_question = process_quesitonnaire_line(id, question, df_value_set,  existing_item )
+        new_question = process_quesitonnaire_line(id, question,   existing_item )
         if new_question is not None:
             return new_question
     elif existing_item is not None:
@@ -97,7 +96,7 @@ def add_questionnaire_item_line(existing_item, id, question, df_value_set, strat
     return None
 
 
-def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
+def process_quesitonnaire_line(id, question,   existing_item):
     type = get_question_fhir_type(question)
     if pd.notna(question['required']):
         if int(question['required']) == 1:
@@ -109,8 +108,8 @@ def process_quesitonnaire_line(id, question, df_value_set,  existing_item):
                     linkId = id,
                     type = type,
                     required= question['required'],
-                    extension = get_question_extension(question, df_value_set, id),
-                    answerValueSet = get_question_valueset(question, df_value_set),
+                    extension = get_question_extension(question, id),
+                    answerValueSet = get_question_valueset(question),
                     design_note = "status::draft",
                     definition = get_question_definition(question),
                     initial = get_initial_uuid(question)
@@ -167,7 +166,8 @@ def get_question_fhir_data_type(question_type):
     return switcher_data_types.get(question_type)
 
 
-def get_question_extension(question, df_value_set, question_id ):
+def get_question_extension(question, question_id ):
+    
     extensions = []
     display= get_display(question)
     
@@ -183,7 +183,7 @@ def get_question_extension(question, df_value_set, question_id ):
     if type.lower() in ('decimal','integer','number') and len(unit) == 1 :
         extensions.append(get_unit_ext(unit[0]))
     if "select_" in type and   "candidateexpression"  in display:
-        extensions = get_question_choice_column(extensions, detail_1, df_value_set)
+        extensions = get_question_choice_column(extensions, detail_1)
     if "hidden"  in display:
         extensions.append(get_hidden_ext())
     if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]):
@@ -205,7 +205,8 @@ def get_display(question):
         return []
 
 
-def get_question_valueset(question, df_value_set):
+def get_question_valueset(question):
+    df_value_set = get_dict_df()['valueset']
     # split question type and details
     display= get_display(question)
     type, detail_1, detail_2 = get_type_details(question)
@@ -224,7 +225,8 @@ def get_question_valueset(question, df_value_set):
     else:
         return None
 
-def get_question_choice_column(extensions, candidate_expression, df_value_set):
+def get_question_choice_column(extensions, candidate_expression):
+    df_value_set = get_dict_df()['valueset']
     # filter DF choice column
     choice_columns = df_value_set[df_value_set['valueSet'] == candidate_expression].set_index('display').to_dict('index')
     #create extension for each field found

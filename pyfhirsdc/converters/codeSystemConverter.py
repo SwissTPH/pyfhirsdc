@@ -3,25 +3,78 @@
 
 """
 from fhir.resources.codesystem import CodeSystemConcept
-from pyfhirsdc.converters.utils import get_custom_codesystem_url
+from pyfhirsdc.config import get_processor_cfg
+from pyfhirsdc.converters.mappingConverter import get_base_profile
 
 from pyfhirsdc.converters.valueSetConverter import get_value_set_additional_data_keyword
 
 def generate_questionnaire_concept(df_questions):
     concept = []
     # remove the line without id
-    questions = df_questions.dropna(axis=0, subset=['id']).set_index('id').to_dict('index')
+    questions = df_questions.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['definition']).set_index('id').to_dict('index')
     # remove the line without id
     for id, question in questions.items():
-        concept.append(
-            CodeSystemConcept(
-                definition = question["description"],
-                code = id,
-                display =  question["label"]
+        if question['definition'] == get_processor_cfg().scope:
+            concept.append(
+                CodeSystemConcept(
+                    definition = question["description"],
+                    code = id,
+                    display =  question["label"]
+                )
             )
-        )
     return concept
 
+
+def generate_observation_concept(df_questions):
+    concept = []
+    # remove the line without id
+    questions = df_questions.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id').to_dict('index')
+    # remove the line without id
+    for id, question in questions.items():
+        base_profile = get_base_profile(question['map_profile'])
+        if base_profile == "Observation":
+            concept.append(
+                CodeSystemConcept(
+                    definition = question["description"],
+                    code = id,
+                    display =  question["label"]
+                )
+            )
+    return concept
+
+def generate_condition_concept(df_questions):
+    concept = []
+    # remove the line without id
+    questions = df_questions.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id').to_dict('index')
+    # remove the line without id
+    for id, question in questions.items():
+        base_profile = get_base_profile(question['map_profile'])
+        if base_profile == "Conditions":
+            concept.append(
+                CodeSystemConcept(
+                    definition = question["description"],
+                    code = id,
+                    display =  question["label"]
+                )
+            )
+    return concept
+
+def generate_diagnosis_concept(df_questions):
+    concept = []
+    # remove the line without id
+    questions = df_questions.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id').to_dict('index')
+    # remove the line without id
+    for id, question in questions.items():
+        base_profile = get_base_profile(question['map_profile'])
+        if base_profile == "Diagnosis":
+            concept.append(
+                CodeSystemConcept(
+                    definition = question["description"],
+                    code = id,
+                    display =  question["label"]
+                )
+            )
+    return concept
 
 def generate_valueset_concept(df_value_set):
     concept = []

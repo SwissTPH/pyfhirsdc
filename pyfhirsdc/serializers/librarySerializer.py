@@ -245,7 +245,39 @@ def write_cql_pd(planDefinition):
                     cql[i] = action_cql
                     i = i+1
     return cql                
-    
+
+
+def get_observation_cql_from_valueset(concepts, lib):
+    # write 3 cql : start, end, applicability
+    cql = {}
+    libs = [{'name':'EmCareBase','alias':'B'}]
+    cql['header'] = writeLibraryHeader(lib, libs)
+    i = 0
+    if concepts:
+        for concept in concepts:
+            if (concept and concept.code):       
+                concept_cql = write_obsevation(concept)
+                if concept_cql is not None:
+                    cql[i] = concept_cql
+                    i = i+1
+    return cql    
+
+def write_obsevation(concept):
+    cql = ""
+    if concept.code is not None:
+        ## Output false, manual process to convert the pseudo-code to CQL
+        cql += "/*\n \"{0}\":\n \n */\n ".format(concept.display)+\
+            "define \"{0}\":\n ".format(concept.code)+ \
+                "  B.HasObs({{c('{}')}})".format(concept.code) + "\n\n "
+    if concept.display is not None:
+        ## Output false, manual process to convert the pseudo-code to CQL
+        cql += "/*\n \"{0}\":\n \n */\n ".format(concept.display)+\
+            "define \"{0}\":\n ".format(concept.display)+ \
+                "  B.HasObs({{c('{}')}})".format(concept.code) + "\n\n "
+    return cql    
+
+
+
 def write_action_condition(action):
     cql = ""
     if action.description is not None:

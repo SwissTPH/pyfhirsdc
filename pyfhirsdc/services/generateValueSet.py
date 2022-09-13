@@ -2,7 +2,7 @@
 
 
 import json
-from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg, get_processor_cfg
+from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.valueSetConverter  import  get_value_set_additional_data,  get_value_set_compose
 from pyfhirsdc.serializers.json import read_resource
 from fhir.resources.valueset import ValueSet
@@ -10,14 +10,17 @@ from fhir.resources.valueset import ValueSet
 from pyfhirsdc.converters.utils import clean_name,  get_resource_name,  get_resource_url
 from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
 
-def generate_value_sets(df_value_sets):
-    # cleaning the DF from VS not in scope or with missing ids
-    df_value_sets = df_value_sets[df_value_sets['scope'] == get_processor_cfg().scope].dropna(axis=0, subset=['code'])
-    # getting the name of the value sets
-    value_sets_dict =  df_value_sets['valueSet'].unique()
-    # looping for each value set to get the childrens
-    for name in value_sets_dict:
-        generate_value_set(name, df_value_sets)
+def generate_value_sets():
+    df_value_sets = get_dict_df()
+    if 'valueset' in df_value_sets:
+        df_value_set = df_value_sets['valueset']
+        # cleaning the DF from VS not in scope or with missing ids
+        df_value_set = df_value_set[df_value_set['scope'] == get_processor_cfg().scope].dropna(axis=0, subset=['code'])
+        # getting the name of the value sets
+        value_sets_dict =  df_value_set['valueSet'].unique()
+        # looping for each value set to get the childrens
+        for name in value_sets_dict:
+            generate_value_set(name, df_value_set)
 
 def  generate_value_set(name, df_value_set):
     filepath = get_resource_path("ValueSet", name)
