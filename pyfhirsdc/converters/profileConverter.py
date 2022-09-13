@@ -52,6 +52,22 @@ def init_extension_def(element):
                 "expression": '-'.join(element['map_profile'].split(' ',1)[1:])})]
         min_cardinality = map_extension[1].strip()
         max_cardinality = map_extension[2].strip()
+        element_type = get_question_fhir_data_type(element['type'])
+        if element_type is None:
+            print("Error an extention mapping is with a not compatible questiontype" + element['type'])
+        add_reference = False
+        if element_type == 'choice':
+            element_valueset_name = element['type'].split(' ',1)[-1]
+            ## Check if the name after slelect_one starts with a capital or not.
+            ## if it starts with a capital it is a reference to a profile
+            print("name of the value set: ",element_valueset_name)
+            if element_valueset_name[0].isupper():
+                add_reference = True
+                element_type = 'Reference'
+            else:
+                element_type = 'CodeableConcept'
+                add_binding = True
+        valuePath = "Extension.value{}"
         extension_element = [ElementDefinition(
                 id ="Extension",
                 path = "Extension",
@@ -73,26 +89,14 @@ def init_extension_def(element):
             ), 
             ElementDefinition(
                 id =  "Extension.value",
-                path = "Extension.value[x]",
+                path =  "Extension.value" + element_type.capitalize(),
                 short = extension_name,
                 definition = element['description'],
                 min = min_cardinality,
                 max = max_cardinality
             )
         ]
-        element_type = element['type']
-        add_reference = False
-        if element_type.startswith('select_one'):
-            element_valueset_name = element_type.split(' ',1)[-1]
-            ## Check if the name after slelect_one starts with a capital or not.
-            ## if it starts with a capital it is a reference to a profile
-            print("name of the value set: ",element_type)
-            if element_valueset_name[0].isupper():
-                add_reference = True
-                element_type = 'Reference'
-            else:
-                element_type = 'CodeableConcept'
-                add_binding = True
+
         element_def_type = ElementDefinitionType.construct()
         element_def_type.code = get_question_fhir_data_type(element_type)
         if add_reference == True : 

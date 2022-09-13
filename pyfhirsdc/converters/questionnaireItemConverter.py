@@ -97,7 +97,7 @@ def add_questionnaire_item_line(existing_item, id, question,  strategy):
 
 
 def process_quesitonnaire_line(id, question,   existing_item):
-    type = get_question_fhir_type(question)
+    type =get_question_fhir_data_type(question['type'])
     if pd.notna(question['required']):
         if int(question['required']) == 1:
             question['required']=1
@@ -126,30 +126,11 @@ def get_initial_uuid(question): #TODO remove when uuid will be supported in cal/
                 valueString = "uuid()"
             )]
 
-
-def get_question_fhir_type(question):
-    # maps the pyfhirsdc type to real fhir type
-    # mapping type are not in questionnaire
-    fhir_type = None
-    if pd.notna(question['type']):
-        type_arr = question['type'].split(" ")
-        fhir_type = type_arr[0]
-    if fhir_type == 'phone':
-        fhir_type = 'string'
-    elif fhir_type == 'mapping':
-        # mapping should not create a question
-        fhir_type = None
-    elif fhir_type in ("select_one", "select_multiple"):
-        fhir_type = "choice"
-    elif fhir_type == "checkbox":
-        fhir_type = "boolean"
-    elif fhir_type == "number":
-        fhir_type = "integer"
-    return fhir_type
-## maps the type of the question e.g. checkbox, to its respective data
-## type that FHIR understands e.g. boolean
-def get_question_fhir_data_type(question_type):
-    switcher_data_types = {
+QUESTION_TYPE_MAPPING = {
+                'select_one':'choice',
+                'select_multiple':'choice',
+                'mapping': None,
+                '{{cql}}':None,
                 "checkbox" : "boolean",
                 "phone" : "string",
                 "text" : "string",
@@ -161,9 +142,18 @@ def get_question_fhir_data_type(question_type):
                 "dateTime" : "datetime",
                 "decimal" :"decimal",
                 "CodeableConcept": "CodeableConcept",
-                "Reference" : "Reference"
-            }
-    return switcher_data_types.get(question_type)
+                "Reference" : "Reference"         
+}
+
+
+## maps the type of the question e.g. checkbox, to its respective data
+## type that FHIR understands e.g. boolean
+def get_question_fhir_data_type(question_type):
+    if pd.notna(question_type) and question_type is not None:
+        type_arr = question_type.split(" ")
+        fhir_type = type_arr[0]
+        
+        return QUESTION_TYPE_MAPPING.get(fhir_type)
 
 
 def get_question_extension(question, question_id ):
