@@ -67,8 +67,8 @@ def get_related_actions(row):
             details = action.split('::')
             if len(details) == 2:
                 related_actions.append(PlanDefinitionActionRelatedAction(
-                    relationship = details[0],
-                    actionId = details[1]
+                    relationship = details[0].strip(),
+                    actionId = details[1].strip()
                 ))
             else:
                 print("Warning, {} related action is not correct, it should follow that format type::id(||type::id)*".format(row['id']))
@@ -103,7 +103,7 @@ def get_conditions(row):
             condition.append( PlanDefinitionActionCondition(
                 kind = Code(exp['kind']),
                 expression = Expression(
-                    language = "text/cql-expression",
+                    language = "text/cql-identifier",
                     expression = exp['prefix']+row['id'],
                     description =    row[name].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)     
                 )

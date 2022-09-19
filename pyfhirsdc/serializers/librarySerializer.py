@@ -4,6 +4,7 @@ import pandas as pd
 from pyfhirsdc.config import get_defaut_path, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import add_library_extentions
 from pyfhirsdc.converters.mappingConverter import inject_config
+from pyfhirsdc.converters.questionnaireItemConverter import get_question_fhir_data_type
 from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_codableconcept_code, get_resource_url
 from fhir.resources.library import Library
 from fhir.resources.attachment import Attachment
@@ -26,24 +27,28 @@ def getIdentifierFirstRep(planDef):
 def generate_plan_defnition_lib(resource, df_actions, type = 'pd'):
     id = clean_name(resource.id)
     print("Generating library ", resource.name, ".......")
+    lib_id =clean_group_name(id)
     library = Library(
-        id = id,
-        identifier = [],
+        id = lib_id,
         status = 'active',
-        name = resource.name,
-        version = " " + get_fhir_cfg().version,
+        name = lib_id,
+        version = get_fhir_cfg().version,
         title = resource.title,
         description = resource.description,
-        url = get_resource_url('Library', id),
+        url = get_resource_url('Library', lib_id),
         content = [Attachment(
-            id = "ig-loader-" + id + ".cql"
+            id = "ig-loader-" + lib_id + ".cql"
         )],
         type = get_codableconcept_code( 
             "http://hl7.org/fhir/ValueSet/library-type", 
             'logic-library'
         ),
         parameter=get_lib_parameters(df_actions, type),
-        dataRequirement= get_lib_data_requirement(df_actions, type)
+        dataRequirement= get_lib_data_requirement(df_actions, type),
+        identifier=[Identifier(
+            use = 'official',
+            value = id
+        )]
 
     )
     cql=write_cql_df(resource, df_actions, type)
@@ -72,13 +77,18 @@ def get_lib_parameters_list(df_in, type = "pd"):
     parameters = []
     df = filter_df(df_in,type)
 
+    
     for index, row in df.iterrows():
+        if type == "q":
+            q_type = get_question_fhir_data_type(row['type'])
+        else:
+            q_type = 'boolean'
         name = row['id'] if 'id' in row else index
         if name is not None and pd.notna(name):
             desc = row['description'].replace(u'\xa0', u' ').replace('  ',' ') if 'description' in row and pd.notna(row['description']) else None
-            parameters.append({'name': name, 'type':'boolean'})
+            parameters.append({'name': name, 'type':q_type})
             if row['description'] is not None:
-                parameters.append({'name':desc, 'type':'boolean'})
+                parameters.append({'name':desc, 'type':q_type})
     #TODO add observation, condition and Zscore function parsing here   maybe using {{paramter}}  
 
     return parameters
@@ -182,7 +192,7 @@ def check_expression_keyword(row, keword):
 # libs [{name,version,alias}]
 # parameters [{name,type}]
 def writeLibraryHeader(resource, libs = [], parameters = []):
-    return """library {1}
+    return """library {1} version '4.0.1'
 using FHIR version '{0}'
 include FHIRHelpers version '4.0.1' called FHIRHelpers 
 {3}
@@ -219,7 +229,7 @@ def get_include_parameters(parameters):
 
 def write_library_CQL(output_path, lib, cql):
     if cql is not None and len(cql)>1:
-        output_file_path = os.path.join(output_path,  lib.name + ".cql")
+        output_file_path = os.path.join(output_path,  lib.id + ".cql")
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         output = open(output_file_path, 'w', encoding='utf-8')
@@ -324,7 +334,7 @@ def write_cql_df(resource, df_actions,  type):
                 cql[i] = write_cql_action(ref, row,'applicabilityExpressions', df_actions)
                 i += 1
                 # add the wrapper name -> id
-                cql[i] = write_cql_action(row['description'], row, 'id', df_actions)
+                cql[i] = write_cql_action(row['description'], row, 'applicabilityExpressions', df_actions)
                 i += 1
             ## questionnaire initial expression in CQL, FIXMDe
             if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()):
@@ -332,7 +342,7 @@ def write_cql_df(resource, df_actions,  type):
                 i += 1
             if i > oi :
                 # FIXME, need better way to detect Base
-                cql[i-1] = inject_config(cql[i-1].replace("PatientHas", "Base.PatientHas"))
+                cql[i-1] = inject_config(cql[i-1].replace("Has", "B.Has"))
             oi = i
     cql['header'] = writeLibraryHeader(resource, libs, get_lib_parameters_list(df_actions, type ))
     return cql
@@ -346,7 +356,6 @@ def write_cql_action(id, row, expression_column, df):
     ret =   """
 /* {1}{0} : {2}*/
 define "{1}{0}":
-
 """.format(id, prefix, name,reindent(cql_exp,4))
     sub =  get_additionnal_cql(id,df,expression_column)
     if len(sub)>0 and cql_exp != '':
@@ -355,7 +364,7 @@ define "{1}{0}":
         ret +=reindent("{}\n".format(sub),4)
     elif cql_exp != '':    
         ret +=reindent("{}\n".format(cql_exp),4)
-    return ret
+    return ret + "\n"
     
 
 def get_additionnal_cql(id,df,expression_column ):

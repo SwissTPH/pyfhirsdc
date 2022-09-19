@@ -73,7 +73,7 @@ def generate_plandefinition( name,df_actions):
 
 
 def init_pd(filepath):
-    pd_json = read_resource(filepath, "PlanDefinition")
+    pd_json = None #read_resource(filepath, "PlanDefinition") FIXME lib extenstion keep adding itself
     default =get_defaut_fhir('PlanDefinition')
     if pd_json is not None :
         pd = PlanDefinition.parse_raw( json.dumps(pd_json))  
