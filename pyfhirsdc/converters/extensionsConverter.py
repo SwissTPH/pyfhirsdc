@@ -20,6 +20,15 @@ def get_dropdown_ext():
 )
 
 
+def get_variable_extension(name,expression):
+    return Extension(
+        url ="http://hl7.org/fhir/StructureDefinition/variable",
+        valueExpression = ExpressionType(
+                name = name,
+                language = "text/fhirpath",
+                expression = expression))
+
+
 def get_candidate_expression_ext(desc, uri):
     if desc is not None and uri is not None:
         return Extension(

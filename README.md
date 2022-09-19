@@ -157,6 +157,8 @@ will follow the structure [type] [option]
 - mapping : will not apprear on the questionnaire, just to document mapping information
 - group start: will start a question group, an ID is mandatory, several levels are possible
 - group end: will end a question group, an ID is mandatory
+- variable : add a variable in the questionnaire, on the questionnaire level if no parentId is specified, else on the question where id == parentId, the expression MUST be in calcualtedExpression column
+
 ##### option
 - [valueSetUrl] valueSet defined in the valueSet tab 
 - url::[valueSetUrl] link to a remote value set

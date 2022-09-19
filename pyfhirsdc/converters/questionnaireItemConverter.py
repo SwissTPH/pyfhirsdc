@@ -11,7 +11,7 @@ import re
 import numpy
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
 from fhir.resources.questionnaire import QuestionnaireItemInitial
-from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_hidden_ext, get_initial_expression_identifier_ext, get_unit_ext
+from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_hidden_ext, get_initial_expression_identifier_ext, get_unit_ext, get_variable_extension
 from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
 import pandas as pd
@@ -40,8 +40,13 @@ def convert_df_to_questionitems(questionnaire,df_questions, strategy = 'overwrit
             print("${0} is not a valid type, see question ${1}".format(question['type'], id))       
         elif type == "skipped":
             pass
+        elif  type == 'variable' and ( 'parentId' not in question or pd.isna(question['parentId']) ):
+            variable = get_variable_extension(id,question['calculatedExpression'])
+            if variable is not None:
+                questionnaire.extension.append(variable)
+        
         elif type == "group" and detail_1 == "start":
-            item = add_questionnaire_item_line(existing_item, id, question,  strategy)
+            item = add_questionnaire_item_line(df_questions, existing_item, id, question,  strategy)
             if item is not None:
                 # we save the the questionnaire 
                 parent.append(ressource)
@@ -59,7 +64,7 @@ def convert_df_to_questionitems(questionnaire,df_questions, strategy = 'overwrit
                 ressource = temp_ressource
 
         else:
-            item = add_questionnaire_item_line(existing_item, id, question,  strategy)
+            item = add_questionnaire_item_line(df_questions, existing_item, id, question,  strategy)
             if item is not None:
                 ressource.item.append(item)
     # close all open groups
@@ -80,14 +85,14 @@ def get_timestamp_item():
                 #design_note = "status::draft"            
                 )
 
-def add_questionnaire_item_line(existing_item, id, question,  strategy):
+def add_questionnaire_item_line(df_questions, existing_item, id, question,  strategy):
     # pop the item if it exists
     
     # create or update the item based on the strategy
     if existing_item is None\
     or strategy in ( "overwriteDraft", "overwriteDraftAddOnly" ) and\
         (existing_item.design_note is not None and "status::draft"  in existing_item.design_note):
-        new_question = process_quesitonnaire_line(id, question,   existing_item )
+        new_question = process_quesitonnaire_line(id, question,df_questions,   existing_item )
         if new_question is not None:
             return new_question
     elif existing_item is not None:
@@ -96,19 +101,23 @@ def add_questionnaire_item_line(existing_item, id, question,  strategy):
     return None
 
 
-def process_quesitonnaire_line(id, question,   existing_item):
+def process_quesitonnaire_line(id, question, df_questions,  existing_item):
     type =get_question_fhir_data_type(question['type'])
     if pd.notna(question['required']):
         if int(question['required']) == 1:
             question['required']=1
         else : question['required']=0
     else : question['required']=0
+    if 'parentId' in  df_questions:
+        df_question = df_questions[df_questions.parentId==id]
+    else:
+        df_question = None
     if type is not None:
         new_question = QuestionnaireItemSDC(
                     linkId = id,
                     type = type,
                     required= question['required'],
-                    extension = get_question_extension(question, id),
+                    extension = get_question_extension(question, id, df_question),
                     answerValueSet = get_question_valueset(question),
                     design_note = "status::draft",
                     definition = get_question_definition(question),
@@ -131,16 +140,18 @@ QUESTION_TYPE_MAPPING = {
                 'select_multiple':'choice',
                 'mapping': None,
                 '{{cql}}':None,
+                'variable':None,
                 "checkbox" : "boolean",
                 "phone" : "string",
                 "text" : "string",
-                "mapping" : "Reference", 
                 "boolean" : "boolean",
                 "date" : "date",
                 "dateTime" : "dateTime",
                 "time" : "time",
                 "dateTime" : "datetime",
                 "decimal" :"decimal",
+                "integer" :"integer",
+                "number" :"integer",
                 "CodeableConcept": "CodeableConcept",
                 "Reference" : "Reference"         
 }
@@ -156,7 +167,7 @@ def get_question_fhir_data_type(question_type):
         return QUESTION_TYPE_MAPPING.get(fhir_type)
 
 
-def get_question_extension(question, question_id ):
+def get_question_extension(question, question_id, df_question = None ):
     
     extensions = []
     display= get_display(question)
@@ -183,8 +194,10 @@ def get_question_extension(question, question_id ):
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
         if not question["initialExpression"].strip() == "uuid()": #TODO remove when uuid will be supported
             extensions.append(get_initial_expression_identifier_ext(question_id))
-
-
+    if df_question is not None and len(df_question)>0:
+        df_variables = df_question[df_question.type=='variable'].dropna(axis=0, subset=['calculatedExpression'])
+        for index, var in df_variables.iterrows():
+            extensions.append(get_variable_extension(var['id'], var['calculatedExpression']))
     return extensions
 
 def get_display(question):
