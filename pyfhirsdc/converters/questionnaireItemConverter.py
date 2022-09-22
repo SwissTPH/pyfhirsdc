@@ -10,10 +10,12 @@ import json
 import re
 import numpy
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
-from fhir.resources.questionnaire import QuestionnaireItemInitial
+from fhir.resources.questionnaire import QuestionnaireItemInitial, QuestionnaireItemAnswerOption
+from fhir.resources.coding import Coding
 from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_hidden_ext, get_initial_expression_identifier_ext, get_unit_ext, get_variable_extension
 from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
+
 import pandas as pd
 
 def convert_df_to_questionitems(questionnaire,df_questions, strategy = 'overwrite'):
@@ -100,6 +102,10 @@ def add_questionnaire_item_line(df_questions, existing_item, id, question,  stra
         return existing_item
     return None
 
+def get_question_answeroption(question):
+    if question["type"] == 'select_boolean':
+        return QuestionnaireItemAnswerOption(valueCoding = Coding(code = question['id'], display = question['label']))
+
 
 def process_quesitonnaire_line(id, question, df_questions,  existing_item):
     type =get_question_fhir_data_type(question['type'])
@@ -119,6 +125,7 @@ def process_quesitonnaire_line(id, question, df_questions,  existing_item):
                     required= question['required'],
                     extension = get_question_extension(question, id, df_question),
                     answerValueSet = get_question_valueset(question),
+                    answerOption=get_question_answeroption(question),
                     design_note = "status::draft",
                     definition = get_question_definition(question),
                     initial = get_initial_uuid(question)
@@ -138,11 +145,12 @@ def get_initial_uuid(question): #TODO remove when uuid will be supported in cal/
 QUESTION_TYPE_MAPPING = {
                 'select_one':'choice',
                 'select_multiple':'choice',
+                'select_boolean': 'choice',
                 'mapping': None,
                 '{{cql}}':None,
                 'variable':None,
                 "checkbox" : "boolean",
-                "phone" : "string",
+                "phone" : "integer",
                 "text" : "string",
                 "boolean" : "boolean",
                 "date" : "date",
@@ -177,7 +185,7 @@ def get_question_extension(question, question_id, df_question = None ):
     
     type, detail_1, detail_2 = get_type_details(question)
     # TODO support other display than drop down
-    if type.lower() == 'boolean' and  "checkbox" in display:
+    if (type.lower() == 'select_boolean'):
         extensions.append(get_checkbox_ext())
     if "select_" in type and "dropdown"  in display :
         extensions.append(get_dropdown_ext())
@@ -214,7 +222,7 @@ def get_question_valueset(question):
     display= get_display(question)
     type, detail_1, detail_2 = get_type_details(question)
     # split each deatil
-    if "select_" in type and 'candidateexpression' not in display :
+    if "select_" in type and 'candidateexpression' not in display or type == 'select_boolean':
         if detail_1 == "url":
             return  (detail_2)
         elif detail_2 is None  :

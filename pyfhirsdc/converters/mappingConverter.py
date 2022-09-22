@@ -564,7 +564,7 @@ def SetOfficalGivenName(mode, profile, question_id, *args):
         print('Error SetOfficalGivenName must have 3 parameters')
         return None
     if mode == 'main':
-        return   "src.item first as item  where linkId =  {0} or linkId =  {1} or linkId =  {2} -> tgt as target,  target.name as name then SetOfficalGivenName{3}(src, name)".format(args[0],args[1],args[2],rule_name)
+        return   "src.item first as item  where linkId =  '{0}' or linkId =  '{1}' or linkId =  '{2}' -> tgt as target,  target.name as name then SetOfficalGivenName{3}(src, name)".format(args[0],args[1],args[2],rule_name)
     return MappingGroup(
         name = 'SetOfficalGivenName{}'.format(rule_name),
         sources = [MappingGroupIO(name = 'src')],
@@ -598,6 +598,57 @@ def SetOfficalGivenName(mode, profile, question_id, *args):
         ]
     )
 
+####### SetOfficalGivenNameSetOfficalGivenName :  to have all the name under a single "official" ###### 
+#args[0]: days
+#args[1]: month
+#args[2]: years
+def SetDoBFromPart(mode, profile, question_id, *args):
+    rule_name = clean_group_name(profile)
+    if len(args)!= 3:
+        print('Error SetDoBFromPart must have 3 parameters')
+        return None
+    if mode == 'main':
+        return   "src.item first as item  where linkId =  '{0}' or linkId =  '{1}' or linkId =  '{2}' -> tgt as target,  target.name as name then SetDoBFromPart{3}(src, name)".format(args[0],args[1],args[2],rule_name)
+    return MappingGroup(
+        name = 'SetDoBFromPart{}'.format(rule_name),
+        sources = [MappingGroupIO(name = 'src')],
+        targets = [MappingGroupIO(name = 'tgt')],
+        groups=[
+            MappingGroup(
+            name = 'SetDoBFromPartD{}'.format(rule_name),        
+            sources = [MappingGroupIO(name = 'src')],
+            targets = [MappingGroupIO(name = 'tgt')],
+            rules = [
+                MappingRule(
+                expression = "src.item as itemD where linkId  =  {0}".format(args[0])
+                )
+            ]
+            ),
+            MappingGroup(name = 'SetDoBFromPartM{}'.format(rule_name),        
+            sources = [MappingGroupIO(name = 'src')],
+            targets = [MappingGroupIO(name = 'tgt')],
+            rules = [
+                MappingRule(
+                expression = "src.item as itemM where linkId  =  {0}".format(args[1])
+                )
+            ]
+            ),
+            MappingGroup(name = 'SetDoBFromPartY{}'.format(rule_name),     
+            sources = [MappingGroupIO(name = 'src'),MappingGroupIO(name = 'itemD'),MappingGroupIO(name = 'itemM')],
+            targets = [MappingGroupIO(name = 'tgt')],
+            rules = [
+                MappingRule(
+                expression = "src.item as itemY where linkId  =  {0}".format(args[2],
+                rules = [
+                    MappingRule(expression = '(((now() - (itemD + "days")) - itemM + "months") - itemY + "years"', 
+                        rules = [
+                            MappingRule(expression = ' -> tgt.birthDate = val ')])])
+                )
+            ]
+            )
+            ]
+    )
+    
 
 ####### MapValueSetExtCode :  to avoid concept maps when the system is predefined ###### 
 #args[0]: valueset
