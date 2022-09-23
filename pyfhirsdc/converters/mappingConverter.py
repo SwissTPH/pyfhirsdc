@@ -574,19 +574,19 @@ def SetOfficalGivenName(mode, profile, question_id, *args):
                 expression = "src -> tgt.use = 'official'",
                 rules = [
                     MappingRule(    
-                        expression = "src.item as item where linkId  =  {0}".format(args[0]),
+                        expression = "src.item as item where linkId  =  '{0}'".format(args[0]),
                         rules = [
                             MappingRule(expression = 'item.answer first as a',
                                 rules = [MappingRule(expression = 'a.value as val -> tgt.given = val ')])]
                     ),
                     MappingRule(    
-                        expression = "src.item as item where linkId  =  {0} ".format(args[1]),
+                        expression = "src.item as item where linkId  =  '{0}'".format(args[1]),
                         rules = [
                             MappingRule(expression = 'item.answer first as a',
                                 rules = [MappingRule(expression = 'a.value as val -> tgt.given = val ')])]
                     ),
                     MappingRule(    
-                        expression = "src.item as item where linkId  =  {0}".format(args[2]),
+                        expression = "src.item as item where linkId  =  '{0}'".format(args[2]),
                         rules = [
                             MappingRule(expression = 'item.answer first as a',
                                 rules = [MappingRule(expression = 'a.value as val -> tgt.family = val ')])]
