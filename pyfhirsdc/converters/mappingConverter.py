@@ -142,8 +142,8 @@ def get_put_bundle_profile_rule(profile):
         rules = [
             get_request_rule(base_profile, rule_name),
             MappingRule(expression = 'src -> entry.resource = create("{0}") as tgt'.format(base_profile),
-                rules = [MappingRule(expression = 'src -> tgt then {0}(src, tgt)'.format(rule_name)),
-                get_id_rule(base_profile,rule_name)] )
+                rules = [MappingRule(expression = 'src -> tgt then {0}(src, tgt)'.format(rule_name))] )#,
+                #get_id_rule(base_profile,rule_name)] )
         ]
     )
     if  base_profile == 'Encounter':
@@ -579,18 +579,18 @@ def SetOfficalGivenName(mode, profile, question_id, *args):
                             MappingRule(expression = 'item.answer first as a',
                                 rules = [MappingRule(expression = 'a.value as val -> tgt.given = val ')])]
                     ),
-                    MappingRule(
+                    MappingRule(    
                         expression = "src.item as item where linkId  =  {0} ".format(args[1]),
                         rules = [
                             MappingRule(expression = 'item.answer first as a',
                                 rules = [MappingRule(expression = 'a.value as val -> tgt.given = val ')])]
                     ),
-                    MappingRule(
+                    MappingRule(    
                         expression = "src.item as item where linkId  =  {0}".format(args[2]),
                         rules = [
                             MappingRule(expression = 'item.answer first as a',
                                 rules = [MappingRule(expression = 'a.value as val -> tgt.family = val ')])]
-                    )                   
+                    )
 
    
                 ]

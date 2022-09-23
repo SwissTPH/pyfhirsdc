@@ -28,6 +28,7 @@ def generate_plan_defnition_lib(resource, df_actions, type = 'pd'):
     id = clean_name(resource.id)
     print("Generating library ", resource.name, ".......")
     lib_id =clean_group_name(id)
+    lib_name = id.replace('.','_')
     library = Library(
         id = lib_id,
         status = 'active',
@@ -51,7 +52,7 @@ def generate_plan_defnition_lib(resource, df_actions, type = 'pd'):
         )]
 
     )
-    cql=write_cql_df(resource, df_actions, type)
+    cql=write_cql_df(library, df_actions, type)
     if len(cql)>1:
         output_lib_path = os.path.join(
                 get_processor_cfg().outputPath,
@@ -191,7 +192,7 @@ def check_expression_keyword(row, keword):
     
 # libs [{name,version,alias}]
 # parameters [{name,type}]
-def writeLibraryHeader(resource, libs = [], parameters = []):
+def writeLibraryHeader(library, libs = [], parameters = []):
     return """library {1} version '4.0.1'
 using FHIR version '{0}'
 include FHIRHelpers version '4.0.1' called FHIRHelpers 
@@ -201,7 +202,7 @@ context Patient
 
 """.format(
     get_fhir_cfg().version, 
-    clean_group_name(resource.id), 
+    library.name, 
     get_processor_cfg().scope,
     get_include_lib(libs),
     '')#get_include_parameters(parameters))
@@ -241,10 +242,10 @@ def write_library_CQL(output_path, lib, cql):
 ## function definition from 
 # https://hapifhir.io/hapi-fhir//apidocs/hapi-fhir-structures-r4/src-html/org/hl7/fhir/r4/model/PlanDefinition.html#line.4284
 ## missing in the python library
-def write_cql_pd(planDefinition):
+def write_cql_pd(library, planDefinition):
     # write 3 cql : start, end, applicability
     cql = {}
-    cql['header'] = writeLibraryHeader(planDefinition)
+    cql['header'] = writeLibraryHeader(library)
     i = 0
     list_actions = planDefinition.action
     if list_actions:
@@ -300,7 +301,7 @@ def write_action_condition(action):
 
 
 
-def write_cql_df(resource, df_actions,  type):
+def write_cql_df(library, df_actions,  type):
     cql = {}
     libs = []
     i = 0
@@ -344,7 +345,7 @@ def write_cql_df(resource, df_actions,  type):
                 # FIXME, need better way to detect Base
                 cql[i-1] = inject_config(cql[i-1].replace("Has", "B.Has"))
             oi = i
-    cql['header'] = writeLibraryHeader(resource, libs, get_lib_parameters_list(df_actions, type ))
+    cql['header'] = writeLibraryHeader(library, libs, get_lib_parameters_list(df_actions, type ))
     return cql
 
 def write_cql_action(id, row, expression_column, df):
