@@ -193,7 +193,7 @@ def get_initial_expression_identifier_ext(quesiton_id, desc = None ):
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/cql-identifier",
-                expression = clean_name(quesiton_id)))
+                expression = clean_name(quesiton_id, lower=False)))
    
 def get_questionnaire_library(library):
     if not re.search("$https?\:\/\/", library):
