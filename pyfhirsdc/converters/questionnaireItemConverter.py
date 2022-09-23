@@ -130,7 +130,7 @@ def process_quesitonnaire_line(id, question, df_questions,  existing_item):
                     definition = get_question_definition(question),
                     initial = get_initial_uuid(question)
                 )
-        if pd.notna(question['label']):
+        if pd.notna(question['label']) and question['type'] != "select_boolean":
             new_question.text = question['label']
         
         return new_question
