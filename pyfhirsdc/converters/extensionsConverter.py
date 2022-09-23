@@ -116,7 +116,37 @@ def get_unit_ext(unit):
             )
         )
 
-    
+# slider_part[1] : min
+# slider_part[2] : increment
+# slider_part[3] : max
+def get_slider_ext(slider,label):
+    slider_part = slider.split('::')
+    if len(slider_part) == 4:
+        return [Extension(
+            url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+            valueCodeableConcept = CodeableConcept(
+                coding = [Coding(
+                 system = "http://hl7.org/fhir/questionnaire-item-control",
+                code = 'slider'
+                )],
+                text=label
+
+            )
+        ),
+        Extension(
+            url="http://hl7.org/fhir/StructureDefinition/minValue",
+            valueInteger= slider_part[1]
+        ),
+        Extension(
+            url="http://hl7.org/fhir/StructureDefinition/questionnaire-sliderStepValue",
+            valueInteger= slider_part[2]
+        ),
+        Extension(
+            url="http://hl7.org/fhir/StructureDefinition/maxValue",
+            valueInteger=slider_part[3]
+        )
+        ]
+
 def get_hidden_ext():
     return Extension(
     url ="http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",

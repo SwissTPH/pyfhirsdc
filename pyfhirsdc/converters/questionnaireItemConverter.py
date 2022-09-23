@@ -12,26 +12,35 @@ import numpy
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
 from fhir.resources.questionnaire import QuestionnaireItemInitial, QuestionnaireItemAnswerOption
 from fhir.resources.coding import Coding
-from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_hidden_ext, get_initial_expression_identifier_ext, get_unit_ext, get_variable_extension
+from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext,get_slider_ext, get_hidden_ext, get_initial_expression_identifier_ext, get_unit_ext, get_variable_extension
 from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
 
 import pandas as pd
 
-def convert_df_to_questionitems(questionnaire,df_questions, strategy = 'overwrite'):
+def convert_df_to_questionitems(ressource,df_questions, parentId = None, strategy = 'overwrite'):
     # create a dict to iterate
-    dict_questions = df_questions.to_dict('index')
+    if parentId is None:
+        if 'parentId' in df_questions:
+            dict_questions = df_questions[df_questions.parentId.isna()].to_dict('index')
+        else:
+            dict_questions = df_questions.to_dict('index')
+    else:
+        if 'parentId' in df_questions:
+            dict_questions = df_questions[df_questions.parentId == parentId ].to_dict('index')
+        else:
+            return ressource
     # Use first part of the id (before DE) as an ID
     # questionnaire.id = list(dict_questions.keys())[0].split(".DE")[0]
     # delete all item in case of overwrite strategy
     
-    if strategy == "overwrite" or questionnaire.item :
-        questionnaire.item =[]
-    if questionnaire.item is None:
-       questionnaire.item =[]
+    if strategy == "overwrite" or ressource.item :
+        ressource.item =[]
+    if ressource.item is None:
+       ressource.item =[]
     # recreate item if draft 
-    ressource = questionnaire
-    parent = []
+    ressource = ressource
+
     # add timestamp
     ressource.item.append(get_timestamp_item())
     for id, question in dict_questions.items():
@@ -42,40 +51,27 @@ def convert_df_to_questionitems(questionnaire,df_questions, strategy = 'overwrit
             print("${0} is not a valid type, see question ${1}".format(question['type'], id))       
         elif type == "skipped":
             pass
-        elif  type == 'variable' and ( 'parentId' not in question or pd.isna(question['parentId']) ):
+        elif  type == 'variable':
             variable = get_variable_extension(id,question['calculatedExpression'])
             if variable is not None:
-                questionnaire.extension.append(variable)
+                ressource.extension.append(variable)
         
-        elif type == "group" and detail_1 == "start":
+        elif type == "group" :
             item = add_questionnaire_item_line(df_questions, existing_item, id, question,  strategy)
             if item is not None:
                 # we save the the questionnaire 
-                parent.append(ressource)
+                convert_df_to_questionitems(item,df_questions, id ,strategy = 'overwrite')
                 # we save the question as a new ressouce
-                ressource = item
-                if ressource.item is None:
-                    ressource.item =[]
-        elif type == "group" and detail_1 == "end":
-            if len(parent) == 0:
-                print("Question ${0} end of a group that was never opened,  group::end ignored".format( id))
-            else:
-                # we load the the group question
-                temp_ressource = parent.pop()
-                temp_ressource.item.append(ressource)
-                ressource = temp_ressource
+  
+                ressource.item.append(item)
 
         else:
             item = add_questionnaire_item_line(df_questions, existing_item, id, question,  strategy)
             if item is not None:
                 ressource.item.append(item)
     # close all open groups
-    while len(parent) > 0:
-        temp_ressource = parent.pop()
-        print("group id ${0} is not close and the tool reached the end of the quesitonnaire, closing the group".format( ressource.id))
-        temp_ressource.item.append(ressource)
-        ressource = temp_ressource
-    
+
+
     return ressource
 
 def get_timestamp_item():
@@ -102,9 +98,12 @@ def add_questionnaire_item_line(df_questions, existing_item, id, question,  stra
         return existing_item
     return None
 
-def get_question_answeroption(question):
+def get_question_answeroption(question, id):
     if question["type"] == 'select_boolean':
-        return QuestionnaireItemAnswerOption(valueCoding = Coding(code = question['id'], display = question['label']))
+        return [QuestionnaireItemAnswerOption(valueCoding = Coding(code = id, display = question['label']))]
+
+def get_question_repeats(question):
+    return True if question['type'] == 'select_boolean' or question['type'].startswith('select_multiple') else False
 
 
 def process_quesitonnaire_line(id, question, df_questions,  existing_item):
@@ -125,7 +124,8 @@ def process_quesitonnaire_line(id, question, df_questions,  existing_item):
                     required= question['required'],
                     extension = get_question_extension(question, id, df_question),
                     answerValueSet = get_question_valueset(question),
-                    answerOption=get_question_answeroption(question),
+                    answerOption=get_question_answeroption(question, id),
+                    repeats= get_question_repeats(question),
                     design_note = "status::draft",
                     definition = get_question_definition(question),
                     initial = get_initial_uuid(question)
@@ -161,7 +161,8 @@ QUESTION_TYPE_MAPPING = {
                 "integer" :"integer",
                 "number" :"integer",
                 "CodeableConcept": "CodeableConcept",
-                "Reference" : "Reference"         
+                "Reference" : "Reference",
+                'group':'group'      
 }
 
 
@@ -182,7 +183,8 @@ def get_question_extension(question, question_id, df_question = None ):
     
     regex_unit = re.compile("^unit::.*")
     unit = list(filter(regex_unit.match, display)) 
-    
+    regex_slider = re.compile("^slider::.*")
+    slider = list(filter(regex_slider.match, display))
     type, detail_1, detail_2 = get_type_details(question)
     # TODO support other display than drop down
     if (type.lower() == 'select_boolean'):
@@ -191,6 +193,8 @@ def get_question_extension(question, question_id, df_question = None ):
         extensions.append(get_dropdown_ext())
     if type.lower() in ('decimal','integer','number') and len(unit) == 1 :
         extensions.append(get_unit_ext(unit[0]))
+    if type.lower() in ('decimal','integer','number') and len(slider) == 1 :
+        extensions = extensions+(get_slider_ext(slider[0], question["label"]))
     if "select_" in type and   "candidateexpression"  in display:
         extensions = get_question_choice_column(extensions, detail_1)
     if "hidden"  in display:
