@@ -132,7 +132,14 @@ def process_quesitonnaire_line(id, question, df_questions,  existing_item):
                 )
         if pd.notna(question['label']) and question['type'] != "select_boolean":
             new_question.text = question['label']
+        #FIXME DEMO WORKARROUND REQUIRE NOT WORKING WITH SKIP LOGIC
         
+        for ext in new_question.extension:
+            if ext.url == 'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression':
+                new_question.required = False
+                        
+                    
+                
         return new_question
 
 def get_initial_uuid(question): #TODO remove when uuid will be supported in cal/fhirpath
@@ -200,7 +207,7 @@ def get_question_extension(question, question_id, df_question = None ):
     if "hidden"  in display:
         extensions.append(get_hidden_ext())
     if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]):
-        extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"]))
+        extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"]))    
     if "calculatedExpression" in question and pd.notna(question["calculatedExpression"]):
         extensions.append(get_calculated_expression_ext(question["calculatedExpression"]))
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
