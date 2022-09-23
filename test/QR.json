@@ -1,0 +1,214 @@
+{
+    "resourceType": "QuestionnaireResponse",
+    "questionnaire": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/Questionnaire/emcarea.registration.p",
+    "subject": {
+      "id": "04d9a034-0017-461b-b56c-9471a4f8c259",
+      "type": "Patient",
+      "identifier": {
+        "value": "04d9a034-0017-461b-b56c-9471a4f8c259"
+      }
+    },
+    "encounter": {
+      "id": "84f1f1c2-f05e-4c9f-a5b1-cd5f8d63f584",
+      "type": "Encounter",
+      "identifier": {
+        "value": "84f1f1c2-f05e-4c9f-a5b1-cd5f8d63f584"
+      }
+    },
+    "item": [
+      {
+        "linkId": "timestamp",
+        "answer": [
+          {
+            "valuedateTime": "2022-09-14T13:28:17-05:00 "
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE01"
+      },
+      {
+        "linkId": "EmCare.A.DE03",
+        "answer": [
+          {
+            "valueBoolean": true
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE07"
+      },
+      {
+        "linkId": "EmCare.A.DE08",
+        "answer": [
+          {
+            "valueDate": "2022-09-07"
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE11",
+        "answer": [
+          {
+            "valueBoolean": true
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE12",
+        "answer": [
+          {
+            "valueCoding": {
+              "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+              "code": "EmCare.A.DE13",
+              "display": "Estimated Age"
+            }
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE13.1",
+        "answer": [
+          {
+            "valueInteger": 1
+          }
+        ]
+      },
+      {
+        "linkId": "dob"
+      },
+      {
+        "linkId": "EmCare.A.DE16",
+        "answer": [
+          {
+            "valueCoding": {
+              "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+              "code": "EmCare.A.DE18",
+              "display": "Male"
+            }
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE20",
+        "answer": [
+          {
+            "valueString": "my adress"
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE47"
+      },
+      {
+        "linkId": "newCaregiver",
+        "answer": [
+          {
+            "valueBoolean": true
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE21",
+        "answer": [
+          {
+            "valueString": "fdas"
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE22",
+        "answer": [
+          {
+            "valueString": "fsda"
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE23",
+        "answer": [
+          {
+            "valueString": "dfas"
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE35",
+        "answer": [
+          {
+            "valueString": "342"
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE36",
+        "answer": [
+          {
+            "valueString": "342"
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE37",
+        "answer": [
+          {
+            "valueString": "342"
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE38",
+        "answer": [
+          {
+            "valueBoolean": true
+          }
+        ]
+      },
+      {
+        "linkId": "emcarerelatedpersoncaregiverid",
+        "answer": [
+          {
+            "valueString": "ea3171ec-bff7-475c-bd6a-85814663efdb"
+          }
+        ]
+      },
+      {"linkId": "emcarerelatedpersoncaregiverid"
+      },
+      {
+        "linkId": "EmCare.A.DE24",
+        "answer": [
+          {
+            "valueCoding": {
+              "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+              "code": "EmCare.A.DE27",
+              "display": "Sibling"
+            }
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE31",
+        "answer": [
+          {
+            "valueCoding": {
+              "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+              "code": "EmCare.A.DE34",
+              "display": "Alive"
+            }
+          }
+        ]
+      },
+      {
+        "linkId": "EmCare.A.DE32",
+        "answer": [
+          {
+            "valueCoding": {
+              "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+              "code": "EmCare.A.DE34",
+              "display": "Alive"
+            }
+          }
+        ]
+      }
+    ]
+  }

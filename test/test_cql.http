@@ -1,0 +1,139 @@
+@host=https://fhir.ruler.dk.swisstph-mis.ch/fhir
+#@host=https://fhir.dk.swisstph-mis.ch/matchbox/fhir
+
+
+### library eval POST with get data
+PUT {{host}}/Library/emcaredt01
+content-type: application/json
+
+
+
+< /home/delcpa/Development/smart-emcare/input/resources/library/library-emcaredt01.json
+
+### library eval POST with get data
+POST {{host}}/Library/emcaredt01/$evaluate?subject=/Patient/patient0
+
+### library eval POST with get data
+PUT {{host}}/Library/emcareb6measurements
+content-type: application/json
+
+
+
+< /home/delcpa/Development/smart-emcare/input/resources/library/library-emcare.b6.measurements.json
+
+
+### post lib 
+
+PUT {{host}}/Library/emcareb6measurements
+content-type: text/cql
+
+
+
+< /home/delcpa/Development/smart-emcare/input/cql/emcareb6measurements.cql
+
+
+### library eval POST with get data
+POST {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0
+
+
+
+
+### library eval POST with get data
+PUT {{host}}/Patient/patient0
+content-type: application/json
+
+< /home/delcpa/Development/DAK-tools/test/patient.json
+
+
+
+
+
+
+
+### evaluate
+
+POST {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0
+
+
+### $Apply
+
+POST {{host}}/PlanDefinition/emcaredt01/$apply?subject=/Patient/patient0
+### Data requirements
+
+GET {{host}}/Library/emcaredt01/$data-requirements
+
+### Send FHIRhelper
+PUT {{host}}/Library/FHIRHelpers
+content-type: application/json
+
+< C:\Users\delcpa\Development\smart-emcare\input\resources\library\library-fhirhelpers.json
+
+###
+
+GET {{host}}/Library/?url=http://fhir.org/guides/who/anc-cds/Library/FHIRHelpers
+### Send emcarepd lib
+PUT {{host}}/Library/emcaredt01
+content-type: application/json
+
+< /home/delcpa/Development/smart-emcare/input/resources/library/library-emcaredt01.json
+###
+GET {{host}}/Library/FHIRHelpers
+
+###
+GET https://fhir.ruler.dk.swisstph-mis.ch/fhir/Library/SimpleR4Library
+
+###
+GET https://fhir.ruler.dk.swisstph-mis.ch/fhir/Library/emcaredt01
+###
+
+POST https://fhir.ruler.dk.swisstph-mis.ch/fhir/$cql?subject=patient0
+content-type: application/json
+
+
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "parameters",
+      "resource": {
+        "resourceType": "Parameters",
+        "parameter": [
+          {
+            "name": "Patient",
+            "resource": {"resourceType":"Patient",
+              "id":"patient0"}
+          }
+        ]
+      }
+    },
+    {
+      "name": "expression",
+      "valueString": "difference in years between Today() and  Patient.birthDate < 5"
+    }
+  ]
+}
+
+
+### EMCareBAse
+
+POST https://fhir.cql-translator.dk.swisstph-mis.ch/cql/translator?annotations=true&result-types=true HTTP/1.1
+Content-Type: multipart/form-data; boundary=MyBoundary
+Accept: multipart/form-data
+
+
+--MyBoundary
+Content-Disposition:form-data; name="emcareb6measurements"
+Content-Type: application/cql
+
+< /home/delcpa/Development/smart-emcare/input/cql/emcareb6measurements.cql
+
+
+--MyBoundary
+Content-Disposition:form-data; name="FHIRHelpers"
+Content-Type: application/cql
+
+< /home/delcpa/Development/smart-emcare/input/cql/FHIRHelpers.cql
+
+
+
+--MyBoundary--

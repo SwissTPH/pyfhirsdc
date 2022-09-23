@@ -1,0 +1,247 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "questionnaire": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/Questionnaire/emcarea.registration.p",
+  "subject": {
+    "type": "Patient",
+    "identifier": {
+      "value": "3c8752d7-2214-4b9d-bfb3-400aa6a1a339"
+    }
+  },
+  "encounter": {
+    "id": "363a619d-5234-4b41-8151-d41d4f102f32",
+    "type": "Encounter",
+    "identifier": {
+      "value": "363a619d-5234-4b41-8151-d41d4f102f32"
+    }
+  },
+  "item": [
+    {
+      "linkId": "timestamp"
+    },
+    {
+      "linkId": "EmCare.A.DE01",
+      "text": "Unique identification",
+      "answer": [
+        {
+          "valueString": "unikIdent"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE03",
+      "text": "Child's Identity unknown/prefer to remain anonymous",
+      "answer": [
+        {
+          "valueBoolean": true
+        }
+      ]
+    },
+    {
+      "linkId": "dob",
+      "text": "Date of birth",
+      "answer": [
+        {
+          "valueDate": "2022-09-15"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE11",
+      "text": "Date of Birth not known",
+      "answer": [
+        {
+          "valueBoolean": true
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE12",
+      "text": "Provide an estimated age or estimated date of birth",
+      "answer": [
+        {
+          "valueCoding": {
+            "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+            "code": "EmCare.A.DE13",
+            "display": "Estimated Age"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE13.1",
+      "text": "Estimated Age",
+      "answer": [
+        {
+          "valueInteger": 1
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE08",
+      "text": "Estimated Date of Birth"
+    },
+    {
+      "linkId": "EmCare.A.DE16",
+      "text": "Sex",
+      "answer": [
+        {
+          "valueCoding": {
+            "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+            "code": "EmCare.A.DE18",
+            "display": "Male"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE20",
+      "text": "Address",
+      "answer": [
+        {
+          "valueString": "nearby street"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE04",
+      "text": "First name",
+      "answer": [
+        {
+          "valueString": "FirstN"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE05",
+      "text": "midName",
+      "answer": [
+        {
+          "valueString": "MidN"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE06",
+      "text": "LastName",
+      "answer": [
+        {
+          "valueString": "LastN"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE47",
+      "text": "Caregiver"
+    },
+    {
+      "linkId": "newCaregiver",
+      "text": "Register a new caregiver",
+      "answer": [
+        {
+          "valueBoolean": true
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE21",
+      "text": "Primary Caregiver First Name",
+      "answer": [
+        {
+          "valueString": "lorem"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE22",
+      "text": "Primary Caregiver Middle Name",
+      "answer": [
+        {
+          "valueString": "ipusm"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE23",
+      "text": "Primary Caregiver Last Name",
+      "answer": [
+        {
+          "valueString": "dolores"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE35",
+      "text": "Caregiver's Mobile telephone number",
+      "answer": [
+        {
+          "valueString": "432"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE36",
+      "text": "Caregiver's Home telephone number",
+      "answer": [
+        {
+          "valueString": "234"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE37",
+      "text": "Caregiver's Work telephone number",
+      "answer": [
+        {
+          "valueString": "432"
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE38",
+      "text": "Caregiver wants to receive SMS or other messages regarding the child's visits and health status",
+      "answer": [
+        {
+          "valueBoolean": true
+        }
+      ]
+    },
+    {
+      "linkId": "emcarerelatedpersoncaregiveruuid",
+      "answer": [
+        {
+          "valueString": "6859e92a-ce2d-4346-8812-c64eb012f6ad"
+        }
+      ]
+    },
+    {
+      "linkId": "emcarerelatedpersoncaregiverid",
+      "text": "CommunicationRequest recipient"
+    },
+    {
+      "linkId": "EmCare.A.DE24",
+      "text": "Primary Caregiver's Relationship to Client",
+      "answer": [
+        {
+          "valueCoding": {
+            "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+            "code": "EmCare.A.DE26",
+            "display": "Father"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "EmCare.A.DE31",
+      "text": "Biological Mother Vital Status",
+      "answer": [
+        {
+          "valueCoding": {
+            "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+            "code": "EmCare.A.DE34",
+            "display": "Alive"
+          }
+        }
+      ]
+    }
+  ]
+}

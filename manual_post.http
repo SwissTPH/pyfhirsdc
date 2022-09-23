@@ -2,31 +2,41 @@
 
 
 ###
-@host =https://fhir.dk.swisstph-mis.ch/matchbox/fhir/
+#@host =https://fhir.dk.swisstph-mis.ch/matchbox/fhir/
 #@host = http://185.11.167.36:8080/matchbox/fhir/
 
 @host=https://fhir.ruler.dk.swisstph-mis.ch/fhir
-POST https://fhir.dk.swisstph-mis.ch/matchbox/fhir/ HTTP/1.1
-Content-Type: application/json
 
-#< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\cpg-bundle.json
-< C:\Users\delcpa\Development\DAK-tools\bundle.json 
-###
-POST http://185.11.167.36:8080/matchbox/fhir/ HTTP/1.1
-Content-Type: application/json
-
-< C:\Users\delcpa\Development\DAK-tools\bundle.json 
 ###
 #Bundle
 
-POST https://fhir.ruler.dk.swisstph-mis.ch/fhir HTTP/1.1
+POST {{host}} HTTP/1.1
 Content-Type: application/json
 
-< C:\Users\delcpa\Development\DAK-tools\bundle.json
+< /home/delcpa/Development/DAK-tools/bundle.json
 #< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\cpg-bundle.json
 #< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\who_bundle.json
 ###
 
+#Bundle who
+
+POST {{host}} HTTP/1.1
+Content-Type: application/json
+
+< /home/delcpa/Development/smart-emcare/input/ext_ig/who_bundle.json
+#< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\cpg-bundle.json
+#< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\who_bundle.json
+###
+
+#Bundle cpg
+
+POST {{host}} HTTP/1.1
+Content-Type: application/json
+
+< /home/delcpa/Development/smart-emcare/input/ext_ig/cpg-bundle.json
+#< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\cpg-bundle.json
+#< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\who_bundle.json
+###
 
 POST {{host}}/ HTTP/1.1
 Content-Type: application/json
@@ -43,29 +53,6 @@ PUT http://185.11.167.36:8080/matchbox/fhir/Questionnaire/emcarea.registration.p
 Content-Type: application/json
 
 < C:\Users\delcpa\Development\smart-emcare\input\resources\questionnaire\questionnaire-emcarea.registration.p.json
-### EMCareBAse
-
-POST https://fhir.cql-translator.dk.swisstph-mis.ch/cql/translator?annotations=true&result-types=true HTTP/1.1
-Content-Type: multipart/form-data; boundary=MyBoundary
-Accept: multipart/form-data
-
-
---MyBoundary
-Content-Disposition:form-data; name="EmCareBase"
-Content-Type: application/cql
-
-< C:\Users\delcpa\Development\smart-emcare\input\cql\EmCareBase.cql
-
-
---MyBoundary
-Content-Disposition:form-data; name="FHIRHelpers"
-Content-Type: application/cql
-
-< C:\Users\delcpa\Development\smart-emcare\input\cql\FHIRHelpers.cql
-
-
-
---MyBoundary--
 
 
 ### ANthro

@@ -9,7 +9,7 @@ Accept: application/fhir+json;fhirVersion=4.0
 
 
 
-< C:\Users\delcpa\Development\smart-emcare\input\resources\structuremap\structuremap-emcarea.registration.p.map
+< /home/delcpa/Development/smart-emcare/input/resources/structuremap/structuremap-emcarea.registration.p.map
 
 ###
 
@@ -18,9 +18,7 @@ POST {{host}}StructureMap/$transform?source=https://fhir.dk.swisstph-mis.ch/matc
 Accept: application/fhir+json;fhirVersion=4.0
 Content-Type: application/fhir+json;fhirVersion=4.0
 
-< C:\Users\delcpa\Downloads\qr.json
-#< C:\Users\delcpa\Development\smart-emcare\input\resources\structuremap\test-qr-emcarea.registration.p.json
-
+< /home/delcpa/Development/DAK-tools/test/QR.json
 
 ### send bundle
 
