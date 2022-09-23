@@ -33,7 +33,7 @@ VAL_REGEX = "[ =]*val(?:[^\w]|$)"
 def get_questionnaire_mapping(questionnaire_name, df_questions):
     structure_maps = []
     sm_name = clean_name(questionnaire_name)  
-    map_filepath = get_resource_path("StructureMap", sm_name, "map")
+    map_filepath = get_resource_path("Mapping", sm_name, "map")
     profiles = get_question_profiles(df_questions)
     filepath = get_resource_path(
         "StructureMap", 
