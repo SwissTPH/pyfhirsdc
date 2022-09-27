@@ -1,10 +1,11 @@
 
 
 
+import os
 import re
 import pandas as pd
 
-from pyfhirsdc.config import get_dict_df, get_fhir_cfg, get_processor_cfg
+from pyfhirsdc.config import get_defaut_path, get_dict_df, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import get_questionnaire_library, get_structure_map_extension
 from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_custom_codesystem_url, get_resource_url
 from pyfhirsdc.converters.valueSetConverter import get_valueset_df
@@ -33,7 +34,7 @@ VAL_REGEX = "[ =]*val(?:[^\w]|$)"
 def get_questionnaire_mapping(questionnaire_name, df_questions):
     structure_maps = []
     sm_name = clean_name(questionnaire_name)  
-    map_filepath = get_resource_path("Mapping", sm_name, "map")
+    map_filepath = os.path.join(get_defaut_path("Mapping","mapping") ,sm_name+".map")
     profiles = get_question_profiles(df_questions)
     filepath = get_resource_path(
         "StructureMap", 
