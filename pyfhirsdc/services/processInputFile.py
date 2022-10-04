@@ -25,14 +25,14 @@ def process_input_file(conf):
                  df_extension, df_cql = parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
             input_file.close()
             print(len(dfs_questionnaire))
+            # generate the CodeSystem
+            generate_custom_code_system()  
             # generate questionnaire
             generate_questionnaires()
 
 
-            # generate the CodeSystem
-            generate_custom_code_system(dfs_questionnaire, df_value_set)   
-            #Generate obs lib and valueset
-            generate_observation_valueset_libs()
+ 
+
             
             # generate the valueSet
             generate_value_sets()

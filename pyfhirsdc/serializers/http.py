@@ -27,8 +27,8 @@ def post_files(file_path, url):
 
 def post_multipart(list, url):
     print("Sending the multipart to {0} and pasing multipart answer".format(url))
-    response = requests.post(url, files = list)
-    if response.status_code == 200 or response.status_code == 201:
+    response = requests.post(url, files = list,headers={'Cache-Control': 'no-cache'})
+    if response.status_code == 200 or response.status_code == 201 :
         print(response.status_code)
         multipart_data = decoder.MultipartDecoder.from_response(response)
         return multipart_data

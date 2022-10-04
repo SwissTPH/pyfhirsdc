@@ -133,10 +133,9 @@ def process_quesitonnaire_line(id, question, df_questions,  existing_item):
         if pd.notna(question['label']) and question['type'] != "select_boolean":
             new_question.text = question['label']
         #FIXME DEMO WORKARROUND REQUIRE NOT WORKING WITH SKIP LOGIC
-        
-        for ext in new_question.extension:
-            if ext.url == 'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression':
-                new_question.required = False
+        #for ext in new_question.extension:
+        #    if ext.url == 'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression':
+        #        new_question.required = False
                         
                     
                 

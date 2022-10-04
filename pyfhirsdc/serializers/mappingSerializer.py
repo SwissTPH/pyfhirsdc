@@ -26,6 +26,8 @@ def write_mapping_file(filepath, mapping, update_map = True):
             obj = json.loads(response.text)
             obj['status'] = 'active'
             obj['id'] = mapping.name
+            # to avoid having change at regeneration
+            del obj['meta']
             structure_map = StructureMap.parse_raw( json.dumps(obj))
         else:
             print(str(response.status_code) +":"+ mapping.name)

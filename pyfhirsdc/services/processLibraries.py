@@ -27,15 +27,20 @@ def refresh_content(lib):
     out_content = [x for x in lib.content if not is_content_to_update(x, lib)]
     if len (out_content) < len(lib.content):
         # get CQL file "ig-loader"
-        cql = read_file(os.path.join(get_defaut_path('CQL', 'cql'), lib.id + '.cql') ,'str')
+        cql = read_file(os.path.join(get_defaut_path('CQL', 'cql'), lib.name + '.cql') ,'str')
         out_content.append(get_cql_content(cql, lib.id))
-        
-        emls = update_eml_content(cql, lib.id)
+        multipart = build_multipart_cql(cql,lib.id)
+        emls = update_eml_content(multipart, lib.id, 'json')
         if emls is not None:
             for eml in emls:
                 emlid = get_id_from_header(eml.headers[b'Content-Disposition'].decode())
                 if emlid == lib.id:
-                    out_content.append(get_eml_content(eml.text,emlid))# eml.content
+                    out_content.append(get_eml_content(eml.text,emlid,'json'))# eml.content
+                    #elms_xml = update_eml_content(multipart, lib.id, 'json')
+                    #for elm_xml in elms_xml:
+                    #    emlid = get_id_from_header(elm_xml.headers[b'Content-Disposition'].decode())
+                    #    if emlid == lib.id:
+                    #        out_content.append(get_eml_content(eml.text,emlid,'xml'))
                 else:
                     dependencies.append(RelatedArtifact(
                         type = "depends-on",
@@ -60,39 +65,64 @@ def get_id_from_header(header):
         return match.groupdict()['name']
 
 
-def update_eml_content(cql, id):
+
+def update_eml_content(multipart, id, ext):
+    
+    from jsonpath_ng import jsonpath, parse
+
     # get the depandencies
     # create the multipart payload
     # add dependencies recursivly
-    multipart = {}
-    build_multipart_cql(cql,id,multipart)
     print("sending cql {}".format(id))
-    data = post_multipart(multipart, get_processor_cfg().cql_translator)
+    data = post_multipart(multipart, get_processor_cfg().cql_translator+"?format="+ext)
     if data is not None:
+        
+        for elm in data.parts:
+            error_str = '"errorSeverity" : "error"'
+            json_w_error = None
+            match = None
+            if error_str in elm.text:
+                print("error found in "+id)
+                json_w_error = json.loads(elm.text)
+                jsonpath_expression = parse('$.library.annotation[*]')
+                match = jsonpath_expression.find(json_w_error)
+                for val in match:
+                    print(val.value)
+                return None
         return data.parts
+
     
     
 
-def build_multipart_cql(cql,id,multipart): 
+def build_multipart_cql(cql,id,multipart = {}): 
     multipart[id] = (id,cql,'application/cql')
     cql_deps = get_cql_dependencies(cql)
     for dep in cql_deps:
-
         if dep['id'] not in multipart:
             build_multipart_cql(dep['data'],dep['id'],multipart)
 
+    return multipart
+
 def get_cql_dependencies(cql):
     cqls = []
-    pattern = "include ([0-0a-zA-Z-.]+)"
+    pattern = "include ([0-0a-zA-Z\-\.]+)(?:\n| )"
     matches = re.findall(pattern, cql, flags=0)
     for match in matches:
-        cql = read_file(os.path.join(get_defaut_path('CQL', 'cql'), match + '.cql') ,'str')
-        if cql is not None:
-            cqls.append({'id':match, 'data':cql})
+        file_path = os.path.join(get_defaut_path('CQL', 'cql'), match + '.cql')
+        if os.path.exists(file_path):
+            sub_cql = read_file(file_path ,'str')
+            sub_cqls = get_cql_dependencies(sub_cql)
+            if isinstance(sub_cqls, list):
+                cqls += sub_cqls
+            if sub_cql is not None:
+                cqls.append({'id':match, 'data':sub_cql})
+            else:
+                print("Error, missing cql dependency "+match)
+                exit()
         else:
             print("Error, missing cql dependency "+match)
             exit()
-            
+                
     return cqls
 
 def get_cql_content(cql,id):
@@ -102,10 +132,10 @@ def get_cql_content(cql,id):
         data = base64.b64encode(cql.encode())
     )
 
-def get_eml_content(cql,id):
+def get_eml_content(cql,id, ext = 'json'):
     return Attachment(
         id = "ig-loader-" + str(id) + ".eml",
-        contentType = "application/elm+json",
+        contentType = "application/elm+"+ext,
         data = base64.b64encode(cql.encode())
     )
 
@@ -113,6 +143,7 @@ def refresh_library(filepath):
     lib_json = read_resource(filepath, "Library")
     if lib_json is not None :
         lib = Library.parse_raw( json.dumps(lib_json))
+        #FIXME
         dependencies, content = refresh_content(lib)
         if content is not None and len(content)>0:
             lib.content = content
@@ -126,14 +157,42 @@ def refresh_library(filepath):
 def process_libraries(conf):
     # Read the config file
     config_obj = read_config_file(conf)
+
     if config_obj is None:
         exit()
     else:
-        lib_path = get_defaut_path('Library', '/ressources/library')
+    # copy the manual libs
+    #TODO dynamic path
+        lib_path = get_defaut_path('Library', 'ressources/library')
+        cql_path = get_defaut_path('CQL', 'cql')
+        manual_lib_path = os.path.join(get_processor_cfg().manual_content,"resources/library")
+        cql_lib_path = os.path.join(get_processor_cfg().manual_content,"cql")
+        if os.path.exists(manual_lib_path) and os.path.exists(cql_lib_path):
+            #TODO for each file
+            update_lib_version(
+                os.path.join(manual_lib_path, 'library-emcarebase.json'),
+                os.path.join(lib_path, 'library-emcarebase.json')
+            )
+            update_lib_version(
+                os.path.join(cql_lib_path, 'EmCareBase.cql'),
+                os.path.join(cql_path, 'EmCareBase.cql')
+            )          
+        
         arr_lib_file_path = os.listdir(lib_path)
         for file in arr_lib_file_path:
             if file.endswith(".json"):
                refresh_library(os.path.join(lib_path,file)) 
         # get libraries 
 
-         
+def update_lib_version(src,dst):
+    
+    with open(src, 'r') as file :
+        filedata = file.read()
+
+    # Replace the target string
+    filedata = filedata.replace("{{LIB_VERSION}}",get_fhir_cfg().lib_version)
+    filedata = filedata.replace("{{FHIR_VERSION}}",get_fhir_cfg().version)
+
+    # Write the file out 
+    with open(dst, 'w') as file:
+        file.write(filedata)         

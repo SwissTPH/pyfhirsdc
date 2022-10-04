@@ -1,4 +1,6 @@
-from __future__ import annotations 
+from __future__ import annotations
+import hashlib
+import json 
 from typing import List, Optional
 from pydantic import BaseModel
 # for recursive definition
@@ -17,11 +19,17 @@ class MappingRule(BaseModel):
     name : Optional[str]
     expression: str
     rules : List[MappingRule] =[]
-        
+    
+    def get_name(self):
+        buffer = self.expression
+        for rule in self.rules:
+            buffer += rule.get_name()
+        return hashlib.md5(buffer.encode('utf-8')).hexdigest()[:8]
+    
     def __init__(self, **data):
         super().__init__(**data)
         if self.name is None:
-            self.name = ''.join(random.choices(string.ascii_lowercase, k=5))
+            self.name = self.get_name()#''.join(random.choices(string.ascii_lowercase, k=5))
 
 class MappingGroup(BaseModel):
     name :str

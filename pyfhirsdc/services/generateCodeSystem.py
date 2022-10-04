@@ -8,27 +8,39 @@
 import json
 import os
 from pyfhirsdc.config import get_defaut_fhir, get_defaut_path, get_dict_df,  get_processor_cfg
-from pyfhirsdc.converters.codeSystemConverter import  generate_observation_concept, generate_questionnaire_concept, generate_valueset_concept
+from pyfhirsdc.converters.codeSystemConverter import   generate_observation_concept, generate_questionnaire_concept, generate_valueset_concept
 from pyfhirsdc.converters.valueSetConverter import add_concept_in_valueset_df
 from pyfhirsdc.serializers.json import  read_resource
 from fhir.resources.codesystem import CodeSystem
 from fhir.resources.library import Library
-
-from pyfhirsdc.serializers.librarySerializer import get_observation_cql_from_valueset, write_library_CQL
-from pyfhirsdc.serializers.utils import  get_resource_path 
+from fhir.resources.attachment import Attachment
+from pyfhirsdc.serializers.librarySerializer import  get_observation_cql_from_concepts, get_valueset_cql_from_concepts, write_library_CQL
+from pyfhirsdc.serializers.utils import  get_resource_path, write_resource 
 from pyfhirsdc.converters.utils import clean_group_name,  get_codableconcept_code, get_custom_codesystem_url, get_resource_url
 
 
-def generate_custom_code_system(dfs_questionnaire, df_value_set):
+def generate_custom_code_system():
+    dfs_questionnaire = get_dict_df()['questionnaires']
+    df_value_set = get_dict_df()['valueset']
     concept = []
+    obs_concepts = []
+    question_concepts = []
+    valueset_concepts = []
     for name, df_questions in dfs_questionnaire.items():
         question_concept = generate_questionnaire_concept(df_questions)
+        obs_concept= generate_observation_concept(df_questions)
         if len(question_concept)>0:
-           concept = concept +  question_concept
-    valueset_concept = generate_valueset_concept(df_value_set)
-    if len(valueset_concept)>0:
-        concept = concept +  valueset_concept
-
+           question_concepts +=   question_concept
+        if len(obs_concept):
+            obs_concepts+=obs_concept
+    if len(question_concepts)>0:
+        concept =  question_concepts    
+    valueset_concepts = generate_valueset_concept(df_value_set)
+    if len(valueset_concepts)>0:
+        concept = concept +  valueset_concepts
+        
+    generate_valuset_valueset_libs(valueset_concepts)
+    generate_observation_valueset_libs(obs_concepts)
     
     # path must end with /
     
@@ -48,35 +60,62 @@ def generate_custom_code_system(dfs_questionnaire, df_value_set):
         #TODO use configuration
 
 
-def generate_observation_valueset_libs():
-    dfs_questionnaire = get_dict_df()['questionnaires']
-    concepts = []
-    name_vs = get_processor_cfg().scope + "Observation"
-    for name, df_questions in dfs_questionnaire.items():
-        question_concept = generate_observation_concept(df_questions)
-        if len(question_concept)>0:
-           concepts = concepts +  question_concept
-    if len(concepts)>0:    
-        add_concept_in_valueset_df('observation', concepts)
-
-
+def  generate_valuset_valueset_libs(valueset_concepts):
+    if len(valueset_concepts)>0:    
+    # Generate library to resolve "display to code"
+        name_vs = get_processor_cfg().scope + "ValueSet"
+        lib_id = clean_group_name(name_vs)
         lib = Library(
             status= 'active',
-            id=clean_group_name(name_vs),
+            id=lib_id,
             name=name_vs,
             url = get_resource_url('Library', clean_group_name(name_vs)),
             type = get_codableconcept_code( 
             "http://hl7.org/fhir/ValueSet/library-type", 
-            'logic-library'
-        ))
+            'logic-library'),
+            content =[Attachment(
+                id = "ig-loader-" + lib_id + ".cql"
+            )])
         
-        cql = get_observation_cql_from_valueset(concepts, lib)
+        cql = get_valueset_cql_from_concepts(valueset_concepts, lib)
         cql_path = get_defaut_path('CQL', 'cql')
+        lib_path =get_resource_path('Library', name_vs )
         write_library_CQL(cql_path, lib, cql)
-            
+        write_resource(lib_path, lib)
+
+def generate_observation_valueset_libs(question_concepts):
+
+    name_vs = get_processor_cfg().scope + "Observation"
+    #for name, df_questions in dfs_questionnaire.items():
+    #    question_concept = generate_observation_concept(df_questions)
+    #    if len(question_concept)>0:
+    #       concepts = concepts +  question_concept
+    if len(question_concepts)>0:    
+        
+
+        lib_id = clean_group_name(name_vs)
+        lib = Library(
+            status= 'active',
+            id=lib_id,
+            name=name_vs,
+            url = get_resource_url('Library', clean_group_name(name_vs)),
+            type = get_codableconcept_code( 
+            "http://hl7.org/fhir/ValueSet/library-type", 
+            'logic-library'),
+            content =[Attachment(
+                id = "ig-loader-" + lib_id + ".cql"
+            )])
+        
+        cql = get_observation_cql_from_concepts(question_concepts, lib)
+        add_concept_in_valueset_df('observation', question_concepts)
+        cql_path = get_defaut_path('CQL', 'cql')
+        lib_path =get_resource_path('Library', name_vs )
+        write_library_CQL(cql_path, lib, cql)
+        write_resource(lib_path, lib)
             
         #TODO use configuration
-    
+        
+    #FIXME generate_valusetLib
     #FIXME generate_diagnosis_concept
     #FIXME generate_observation_concept
     #FIXME generate_condition_concept    

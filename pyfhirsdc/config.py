@@ -7,6 +7,22 @@ processor_cfg = None
 fhir_cfg = None
 dict_cfg = None
 dict_df = None
+used_valueset = []
+used_obs = []
+
+def append_used_valueset(value):
+    if value not in used_valueset:
+        used_valueset.append(value)
+
+def append_used_obs(value):
+    if value not in used_obs:
+        used_obs.append(value)
+        
+def get_used_obs():
+    return used_obs
+
+def get_used_valueset():
+    return used_valueset
 
 def set_dict_df(dict_in):
     global dict_df
