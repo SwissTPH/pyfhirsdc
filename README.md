@@ -7,6 +7,84 @@ The goal of the project is to have tool like pyxform but for fhir structure data
 the input file is an xlsx file with several mandatory sheet
 
 
+## Config file
+
+the config file is a json with two main section 
+
+processor;
+```
+"processor":{
+        "inputFile":"/home/<>/WHO DAK/merged/xls_form_iraq.xlsx",
+        "manual_content":"/home/<>/smart-emcare/manual",
+        "outputPath":"/home/<>/smart-emcare/input",
+        "cql_translator": "https://fhir.cql-translator.dk.swisstph-mis.ch/cql/translator",
+        "mapping_translator": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureMap",
+        "default_resource_path":"./default_resources",
+        "excudedWorksheets":[
+        ],
+        "scope":"EmCare",
+        "encoding":"json",
+        "generateElm" : false
+    },
+
+```
+
+FHIR:
+```
+"fhir":{
+        "version": "4.0.1",
+        "lib_version": "0.99.99",
+        "canonicalBase" : "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/",
+        "guideBase":"http://fhir.org/guides/who/emc-cds/",
+        "activity":{
+            "CodeSystem": "http://fhir.org/guides/who/anc-cds/CodeSystem/activity-codes"
+        },
+        "external_libraries" : {
+            "FHIRHelpers" : "http://fhir.org/guides/who/anc-cds/Library/FHIRHelpers"
+        }
+        ,
+        "usageContext":{
+            "CodeSystem": "http://terminology.hl7.org/CodeSystem/usage-context-type",
+            "Code": "task",
+            "Display": "Workflow Task"
+        },
+        "PlanDefinition":{
+            "outputPath":"resources/plandefinition",
+            "planDefinitionType":{
+                "CodeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
+                "Code": "eca-rule"
+            }
+        },
+        "Extensions":{
+            "outputPath":"resources/extensions"
+        },
+        "Profiles": {
+            "outputPath":"profiles"
+        },
+        "Questionnaire":{
+            "outputPath":"resources/questionnaire"
+        },
+        "ActivityDefinition":{
+            "outputPath":"resources/activitydefinition"
+        },
+        "Library":{
+            "outputPath":"resources/library/"
+        },
+        "Bundle":{
+            "outputPath" : "bundles"
+        },
+        "pagecontent":{
+            "outputPath":"/pagecontent/"
+        },"CodeSystem":
+        {
+            "outputPath":"vocabulary/codesystem/"
+        },"ValueSet":
+        {
+            "outputPath":"vocabulary/valueset/"
+        }
+    }
+```
+
 
 ### carePlan
 
@@ -106,7 +184,17 @@ each set of subline is joined to the parent with an AND
 only the first line may not have expression but then it must have '{{cql}}' in it in order to triger the conversion to library
 ##### initialExpression (optionnal)
 
- fhirpath/cal code that will be executed by the api with the $populate opearation
+ fhirpath/CQL code that will be executed by the api with the $populate opearation
+
+  When writing the CQL please note:
+  - all objservations (i.e. questions mapped to Observation) can be access via their label or id
+  - if an Observation was assessed but not found it will return "No" ('no' coding from the custom codingsystem)
+    - if an observation returns a boolean, it would be transformed to "Yes" (true) and "No" (false)
+    - if an Observation returns a coding that it could take all possible value from the valueset + "No"
+    - if an Observation returns a integer/quantity it could returns    integer/quantity + "No" (coding)
+  - if an observation returns a coding and you want to insure it not could list the possible coding
+
+  Cql identifier (label) must only use ascii 
 
 ##### enableWhenExpression (optionnal)
 
@@ -169,6 +257,7 @@ the details of the profile to the mapped will be in the profile tab
 #### add library:
 id = {{library}}
 description = [name]::[alias]::[version] e.g FHIRHelper::FHIRHelper::4.01
+        version can be {{LIB_VERSION}} or {{FHIR_VERSION}} this will ne updated base on the configuration file
 type = mapping 
 
 ### valueSet

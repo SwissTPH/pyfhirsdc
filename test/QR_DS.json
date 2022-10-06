@@ -1,0 +1,242 @@
+{
+    "resourceType": "QuestionnaireResponse",
+    "questionnaire": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/Questionnaire/emcare.b10-14.symptoms.2m.p",
+    "item": [
+        {
+            "linkId": "timestamp"
+        },
+        {
+            "linkId": "AgeInMonths",
+            "text": "Age"
+        },
+        {
+            "linkId": "EmCare.B14S2.DE05",
+            "text": "Generalised or Localised Skin Problem"
+        },
+        {
+            "linkId": "EmCare.B12S2.DE09",
+            "text": "Measles Rash"
+        },
+        {
+            "linkId": "EmCare.B10S1.DE05",
+            "text": "Cough",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B10S1.DE06",
+            "text": "Cough for how long?",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "EmCare.B10S1.DE07",
+                        "display": "Less than 14 days"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B10S1.DE01",
+            "text": "Difficulty Breathing",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B10S1.DE02",
+            "text": "Difficulty breathing for how long?",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "EmCare.B10S1.DE03",
+                        "display": "Less than 14 days"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B11S1.DE01",
+            "text": "Diarrhoea",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B11S1.DE02",
+            "text": "Diarrhoea for how long?",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "EmCare.B11S1.DE03",
+                        "display": "Less than 14 days"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B11S1.DE05",
+            "text": "Blood in the stool in this Illness",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B12S1.DE01",
+            "text": "Measured Fever",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B12S1.DE02",
+            "text": "Fever Reported",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B12S1.DE03",
+            "text": "Fever for how long?",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "EmCare.B12S1.DE04",
+                        "display": "Less than 7 days"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B12S1.DE06",
+            "text": "Has Fever been present every day since the Fever started?",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B13S1.DE01",
+            "text": "Ear problem",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B13S1.DE02",
+            "text": "Ear pain",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B13S1.DE03",
+            "text": "Ear discharge",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B13S1.DE04",
+            "text": "Ear discharge for how long?",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "EmCare.B13S1.DE05",
+                        "display": "Less than 14 days"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B14S1.DE03",
+            "text": "Eye Problem",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        },
+        {
+            "linkId": "EmCare.B14S1.DE02",
+            "text": "Itchy Skin",
+            "answer": [
+                {
+                    "valueCoding": {
+                        "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code": "yes",
+                        "display": "Yes"
+                    }
+                }
+            ]
+        }
+    ]
+}

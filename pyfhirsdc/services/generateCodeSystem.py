@@ -103,7 +103,7 @@ def generate_observation_valueset_libs(question_concepts):
             "http://hl7.org/fhir/ValueSet/library-type", 
             'logic-library'),
             content =[Attachment(
-                id = "ig-loader-" + lib_id + ".cql"
+                id = "ig-loader-" + name_vs + ".cql"
             )])
         
         cql = get_observation_cql_from_concepts(question_concepts, lib)

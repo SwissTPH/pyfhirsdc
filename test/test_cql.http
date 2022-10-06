@@ -11,7 +11,7 @@ content-type: application/json
 < /home/delcpa/Development/smart-emcare/input/resources/library/library-emcaredt01.json
 
 ### library eval POST with get data
-POST {{host}}/Library/emcaredt01/$evaluate?subject=/Patient/patient0
+POST {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0
 
 ### library eval POST with get data
 PUT {{host}}/Library/emcareb6measurements
@@ -26,6 +26,7 @@ content-type: application/json
 
 PUT {{host}}/Library/emcareb6measurements
 content-type: text/cql
+
 
 
 
@@ -52,7 +53,13 @@ content-type: application/json
 
 ### evaluate
 
-POST {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0
+GET {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0&annotations=true&result-types=true
+
+
+### evaluate
+
+POST {{host}}/Library/EmCareBase/$evaluate?subject=/Patient/patient0&annotations=true&result-types=true
+
 
 
 ### $Apply
@@ -60,7 +67,7 @@ POST {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0
 POST {{host}}/PlanDefinition/emcaredt01/$apply?subject=/Patient/patient0
 ### Data requirements
 
-GET {{host}}/Library/emcaredt01/$data-requirements
+GET {{host}}/Library/EmCareBase
 
 ### Send FHIRhelper
 PUT {{host}}/Library/FHIRHelpers
@@ -100,7 +107,7 @@ content-type: application/json
         "parameter": [
           {
             "name": "Patient",
-            "resource": {"resourceType":"Patient",
+            "resource": {"resourceType":"Patient",5555
               "id":"patient0"}
           }
         ]
@@ -133,7 +140,4 @@ Content-Disposition:form-data; name="FHIRHelpers"
 Content-Type: application/cql
 
 < /home/delcpa/Development/smart-emcare/input/cql/FHIRHelpers.cql
-
-
-
 --MyBoundary--

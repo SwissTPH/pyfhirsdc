@@ -18,7 +18,7 @@ from fhir.resources.library import Library
 from fhir.resources.attachment import Attachment
 
 def is_content_to_update(content, lib):
-    return content.id.startswith("ig-loader-" + lib.id)
+    return content.id.startswith("ig-loader-" + lib.name)
 
 def refresh_content(lib):
     # for each lib check if there is the content "attachment.id = "ig-loader-" + id + ".cql""
@@ -28,27 +28,28 @@ def refresh_content(lib):
     if len (out_content) < len(lib.content):
         # get CQL file "ig-loader"
         cql = read_file(os.path.join(get_defaut_path('CQL', 'cql'), lib.name + '.cql') ,'str')
-        out_content.append(get_cql_content(cql, lib.id))
-        multipart = build_multipart_cql(cql,lib.id)
-        emls = update_eml_content(multipart, lib.id, 'json')
-        if emls is not None:
-            for eml in emls:
-                emlid = get_id_from_header(eml.headers[b'Content-Disposition'].decode())
-                if emlid == lib.id:
-                    out_content.append(get_eml_content(eml.text,emlid,'json'))# eml.content
-                    #elms_xml = update_eml_content(multipart, lib.id, 'json')
-                    #for elm_xml in elms_xml:
-                    #    emlid = get_id_from_header(elm_xml.headers[b'Content-Disposition'].decode())
-                    #    if emlid == lib.id:
-                    #        out_content.append(get_eml_content(eml.text,emlid,'xml'))
-                else:
-                    dependencies.append(RelatedArtifact(
-                        type = "depends-on",
-                        resource = get_lib_url(emlid)
-                    ))
-                    
-        return dependencies, out_content
-                 
+        out_content.append(get_cql_content(cql, lib.name))
+        multipart = build_multipart_cql(cql,lib.name)
+        emls = update_eml_content(multipart, lib.name, 'json')
+        if get_processor_cfg().generateElm: # create the elm
+            if emls is not None:
+                for eml in emls:
+                    emlid = get_id_from_header(eml.headers[b'Content-Disposition'].decode())
+                    if emlid == lib.name:
+                        out_content.append(get_eml_content(eml.text,emlid,'json'))# eml.content
+                        #elms_xml = update_eml_content(multipart, lib.id, 'json')
+                        #for elm_xml in elms_xml:
+                        #    emlid = get_id_from_header(elm_xml.headers[b'Content-Disposition'].decode())
+                        #    if emlid == lib.id:
+                        #        out_content.append(get_eml_content(eml.text,emlid,'xml'))
+                    else:
+                        dependencies.append(RelatedArtifact(
+                            type = "depends-on",
+                            resource = get_lib_url(emlid)
+                        ))
+                        
+            return dependencies, out_content
+        return None, out_content    
     return None, None
 
 def get_lib_url(id):
@@ -88,6 +89,9 @@ def update_eml_content(multipart, id, ext):
                 match = jsonpath_expression.find(json_w_error)
                 for val in match:
                     print(val.value)
+                    
+                match.clear()
+                data.parts = ()
                 return None
         return data.parts
 
@@ -125,16 +129,16 @@ def get_cql_dependencies(cql):
                 
     return cqls
 
-def get_cql_content(cql,id):
+def get_cql_content(cql,name):
     return Attachment(
-        id = "ig-loader-" + str(id) + ".cql",
+        id = "ig-loader-" + str(name) + ".cql",
         contentType = "text/cql",
         data = base64.b64encode(cql.encode())
     )
 
-def get_eml_content(cql,id, ext = 'json'):
+def get_eml_content(cql,name, ext = 'json'):
     return Attachment(
-        id = "ig-loader-" + str(id) + ".eml",
+        id = "ig-loader-" + str(name) + ".eml",
         contentType = "application/elm+"+ext,
         data = base64.b64encode(cql.encode())
     )
@@ -168,15 +172,21 @@ def process_libraries(conf):
         manual_lib_path = os.path.join(get_processor_cfg().manual_content,"resources/library")
         cql_lib_path = os.path.join(get_processor_cfg().manual_content,"cql")
         if os.path.exists(manual_lib_path) and os.path.exists(cql_lib_path):
-            #TODO for each file
-            update_lib_version(
-                os.path.join(manual_lib_path, 'library-emcarebase.json'),
-                os.path.join(lib_path, 'library-emcarebase.json')
-            )
-            update_lib_version(
-                os.path.join(cql_lib_path, 'EmCareBase.cql'),
-                os.path.join(cql_path, 'EmCareBase.cql')
-            )          
+
+            arr_lib_file_path = os.listdir(manual_lib_path)
+            for file in arr_lib_file_path:
+                if file.endswith(".json") :
+                    update_lib_version(
+                        os.path.join(manual_lib_path, file),
+                        os.path.join(lib_path, file)
+                    )
+            arr_lib_file_path = os.listdir(cql_lib_path)
+            for file in arr_lib_file_path:
+                if file.endswith(".json") or file.endswith(".cql"):
+                    update_lib_version(
+                        os.path.join(cql_lib_path, file),
+                        os.path.join(cql_path, file)
+                    )          
         
         arr_lib_file_path = os.listdir(lib_path)
         for file in arr_lib_file_path:
@@ -190,9 +200,11 @@ def update_lib_version(src,dst):
         filedata = file.read()
 
     # Replace the target string
-    filedata = filedata.replace("{{LIB_VERSION}}",get_fhir_cfg().lib_version)
-    filedata = filedata.replace("{{FHIR_VERSION}}",get_fhir_cfg().version)
+    filedata = filedata.replace("{{LIB_VERSION}}",get_fhir_cfg().lib_version)\
+        .replace("{{cs_url}}",get_fhir_cfg().canonicalBase)\
+        .replace("{{FHIR_VERSION}}",get_fhir_cfg().version)
 
     # Write the file out 
     with open(dst, 'w') as file:
         file.write(filedata)         
+        

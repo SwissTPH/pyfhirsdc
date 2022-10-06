@@ -29,7 +29,6 @@ def generate_plan_defnition_lib(resource, df_actions, type = 'pd'):
     id = clean_name(resource.id)
     print("Generating library ", resource.name, ".......")
     lib_id =clean_group_name(id)
-    lib_name = id.replace('.','_')
     library = Library(
         id = lib_id,
         status = 'active',
@@ -87,7 +86,8 @@ def get_lib_parameters_list(df_in, type = "pd"):
             q_type = 'boolean'
         name = row['id'] if 'id' in row else index
         if name is not None and pd.notna(name):
-            desc = row['description'].replace(u'\xa0', u' ').replace('  ',' ') if 'description' in row and pd.notna(row['description']) else None
+            desc = row['label'].replace(u'\xa0', u' ').replace('  ',' ') if 'label' in row and pd.notna(row['label']) else\
+                row['description'].replace(u'\xa0', u' ').replace('  ',' ') if 'description' in row and pd.notna(row['description']) else None
             parameters.append({'name': name, 'type':q_type})
             if row['description'] is not None:
                 parameters.append({'name':desc, 'type':q_type})
@@ -407,13 +407,13 @@ def write_cql_df(library, df_actions,  type):
                 cql[i] = write_cql_action(ref, row,'applicabilityExpressions', df_actions)
                 i += 1
                 # add the wrapper name -> id
-                cql[i] = write_cql_action(row['description'], row, 'applicabilityExpressions', df_actions)
+                cql[i] = write_cql_action(ref, row, 'applicabilityExpressions', df_actions,row['description'])
                 i += 1
             ## questionnaire initial expression in CQL, FIXMDe
             if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()):
                 cql[i] = write_cql_action(ref, row,'initialExpression',df_actions)
                 i += 1
-                cql[i] = write_cql_action(row['label'], row, 'initialExpression', df_actions)
+                cql[i] = write_cql_action(ref, row, 'initialExpression', df_actions,row['label'])
                 i += 1
             while  i > oi :
                 cql[oi] = inject_config(cql[oi])
@@ -423,8 +423,9 @@ def write_cql_df(library, df_actions,  type):
     cql['header'] = writeLibraryHeader(library, libs, get_lib_parameters_list(df_actions, type ))
     return cql
 
-def write_cql_action(id, row, expression_column, df):
-    
+def write_cql_action(id, row, expression_column, df, display = None):
+    if display is None:
+        display = id    
     cql_exp = row[expression_column] if row[expression_column].strip() != '{{cql}}' else ''
     if cql_exp != '':
         cql_exp = map_to_obs_valueset(cql_exp)
@@ -434,7 +435,7 @@ def write_cql_action(id, row, expression_column, df):
     ret =   """
 /* {1}{0} : {2}*/
 define "{1}{0}":
-""".format(id, prefix, name,reindent(cql_exp,4))
+""".format(display, prefix, name,reindent(cql_exp,4))
     sub =  get_additionnal_cql(id,df,expression_column)
     if len(sub)>0 and cql_exp != '':
         ret +=reindent("({})\n and ({})\n".format(cql_exp,sub),4)
