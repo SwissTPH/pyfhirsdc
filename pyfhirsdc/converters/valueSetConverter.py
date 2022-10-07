@@ -69,9 +69,9 @@ def get_value_set_in_exclude(system, include, df_value_set):
         concepts = []
     else:
         concepts = include.concept
-    value_set_dict = df_value_set.set_index('code').to_dict('index')
+    value_set_dict = df_value_set.to_dict('index')
     for id, line in value_set_dict.items():
-        concepts = get_value_set_concept(concepts, id, line)
+        concepts = get_value_set_concept(concepts, line['code'], line)
     include.concept = concepts
 
     return include
@@ -89,7 +89,8 @@ def get_value_set_concept(concepts, id, line):
             concept.designation = [ValueSetComposeIncludeConceptDesignation(
                 value = line['definition']
             )]
-        concepts.append(concept)
+        if concept not in concepts:
+            concepts.append(concept)
     return concepts
 
 
