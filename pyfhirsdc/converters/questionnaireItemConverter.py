@@ -12,7 +12,7 @@ import numpy
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
 from fhir.resources.questionnaire import QuestionnaireItemInitial, QuestionnaireItemAnswerOption
 from fhir.resources.coding import Coding
-from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext,get_slider_ext, get_hidden_ext, get_initial_expression_identifier_ext, get_unit_ext, get_variable_extension
+from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_constraint_exp_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_open_choice_ext,get_slider_ext, get_hidden_ext, get_initial_expression_identifier_ext, get_unit_ext, get_variable_extension
 from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
 
@@ -164,6 +164,7 @@ QUESTION_TYPE_MAPPING = {
                 "time" : "time",
                 "dateTime" : "datetime",
                 "decimal" :"decimal",
+                "quantity" :"quantity",
                 "integer" :"integer",
                 "number" :"integer",
                 "CodeableConcept": "CodeableConcept",
@@ -192,11 +193,17 @@ def get_question_extension(question, question_id, df_question = None ):
     regex_slider = re.compile("^slider::.*")
     slider = list(filter(regex_slider.match, display))
     type, detail_1, detail_2 = get_type_details(question)
+    if "constraintExpression" in question and pd.notna(question["constraintExpression"])\
+        and "constraintDescription" in question and pd.notna(question["constraintDescription"]):
+        extensions.append(get_constraint_exp_ext(question_id,question["constraintExpression"],question["constraintDescription"]))
     # TODO support other display than drop down
     if (type.lower() == 'select_boolean'):
         extensions.append(get_checkbox_ext())
     if "select_" in type and "dropdown"  in display :
         extensions.append(get_dropdown_ext())
+    elif type == "select_multiple":
+        # only way to have select multiple repeat = true is not enough
+        extensions.append(get_open_choice_ext())
     if type.lower() in ('decimal','integer','number') and len(unit) == 1 :
         extensions.append(get_unit_ext(unit[0]))
     if type.lower() in ('decimal','integer','number') and len(slider) == 1 :

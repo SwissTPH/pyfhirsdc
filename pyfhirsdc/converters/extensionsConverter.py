@@ -19,6 +19,17 @@ def get_dropdown_ext():
             text ="Drop down")
 )
 
+def get_open_choice_ext():
+ return Extension(
+    url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+    valueCodeableConcept = CodeableConcept(
+            coding = [Coding( 
+                system = "http://hl7.org/fhir/questionnaire-item-control",
+                code = "open-choice",
+                display = "Open choice")],
+            text ="Open choice")
+)    
+
 
 def get_variable_extension(name,expression):
     return Extension(
@@ -81,6 +92,50 @@ def get_structure_map_extension(extentions, uri):
         else:
             append_unique(extentions, sm_ext, True)
     return extentions
+# exp  expression::severity
+# message human::requirements
+def get_constraint_exp_ext(id,expr, human):
+    expr_parts = expr.split('::')
+    human_parts = human.split('::')
+    if len(human_parts)==2:
+        human = human_parts[0]
+        severity = human_parts[1]
+    elif len(human_parts)==1:
+        severity = 'error'
+    else:
+        print("Error, missing constraint message")
+    if len(expr_parts)==2:
+        expr = expr_parts[0]
+        requirements = expr_parts[1]
+    elif len(expr_parts)==1:
+        requirements = None
+    else:
+        print("Error, missing constraint message")        
+
+    
+    ext =  Extension(
+            url ="http://hl7.org/fhir/StructureDefinition/questionnaire-constraint",
+            extension = [
+                Extension( 
+                    url = "key",
+                    valueId= id),
+                Extension( 
+                    url = "expression",
+                    valueExpression= ExpressionType(
+                language = "text/fhirpath",
+                expression = expr)),
+                Extension( 
+                    url = "severity",
+                    valueCode= severity),
+                Extension( 
+                    url = "human",
+                    valueString= severity) 
+            ])
+    if requirements is not None:
+        ext.extension.append(Extension( 
+                    url = "requirements",
+                    valueString= requirements))
+    return ext
 
 def append_unique(extentions, new_ext, replace = False):
     nofound = True

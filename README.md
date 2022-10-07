@@ -112,9 +112,9 @@ this sheet defined how the questionnaires are sequences using multiple plan defi
     - If this column is filled, the condition mapped with have start as type
 #### stopCondition
     - If this column is filled, the condition mapped with have stop as type
-#### conditionDescription
+#### constraintDescription
     - Describes the input that is required for an action to take place
-#### conditionExpression
+#### constraintExpression
     - The action that will result
 #### trigger
     - What will trigger this decision. Must only be specified at the mainAction level
