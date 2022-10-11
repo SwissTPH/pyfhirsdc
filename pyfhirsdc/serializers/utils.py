@@ -4,6 +4,7 @@ from pyfhirsdc.config import get_defaut_path, get_processor_cfg
 from pyfhirsdc.converters.utils import get_resource_name
 import json
 
+
 def write_resource(filepath, resource, encoding = None):
     if encoding is None:
         encoding = get_processor_cfg().encoding
@@ -50,3 +51,4 @@ def reindent(s, numSpaces):
     arr = [y for y in (x.rstrip() for x in s.splitlines()) if y]
     arr = [(numSpaces * ' ') + line for line in arr]
     return "\n".join(arr)
+

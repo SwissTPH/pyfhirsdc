@@ -1,5 +1,7 @@
 import json
 import requests
+
+from pyfhirsdc.serializers.http import check_internet
 from ..config import add_tail_slash, get_processor_cfg
 
 from pyfhirsdc.converters.utils import  get_resource_url
@@ -16,7 +18,7 @@ def write_mapping_file(filepath, mapping, update_map = True):
         , 'map'
         )
     structure_map = None
-    if update_map:
+    if update_map and check_internet():
         
         url_map=   add_tail_slash(get_processor_cfg().mapping_translator) + mapping.name
         print("Sending the mapping file {0}".format(url_map))

@@ -11,7 +11,7 @@ import base64
 import re
 from pyfhirsdc.config import  get_defaut_path, get_fhir_cfg, get_processor_cfg,  read_config_file
 from ..converters.utils import get_resource_url
-from pyfhirsdc.serializers.http import post_multipart
+from pyfhirsdc.serializers.http import check_internet, post_multipart
 from pyfhirsdc.serializers.json import  read_file, read_resource
 from fhir.resources.relatedartifact import RelatedArtifact
 from fhir.resources.library import Library
@@ -29,26 +29,27 @@ def refresh_content(lib):
         # get CQL file "ig-loader"
         cql = read_file(os.path.join(get_defaut_path('CQL', 'cql'), lib.name + '.cql') ,'str')
         out_content.append(get_cql_content(cql, lib.name))
-        multipart = build_multipart_cql(cql,lib.name)
-        emls = update_eml_content(multipart, lib.name, 'json')
-        if get_processor_cfg().generateElm == True: # create the elm
-            if emls is not None:
-                for eml in emls:
-                    emlid = get_id_from_header(eml.headers[b'Content-Disposition'].decode())
-                    if emlid == lib.name:
-                        out_content.append(get_eml_content(eml.text,emlid,'json'))# eml.content
-                        #elms_xml = update_eml_content(multipart, lib.id, 'json')
-                        #for elm_xml in elms_xml:
-                        #    emlid = get_id_from_header(elm_xml.headers[b'Content-Disposition'].decode())
-                        #    if emlid == lib.id:
-                        #        out_content.append(get_eml_content(eml.text,emlid,'xml'))
-                    else:
-                        dependencies.append(RelatedArtifact(
-                            type = "depends-on",
-                            resource = get_lib_url(emlid)
-                        ))
-                        
-            return dependencies, out_content
+        if check_internet():
+            multipart = build_multipart_cql(cql,lib.name)
+            emls = update_eml_content(multipart, lib.name, 'json')
+            if get_processor_cfg().generateElm == True: # create the elm
+                if emls is not None:
+                    for eml in emls:
+                        emlid = get_id_from_header(eml.headers[b'Content-Disposition'].decode())
+                        if emlid == lib.name:
+                            out_content.append(get_eml_content(eml.text,emlid,'json'))# eml.content
+                            #elms_xml = update_eml_content(multipart, lib.id, 'json')
+                            #for elm_xml in elms_xml:
+                            #    emlid = get_id_from_header(elm_xml.headers[b'Content-Disposition'].decode())
+                            #    if emlid == lib.id:
+                            #        out_content.append(get_eml_content(eml.text,emlid,'xml'))
+                        else:
+                            dependencies.append(RelatedArtifact(
+                                type = "depends-on",
+                                resource = get_lib_url(emlid)
+                            ))
+                            
+                return dependencies, out_content
         return None, out_content    
     return None, None
 

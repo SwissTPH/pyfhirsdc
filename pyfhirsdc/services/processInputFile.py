@@ -1,7 +1,7 @@
 from pyfhirsdc.serializers.inputFile import read_input_file, parse_sheets
 from pyfhirsdc.config import *
 from pyfhirsdc.services.generateActivities import generate_activities
-from pyfhirsdc.services.generateCodeSystem import generate_custom_code_system, generate_observation_valueset_libs
+from pyfhirsdc.services.generateCodeSystem import generate_custom_code_system
 from pyfhirsdc.services.generateValueSet import generate_value_sets
 from .generateQuestionnaires import generate_questionnaires
 from .generatePlanDefinitions import generate_plandefinitions

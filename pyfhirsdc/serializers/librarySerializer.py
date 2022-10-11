@@ -333,12 +333,12 @@ def write_valueset(concept):
 def write_obsevation(concept):
     cql = ""
 
-    if concept.display is not None:
+    if concept.display is not None and pd.notna(concept.display):
         ## Output false, manual process to convert the pseudo-code to CQL
         cql += "/*\"{0}\"*/\n".format(concept.display)+\
             "define \"{0}\":\n".format(concept.display)+ \
                 "  B.HasObs(B.c('{}'), '{}')".format(concept.code,get_custom_codesystem_url()) + "\n"
-    if concept.code is not None:
+    if concept.code is not None and concept.code:
         ## Output false, manual process to convert the pseudo-code to CQL    
         cql += "define \"{0}\":\n".format(concept.code)+ \
                 "  B.HasObs(B.c('{}'), '{}')".format(concept.code, get_custom_codesystem_url()) + "\n\n"
@@ -413,8 +413,9 @@ def write_cql_df(library, df_actions,  type):
             if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()):
                 cql[i] = write_cql_action(ref, row,'initialExpression',df_actions)
                 i += 1
-                cql[i] = write_cql_action(ref, row, 'initialExpression', df_actions,row['label'])
-                i += 1
+                if pd.notna(row['label']):
+                    cql[i] = write_cql_action(ref, row, 'initialExpression', df_actions,row['label'])
+                    i += 1
             while  i > oi :
                 cql[oi] = inject_config(cql[oi])
                 oi+=1
@@ -425,7 +426,7 @@ def write_cql_df(library, df_actions,  type):
 
 def write_cql_action(id, row, expression_column, df, display = None):
     if display is None:
-        display = id    
+        display = id   
     cql_exp = row[expression_column] if row[expression_column].strip() != '{{cql}}' else ''
     if cql_exp != '':
         cql_exp = map_to_obs_valueset(cql_exp)
@@ -435,7 +436,7 @@ def write_cql_action(id, row, expression_column, df, display = None):
     ret =   """
 /* {1}{0} : {2}*/
 define "{1}{0}":
-""".format(display, prefix, name,reindent(cql_exp,4))
+""".format(display, prefix, name)
     sub =  get_additionnal_cql(id,df,expression_column)
     if len(sub)>0 and cql_exp != '':
         ret +=reindent("({})\n and ({})\n".format(cql_exp,sub),4)

@@ -35,7 +35,7 @@ def  generate_value_set(name, df_value_set):
     write_resource(filepath, vs, get_processor_cfg().encoding)
 
 def init_vs(filepath):
-    vs_json = read_resource(filepath, "ValueSet")
+    vs_json = None#read_resource(filepath, "ValueSet")
     default =get_defaut_fhir('ValueSet') 
     if vs_json is not None :
         vs = ValueSet.parse_raw( json.dumps(vs_json))  
