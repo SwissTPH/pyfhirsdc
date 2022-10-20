@@ -30,7 +30,7 @@ def refresh_content(lib):
         cql = read_file(os.path.join(get_defaut_path('CQL', 'cql'), lib.name + '.cql') ,'str')
         out_content.append(get_cql_content(cql, lib.name))
         if check_internet():
-            multipart = build_multipart_cql(cql,lib.name)
+            multipart = build_multipart_cql(cql,lib.name, {})
             emls = update_eml_content(multipart, lib.name, 'json')
             if get_processor_cfg().generateElm == True: # create the elm
                 if emls is not None:
@@ -99,36 +99,38 @@ def update_eml_content(multipart, id, ext):
     
     
 
-def build_multipart_cql(cql,id,multipart = {}): 
-    multipart[id] = (id,cql,'application/cql')
-    cql_deps = get_cql_dependencies(cql)
-    for dep in cql_deps:
-        if dep['id'] not in multipart:
-            build_multipart_cql(dep['data'],dep['id'],multipart)
+def build_multipart_cql(cql,id,multipart = {}):
+    if id not in multipart:
+        multipart[id] = (id,cql,'application/cql')
+        cql_deps = get_cql_dependencies(cql, [])
+        for dep in cql_deps:
+            if dep['id'] not in multipart:
+                build_multipart_cql(dep['data'],dep['id'],multipart)
 
     return multipart
 
-def get_cql_dependencies(cql):
-    cqls = []
-    pattern = "include ([0-0a-zA-Z\-\.]+)(?:\n| )"
+def get_cql_dependencies(cql, cqls = []):
+    pattern = "include ([0-9a-zA-Z\-\.]+)(?:\n| )"
     matches = re.findall(pattern, cql, flags=0)
     for match in matches:
-        file_path = os.path.join(get_defaut_path('CQL', 'cql'), match + '.cql')
-        if os.path.exists(file_path):
-            sub_cql = read_file(file_path ,'str')
-            sub_cqls = get_cql_dependencies(sub_cql)
-            if isinstance(sub_cqls, list):
-                cqls += sub_cqls
-            if sub_cql is not None:
-                cqls.append({'id':match, 'data':sub_cql})
+        if match not in get_cqls_ids(cqls):
+            file_path = os.path.join(get_defaut_path('CQL', 'cql'), match + '.cql')
+            if os.path.exists(file_path):
+                sub_cql = read_file(file_path ,'str')
+                if sub_cql is not None:
+                    cqls.append({'id':match, 'data':sub_cql})
+                    cqls = get_cql_dependencies(sub_cql, cqls)
+                else:
+                    print("Error, missing cql dependency "+match)
+                    exit()
             else:
                 print("Error, missing cql dependency "+match)
                 exit()
-        else:
-            print("Error, missing cql dependency "+match)
-            exit()
                 
     return cqls
+
+def get_cqls_ids(cqls):
+    return [x['id'] for x in cqls]
 
 def get_cql_content(cql,name):
     return Attachment(

@@ -1,16 +1,17 @@
 import pandas as pd
-from fhir.resources.fhirtypes import Code
-from pyfhirsdc.config import get_fhir_cfg
 from fhir.resources.expression import Expression
-from fhir.resources.plandefinition import PlanDefinitionAction, PlanDefinitionActionRelatedAction, PlanDefinitionActionCondition
+from fhir.resources.fhirtypes import Canonical, Code
+from fhir.resources.plandefinition import (PlanDefinitionAction,
+                                           PlanDefinitionActionCondition,
+                                           PlanDefinitionActionRelatedAction)
 from fhir.resources.relatedartifact import RelatedArtifact
 from fhir.resources.triggerdefinition import TriggerDefinition
-from fhir.resources.fhirtypes import Canonical
-from pyfhirsdc.converters.utils import  clean_name, get_codableconcept_code, init_list, init_resource_meta
+
+from pyfhirsdc.config import get_fhir_cfg
+from pyfhirsdc.converters.utils import (clean_name, get_codableconcept_code,
+                                        init_list, init_resource_meta)
+
 from ..serializers.librarySerializer import ROW_EXPRESSIONS
-
-
-
 
 
 ## Goes through a row and maps it to FHIR action 
