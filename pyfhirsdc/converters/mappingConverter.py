@@ -3,13 +3,19 @@
 
 import os
 import re
+
 import pandas as pd
 
-from pyfhirsdc.config import get_defaut_path, get_dict_df, get_fhir_cfg, get_processor_cfg
-from pyfhirsdc.converters.extensionsConverter import get_questionnaire_library, get_structure_map_extension
-from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_custom_codesystem_url, get_resource_url
+from pyfhirsdc.config import (get_defaut_path, get_dict_df, get_fhir_cfg,
+                              get_processor_cfg)
+from pyfhirsdc.converters.extensionsConverter import (
+    get_questionnaire_library, get_structure_map_extension)
+from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
+                                        get_custom_codesystem_url,
+                                        get_resource_url)
 from pyfhirsdc.converters.valueSetConverter import get_valueset_df
-from pyfhirsdc.models.mapping import Mapping, MappingGroup, MappingGroupIO, MappingIO, MappingRule
+from pyfhirsdc.models.mapping import (Mapping, MappingGroup, MappingGroupIO,
+                                      MappingIO, MappingRule)
 from pyfhirsdc.serializers.mappingSerializer import write_mapping_file
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 

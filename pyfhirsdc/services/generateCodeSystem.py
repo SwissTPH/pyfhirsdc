@@ -7,21 +7,31 @@
 
 import json
 import os
-from pyfhirsdc.config import get_defaut_fhir, get_defaut_path, get_dict_df,  get_processor_cfg
-from pyfhirsdc.converters.codeSystemConverter import   generate_observation_concept, generate_questionnaire_concept, generate_valueset_concept
-from pyfhirsdc.converters.valueSetConverter import add_concept_in_valueset_df
-from pyfhirsdc.serializers.json import  read_resource
+
+from fhir.resources.attachment import Attachment
 from fhir.resources.codesystem import CodeSystem
 from fhir.resources.library import Library
-from fhir.resources.attachment import Attachment
-from pyfhirsdc.serializers.librarySerializer import  get_observation_cql_from_concepts, get_valueset_cql_from_concepts, write_library_CQL
-from pyfhirsdc.serializers.utils import  get_resource_path, write_resource 
-from pyfhirsdc.converters.utils import clean_group_name,  get_codableconcept_code, get_custom_codesystem_url, get_resource_url
+
+from pyfhirsdc.config import (get_defaut_fhir, get_defaut_path, get_dict_df,
+                              get_processor_cfg)
+from pyfhirsdc.converters.codeSystemConverter import (
+    generate_observation_concept, generate_questionnaire_concept,
+    generate_valueset_concept)
+from pyfhirsdc.converters.utils import (clean_group_name,
+                                        get_codableconcept_code,
+                                        get_custom_codesystem_url,
+                                        get_resource_url)
+from pyfhirsdc.converters.valueSetConverter import add_concept_in_valueset_df
+from pyfhirsdc.serializers.json import read_resource
+from pyfhirsdc.serializers.librarySerializer import (
+    get_observation_cql_from_concepts, get_valueset_cql_from_concepts,
+    write_library_CQL)
+from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
 
 def generate_custom_code_system():
     dfs_questionnaire = get_dict_df()['questionnaires']
-    df_value_set = get_dict_df()['valueset']
+    df_value_set = get_dict_df()['valueset'].dropna(axis=0, subset=['scope'])
     concept = []
     obs_concepts = []
     question_concepts = []

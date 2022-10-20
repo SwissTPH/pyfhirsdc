@@ -1,12 +1,19 @@
 import json
-from fhir.resources.activitydefinition import ActivityDefinition, ActivityDefinitionDynamicValue
-from fhir.resources.usagecontext import  UsageContext 
-from fhir.resources.expression import  Expression
+
+from fhir.resources.activitydefinition import (ActivityDefinition,
+                                               ActivityDefinitionDynamicValue)
+from fhir.resources.expression import Expression
 from fhir.resources.extension import Extension
+from fhir.resources.usagecontext import UsageContext
+
 from pyfhirsdc.config import get_defaut_fhir
-from .extensionsConverter import append_unique
+from pyfhirsdc.converters.utils import (clean_name, get_codableconcept_code,
+                                        get_code, get_custom_codesystem_url,
+                                        get_resource_url)
 from pyfhirsdc.serializers.json import read_resource
-from pyfhirsdc.converters.utils import clean_name, get_codableconcept_code, get_code, get_custom_codesystem_url, get_resource_url
+
+from .extensionsConverter import append_unique
+
 
 def init_activity(filepath, id):
     activity_json = read_resource(filepath, "ActivityDefinition")

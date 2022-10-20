@@ -1,19 +1,28 @@
 import os
 import re
 from xmlrpc.client import boolean
+
 import pandas as pd
-from pyfhirsdc.config import append_used_obs, append_used_valueset, get_defaut_path, get_fhir_cfg, get_processor_cfg, get_used_obs, get_used_valueset
-from pyfhirsdc.converters.extensionsConverter import add_library_extentions
-from pyfhirsdc.converters.mappingConverter import inject_config
-from pyfhirsdc.converters.questionnaireItemConverter import get_question_fhir_data_type
-from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_codableconcept_code, get_custom_codesystem_url, get_resource_url
-from fhir.resources.library import Library
 from fhir.resources.attachment import Attachment
+from fhir.resources.datarequirement import (DataRequirement,
+                                            DataRequirementCodeFilter)
 from fhir.resources.fhirtypes import Canonical
 from fhir.resources.identifier import Identifier
-from fhir.resources.parameterdefinition  import ParameterDefinition 
-from fhir.resources.identifier import Identifier
-from fhir.resources.datarequirement  import DataRequirement, DataRequirementCodeFilter
+from fhir.resources.library import Library
+from fhir.resources.parameterdefinition import ParameterDefinition
+
+from pyfhirsdc.config import (append_used_obs, append_used_valueset,
+                              get_defaut_path, get_fhir_cfg, get_processor_cfg,
+                              get_used_obs, get_used_valueset)
+from pyfhirsdc.converters.extensionsConverter import add_library_extentions
+from pyfhirsdc.converters.mappingConverter import inject_config
+from pyfhirsdc.converters.questionnaireItemConverter import \
+    get_question_fhir_data_type
+from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
+                                        get_codableconcept_code,
+                                        get_custom_codesystem_url,
+                                        get_resource_url)
+
 from .utils import reindent, write_resource
 
 ### Function that creates the constant part of cql files 
@@ -287,6 +296,7 @@ def get_observation_cql_from_concepts(concepts, lib):
     i = 0
     if concepts is not None:
         for concept in concepts:
+            concept.display=str(concept.display).lower()
             if concept.display not in list_of_display:
                 list_of_display.append(concept.display)
                 if (concept is not None and concept.code is not None):       
@@ -309,6 +319,7 @@ def get_valueset_cql_from_concepts(concepts, lib):
     i = 0
     if concepts:
         for concept in concepts:
+            concept.display=str(concept.display).lower()
             if concept.display not in list_of_display:
                 list_of_display.append(concept.display)
                 if (concept and concept.code):       
@@ -336,11 +347,11 @@ def write_obsevation(concept):
     if concept.display is not None and pd.notna(concept.display):
         ## Output false, manual process to convert the pseudo-code to CQL
         cql += "/*\"{0}\"*/\n".format(concept.display)+\
-            "define \"{0}\":\n".format(concept.display)+ \
+            "define \"{0}\":\n".format(str(concept.display).lower())+ \
                 "  B.HasObs(B.c('{}'), '{}')".format(concept.code,get_custom_codesystem_url()) + "\n"
     if concept.code is not None and concept.code:
         ## Output false, manual process to convert the pseudo-code to CQL    
-        cql += "define \"{0}\":\n".format(concept.code)+ \
+        cql += "define \"{0}\":\n".format(str(concept.code).lower())+ \
                 "  B.HasObs(B.c('{}'), '{}')".format(concept.code, get_custom_codesystem_url()) + "\n\n"
     return cql    
 
@@ -353,7 +364,7 @@ def write_action_condition(action):
             
             ## Output false, manual process to convert the pseudo-code to CQL
             cql += "/*\n \"{0}\":\n ".format(condition.expression.description if condition.expression.description is not None else action.description)+"\n */\n "+\
-                "define \"{0}\":\n ".format(condition.expression.expression)+ \
+                "define \"{0}\":\n ".format(str(condition.expression.expression).lower())+ \
                     "  false" + "\n\n "
     return cql    
 
@@ -436,7 +447,7 @@ def write_cql_action(id, row, expression_column, df, display = None):
     ret =   """
 /* {1}{0} : {2}*/
 define "{1}{0}":
-""".format(display, prefix, name)
+""".format(str(display).lower(), str(prefix).lower(), name)
     sub =  get_additionnal_cql(id,df,expression_column)
     if len(sub)>0 and cql_exp != '':
         ret +=reindent("({})\n and ({})\n".format(cql_exp,sub),4)
@@ -448,21 +459,27 @@ define "{1}{0}":
 
 def map_to_obs_valueset(cql_exp):
     # find "([^"]+)" *= *"([^"]+)" 
-    valueset_list = get_used_valueset()
-    obs_list = get_used_obs()
+    valueset_list = [x.lower() for x in  get_used_valueset()]
+    obs_list = [x.lower() for x in get_used_obs()]
     changed = []
     matches = re.findall(r'(?<!\.)"([^"]+)"',cql_exp)
     out = cql_exp
-    for match in matches:
-        if match  not in ("Yes", "No") and match not in changed:
-            if match in valueset_list:
-                changed.append(match)
-                out = out.replace('"{}"'.format(match), 'val."{}"'.format(match) )
-            elif match in obs_list:
-                changed.append(match)
-                out = out.replace('"{}"'.format(match), 'obs."{}"'.format(match) )
-    out = out.replace(' "Yes"', ' Base."Yes"').replace(' "No"', ' Base."No"')
     out = out.replace('Has', 'Base.Has')
+    for match in matches:
+        if match not in changed:
+            if match  in ("Yes", "No"):
+                out = out.replace('"{}"'.format(match), 'Base."{}"'.format(match) )
+                changed.append(match)
+            elif match.lower() in valueset_list:
+                changed.append(match)
+                out = out.replace('"{0}"'.format(match), 'val."{1}"'.format(match,match.lower()) )
+            elif match.lower() in obs_list:
+                changed.append(match)
+                out = out.replace('"{0}"'.format(match), 'obs."{1}"'.format(match,match.lower()) )
+            else:
+                out = out.replace('"{0}"'.format(match), '"{1}"'.format(match,match.lower()) )
+            
+    
     return out
     
 

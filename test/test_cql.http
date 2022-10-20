@@ -36,6 +36,8 @@ content-type: text/cql
 ### library eval POST with get data
 POST {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0
 
+### library eval POST with get data
+GET {{host}}/Library/emcarebregistratione/$evaluate?subject=/Patient/patient0
 
 
 
@@ -44,11 +46,6 @@ PUT {{host}}/Patient/patient0
 content-type: application/json
 
 < /home/delcpa/Development/DAK-tools/test/patient.json
-
-
-
-
-
 
 
 ### evaluate

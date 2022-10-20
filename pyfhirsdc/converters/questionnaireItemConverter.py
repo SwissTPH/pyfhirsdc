@@ -8,15 +8,25 @@
 
 import json
 import re
-import numpy
-from pyfhirsdc.models.questionnaireSDC import QuestionnaireItemSDC, QuestionnaireSDC
-from fhir.resources.questionnaire import QuestionnaireItemInitial, QuestionnaireItemAnswerOption
-from fhir.resources.coding import Coding
-from pyfhirsdc.converters.extensionsConverter import get_calculated_expression_ext, get_checkbox_ext, get_constraint_exp_ext, get_dropdown_ext, get_candidate_expression_ext, get_choice_column_ext, get_enable_when_expression_ext, get_open_choice_ext,get_slider_ext, get_hidden_ext, get_initial_expression_identifier_ext, get_unit_ext, get_variable_extension
-from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
-from pyfhirsdc.converters.utils import clean_name, get_custom_codesystem_url, get_resource_url
 
+import numpy
 import pandas as pd
+from fhir.resources.coding import Coding
+from fhir.resources.questionnaire import (QuestionnaireItemAnswerOption,
+                                          QuestionnaireItemInitial)
+
+from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
+from pyfhirsdc.converters.extensionsConverter import (
+    get_calculated_expression_ext, get_candidate_expression_ext,
+    get_checkbox_ext, get_choice_column_ext, get_constraint_exp_ext,
+    get_dropdown_ext, get_enable_when_expression_ext, get_hidden_ext,
+    get_initial_expression_identifier_ext, get_open_choice_ext, get_slider_ext,
+    get_unit_ext, get_variable_extension)
+from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
+                                        get_resource_url)
+from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
+                                               QuestionnaireSDC)
+
 
 def convert_df_to_questionitems(ressource,df_questions, parentId = None, strategy = 'overwrite'):
     # create a dict to iterate
@@ -226,7 +236,7 @@ def get_question_extension(question, question_id, df_question = None ):
     return extensions
 
 def get_display(question):
-    display_str = question["display"].lower() if "display" in question and pd.notna(question["display"]) else None
+    display_str = str(question["display"]).lower() if "display" in question and pd.notna(question["display"]) else None
     if display_str is not None:
         return display_str.split('||')
     else:

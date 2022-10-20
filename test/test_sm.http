@@ -27,7 +27,7 @@ POST {{host}}StructureMap/$transform?source=https://fhir.dk.swisstph-mis.ch/matc
 Accept: application/fhir+json;fhirVersion=4.0
 Content-Type: application/fhir+json;fhirVersion=4.0
 
-< /home/delcpa/Development/DAK-tools/test/encounter_qr.json
+< /home/delcpa/Development/DAK-tools/test/QR.E.json
 
 ### Test SM against QR
 POST {{host}}StructureMap/$transform?source=https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureMap/emcarea.registration.p

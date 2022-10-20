@@ -1,13 +1,15 @@
-from fhir.resources.extension import Extension
-from fhir.resources.codeableconcept import CodeableConcept
-from fhir.resources.fhirtypes import  ExpressionType, QuantityType 
-from fhir.resources.coding import Coding
-from fhir.resources.fhirtypes import Canonical
-from distutils.util import strtobool
 import re
+from distutils.util import strtobool
+
+from fhir.resources.codeableconcept import CodeableConcept
+from fhir.resources.coding import Coding
+from fhir.resources.extension import Extension
+from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
 
 from pyfhirsdc.config import get_fhir_cfg
 from pyfhirsdc.converters.utils import clean_name
+
+
 def get_dropdown_ext():
  return Extension(
     url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -248,7 +250,7 @@ def get_initial_expression_identifier_ext(quesiton_id, desc = None ):
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/cql-identifier",
-                expression = clean_name(quesiton_id, lower=False)))
+                expression = str(quesiton_id).lower()))
    
 def get_questionnaire_library(library):
     if not re.search("$https?\:\/\/", library):

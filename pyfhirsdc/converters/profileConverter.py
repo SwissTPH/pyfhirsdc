@@ -1,20 +1,22 @@
-from importlib.resources import path
-from pyfhirsdc.config import get_dict_df, get_fhir_cfg
-from fhir.resources.structuredefinition import StructureDefinition
-from fhir.resources.structuredefinition import StructureDefinitionDifferential
-from fhir.resources.fhirtypes import Id
-from fhir.resources.fhirtypes import Uri
-from fhir.resources.fhirtypes import Code
 import re
-from fhir.resources.elementdefinition import ElementDefinitionType
-from fhir.resources.fhirtypes import StructureDefinitionContextType
-from fhir.resources.elementdefinition import ElementDefinition
-from pyfhirsdc.converters.mappingConverter import get_base_profile
-from pyfhirsdc.converters.questionnaireItemConverter import get_display, get_question_fhir_data_type
+from importlib.resources import path
+
 import pandas as pd
 import validators
+from fhir.resources.elementdefinition import (ElementDefinition,
+                                              ElementDefinitionType)
+from fhir.resources.fhirtypes import (Code, Id, StructureDefinitionContextType,
+                                      Uri)
+from fhir.resources.structuredefinition import (
+    StructureDefinition, StructureDefinitionDifferential)
 
-from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_resource_name, get_resource_url
+from pyfhirsdc.config import get_dict_df, get_fhir_cfg
+from pyfhirsdc.converters.mappingConverter import get_base_profile
+from pyfhirsdc.converters.questionnaireItemConverter import (
+    get_display, get_question_fhir_data_type)
+from pyfhirsdc.converters.utils import (clean_name, get_resource_name,
+                                        get_resource_url)
+
 # allow slice in ID and extention MedicationRequest.medication[x].coding or MedicationRequest.medication[x].extension:notDoneValueSet Observation.modifierExtension:notDone.value[x]
 
 Id.configure_constraints(regex=re.compile(r"^[A-Za-z0-9\-\.]+(\[x\](\.[a-zA-Z]+)?)?(:[A-Za-z0-9\-.]+(\[x\](\.[a-zA-Z]+)?)?)?$"))      
