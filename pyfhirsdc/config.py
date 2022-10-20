@@ -1,7 +1,7 @@
 import json
 import os
-from pyfhirsdc.serializers.json import read_file
 
+from pyfhirsdc.serializers.json import read_file
 
 processor_cfg = None
 fhir_cfg = None

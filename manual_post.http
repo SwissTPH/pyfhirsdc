@@ -7,7 +7,7 @@
 
 @host=https://fhir.ruler.dk.swisstph-mis.ch/fhir
 
-###      
+###
 #Bundle
 
 POST {{host}} HTTP/1.1
@@ -17,8 +17,15 @@ Content-Type: application/json
 #< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\cpg-bundle.json
 #< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\who_bundle.json
 ###
+POST https://fhir.dk.swisstph-mis.ch/matchbox/fhir/ HTTP/1.1
+Content-Type: application/json
 
-#Bundle who
+< /home/delcpa/Development/DAK-tools/bundle.json
+#< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\cpg-bundle.json
+#< C:\Users\delcpa\Development\smart-emcare\input\ext_ig\who_bundle.json
+###
+
+#Bundle who5
 
 POST {{host}} HTTP/1.1
 Content-Type: application/json

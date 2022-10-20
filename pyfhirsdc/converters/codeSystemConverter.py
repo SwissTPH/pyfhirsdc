@@ -3,22 +3,24 @@
 
 """
 from fhir.resources.codesystem import CodeSystemConcept
+
 from pyfhirsdc.config import get_processor_cfg
 from pyfhirsdc.converters.mappingConverter import get_base_profile
+from pyfhirsdc.converters.valueSetConverter import \
+    get_value_set_additional_data_keyword
 
-from pyfhirsdc.converters.valueSetConverter import get_value_set_additional_data_keyword
 
 def generate_questionnaire_concept(df_questions):
     concept = []
     # remove the line without id
-    questions = df_questions.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['scope']).set_index('id').to_dict('index')
+    questions = df_questions.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['scope']).to_dict('index')
     # remove the line without id
     for id, question in questions.items():
         if question['scope'] == get_processor_cfg().scope:
             concept.append(
                 CodeSystemConcept(
                     definition = question["description"],
-                    code = id,
+                    code = question['id'],
                     display =  question["label"]
                 )
             )
