@@ -172,7 +172,7 @@ QUESTION_TYPE_MAPPING = {
                 "date" : "date",
                 "dateTime" : "dateTime",
                 "time" : "time",
-                "dateTime" : "datetime",
+                "dateTime" : "dateTime",
                 "decimal" :"decimal",
                 "quantity" :"quantity",
                 "integer" :"integer",

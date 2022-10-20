@@ -172,7 +172,6 @@ def get_unit_ext(unit):
 
             )
         )
-
 # slider_part[1] : min
 # slider_part[2] : increment
 # slider_part[3] : max

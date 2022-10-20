@@ -1,6 +1,6 @@
 @host =https://fhir.dk.swisstph-mis.ch/matchbox/fhir/
 #@host=https://fhir.ruler.dk.swisstph-mis.ch/fhir/
-
+@rootemcare=/Users/perema/Documents/Projects/smart-emcare/
 ### update the SM 
 
 PUT {{host}}StructureMap/emcarea.registration.p HTTP/1.1
@@ -35,6 +35,22 @@ Accept: application/fhir+json;fhirVersion=4.0
 Content-Type: application/fhir+json;fhirVersion=4.0
 
 < /home/delcpa/Development/DAK-tools/test/QR.json
+
+### update the SM DS
+
+PUT {{host}}StructureMap/emcareb.registration.e HTTP/1.1
+Content-Type: text/fhir-mapping
+Accept: application/fhir+json;fhirVersion=4.0
+
+< {{rootemcare}}/input/mapping/emcareb.registration.e.map
+
+### Test SM against QR  Encounter
+POST {{host}}StructureMap/$transform?source=https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureMap/emcareb.registration.e
+Accept: application/fhir+json;fhirVersion=4.0
+Content-Type: application/fhir+json;fhirVersion=4.0
+
+< ./QR_E.json
+
 
 ### send bundle
 

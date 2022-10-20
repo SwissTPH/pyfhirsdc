@@ -121,7 +121,7 @@ def get_bundle_rules(df_questions):
 def get_post_bundle_profile_rule(profile, question_id, row):
     base_profile = get_base_profile(profile)
     rule_name = clean_group_name(profile)
-    if base_profile in ('Patient', 'Encounter'):
+    if base_profile in ('Patient', 'Encounter') or base_profile in FHIR_ONELINER_PROFILES:
         expression =  "src where src.item.where(linkId='{0}').exists()".format(question_id)
     else:
         expression =  "src where src.item.where(linkId='{0}').exists() and src.item.where(linkId='{1}id').first().answer.exists()".format(question_id, rule_name )
@@ -341,21 +341,23 @@ def generate_helper(helper_func, mode, profile, question_id, *helper_args):
 
         
 def get_timestamp_rule(rule_name):
-    return MappingRule(
-        expression = "src.item as item where linkId  = 'timestamp', item.answer as a -> tgt.issued = a",
-        name = 'timestamp-{}'.format(rule_name)
-    )
+    return MappingRule(    
+                        expression = "src.item as item where linkId  =  'timestamp'",
+                        rules = [
+                            MappingRule(expression = 'item.answer first as a',
+                                rules = [MappingRule(expression = 'a.value as val -> tgt.issued = val ')])]
+        )
+
 
 def get_obs_meta_rule(profile, code, rule_name):
     return  MappingRule(
         expression = """
-    src -> tgt.basedOn = src.basedOn,
-        tgt.encounter = src.encounter,
-        tgt.subject = src.subject,
+    src.encounter as encounter -> tgt.encounter = encounter,
+    src.subject as subject -> tgt.subject = subject,
         tgt.meta = create('Meta') as newMeta, newMeta.profile = '{2}',
-        tgt.code = create('CodeableConcept') as concept, 
-            concept.system = '{1}',
-            concept.code = '{0}'
+        tgt.code = create('CodeableConcept') as concept, concept.coding = create('Coding') as coding, 
+            coding.system = '{1}',
+            coding.code = '{0}'
     """.format(code,get_custom_codesystem_url(),get_resource_url('StructureDefinition',profile)),
         name = 'code-{}'.format(rule_name)
     )
@@ -367,9 +369,10 @@ def get_code_obs_meta_rule(profile, rule_name):
         tgt.encounter = src.encounter,
         tgt.subject = src.subject,
         tgt.meta = create('Meta') as newMeta, newMeta.profile = '{1}',
-        tgt.code = create('CodeableConcept') as concept, 
-            concept.system = '{0}',
-            concept.code = code
+        tgt.code = create('CodeableConcept') as concept, concept.coding = create('Coding') as coding, 
+            coding.system = '{0}',
+            coding.code = code
+
     """.format(get_custom_codesystem_url(),get_resource_url('StructureDefinition',profile)),
         name = 'code-{}'.format(rule_name)
     )
@@ -560,6 +563,50 @@ def get_obs_bool_rules(question_id):
         expression = "a  where a.value = false -> tgt.status = 'cancelled'",
         name = 'notfound-{}'.format(rule_name)
     )])]
+
+####### SetOfficalGivenNameSetOfficalGivenName :  to have all the name under a single "official" ###### 
+#args[0]: question name given
+#args[1]: question name mid
+#args[2]: question name lasst
+def SetOfficalGivenName(mode, profile, question_id, *args):
+    rule_name = clean_group_name(profile)
+    if len(args)!= 3:
+        print('Error SetOfficalGivenName must have 3 parameters')
+        return None
+    if mode == 'main':
+        return   "src.item first as item  where linkId =  '{0}' or linkId =  '{1}' or linkId =  '{2}' -> tgt as target,  target.name as name then SetOfficalGivenName{3}(src, name)".format(args[0],args[1],args[2],rule_name)
+    return MappingGroup(
+        name = 'SetOfficalGivenName{}'.format(rule_name),
+        sources = [MappingGroupIO(name = 'src')],
+        targets = [MappingGroupIO(name = 'tgt')],
+        rules = [
+            MappingRule(
+                expression = "src -> tgt.use = 'official'",
+                rules = [
+                    MappingRule(    
+                        expression = "src.item as item where linkId  =  '{0}'".format(args[0]),
+                        rules = [
+                            MappingRule(expression = 'item.answer first as a',
+                                rules = [MappingRule(expression = 'a.value as val -> tgt.given = val ')])]
+                    ),
+                    MappingRule(    
+                        expression = "src.item as item where linkId  =  '{0}'".format(args[1]),
+                        rules = [
+                            MappingRule(expression = 'item.answer first as a',
+                                rules = [MappingRule(expression = 'a.value as val -> tgt.given = val ')])]
+                    ),
+                    MappingRule(    
+                        expression = "src.item as item where linkId  =  '{0}'".format(args[2]),
+                        rules = [
+                            MappingRule(expression = 'item.answer first as a',
+                                rules = [MappingRule(expression = 'a.value as val -> tgt.family = val ')])]
+                    )
+
+   
+                ]
+            )
+        ]
+    )
 
 ####### SetOfficalGivenNameSetOfficalGivenName :  to have all the name under a single "official" ###### 
 #args[0]: question name given
