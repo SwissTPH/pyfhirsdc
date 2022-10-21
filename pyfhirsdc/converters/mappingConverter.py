@@ -462,7 +462,7 @@ def set_generic_observation_v2(profile, rule_name, code ,spe_rules):
             get_rand_identifier_rule(rule_name),
             *get_obs_meta_rule(profile, code, rule_name),
             get_timestamp_rule(rule_name),
-            MappingRule(name = 'patient', expression = "src ->   tgt.subject = src.subject "),
+            MappingRule(name = 'patient', expression = "src.subject as subject -> tgt.subject = subject "),
             *spe_rules
         ]
     )
