@@ -350,9 +350,10 @@ def get_timestamp_rule(rule_name):
 
 
 def get_obs_meta_rule(profile, code, rule_name):
-    return  MappingRule(
+    return  [
+    MappingRule(expression = "src.encounter as encounter -> tgt.encounter = encounter"),
+    MappingRule(
         expression = """
-    src.encounter as encounter -> tgt.encounter = encounter,
     src.subject as subject -> tgt.subject = subject,
         tgt.meta = create('Meta') as newMeta, newMeta.profile = '{2}',
         tgt.code = create('CodeableConcept') as concept, concept.coding = create('Coding') as coding, 
@@ -361,6 +362,7 @@ def get_obs_meta_rule(profile, code, rule_name):
     """.format(code,get_custom_codesystem_url(),get_resource_url('StructureDefinition',profile)),
         name = 'code-{}'.format(rule_name)
     )
+    ]
 
 def get_code_obs_meta_rule(profile, rule_name):
     return  MappingRule(
@@ -458,7 +460,7 @@ def set_generic_observation_v2(profile, rule_name, code ,spe_rules):
         ],
         rules = [
             get_rand_identifier_rule(rule_name),
-            get_obs_meta_rule(profile, code, rule_name),
+            *get_obs_meta_rule(profile, code, rule_name),
             get_timestamp_rule(rule_name),
             MappingRule(name = 'patient', expression = "src ->   tgt.subject = src.subject "),
             *spe_rules
