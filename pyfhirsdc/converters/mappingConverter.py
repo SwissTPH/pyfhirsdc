@@ -504,6 +504,27 @@ def wrapin_first_answers_rules(rule_name, question_id, rules):
         )]
     )
 
+####### SetObservationQuantity :  set the value of an observation, obs will never be cancelled; Same
+####### SetObservation but now accounting that the answer won't be the value itself
+####### but will hold the value in the field value of Quantity  ###### 
+ #args[0]: question name
+ # 
+def SetObservationQuantity(mode,  profile, question_id, *args):
+    if len(args)!= 1:
+        print('Error SetObservationQuantity must have 1 parameter')
+        return None
+    elif mode == 'group':
+        code = args[0] if len(args) == 1 else question_id
+        rule_name = clean_group_name(question_id)
+        return set_generic_observation_v2( profile, rule_name, code, get_obs_qty_value_rules(code))
+
+def get_obs_qty_value_rules(question_id):
+    rule_name = clean_group_name(question_id)
+    return [ wrapin_first_answers_rules(rule_name, question_id, [MappingRule(
+                expression = "a.value as val -> tgt.value = val, tgt.status = 'final'",
+                name = 'val-{}'.format(rule_name)
+            )])]
+
  ####### SetObservationNotFound :  if yes, set the related obs to cancelled  ###### 
  #args[0]: question name 
 def SetObservationNotFound(mode, profile, question_id, *args):
