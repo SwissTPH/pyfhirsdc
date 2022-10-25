@@ -1,5 +1,4 @@
 @startuml
-
 ' Actors
 'skinparam actorStyle awesome
 'skinparam controlStyle awesome
@@ -10,22 +9,18 @@ actor HW as "health workers"
 'interface UI as "user interface"
 
 
-HW -> UI : patient selected (created before if needed)
+HW -> UI :search for patient (created before if needed)
 
 control L as "Engine"
 database F as "Fhir"
 note over HW, F
-    This diagrams intend to use the Action __named-event trigger__ to avoid puting too much load on handset in LIMC, 
+    This diagrams to avoid puting too much load on handset in LIMC, 
     * latest phones and tablets are not always avaiable 
     * in general, electonic equipment are more expensive (~30%),
-    * if the L4 need to be scaled up  political and financial constraint might prevent the purshase of high end handsets
+    * if the L4 need to be scaled up, political and financial constraint might prevent the purshase of high end handsets
     
-    there is 2 type of triggers
-    * trigger that match the Actions.code, those are removed in the new version, replaced by sub PlanDefinition
-    * trigger that ensure adderence to guideline, in Emcare, the guidline define the order of the question and questionnaires.  if we removed them then we would have to be replace by a similar logic  in the conditions (no advantages)
-        using the start-after contrainst wont help as the condition will need to be re-evaluated after the submission of the previous questionnaireResponse, that would lead to assess multiple time the same logic
-
-    providing a trigger should not block Action without trigger
+    This PlanDefinition only allow the triggering of questionnaires for clinical interogation, classification proposal, treatment proposal,
+    each questionnaire could have a Action.code so the formfiller application may organise/group the quesitonnaire 
 end note
 
 UI -> L : search for patient
@@ -41,16 +36,19 @@ HW<-> UI : select the CarePlan (ie. further $Apply will be applied on the PlanDe
 UI -> L: send the CarePlan to use ( does include sub PlanDefinition)
 L->L : save "inMemory" the PlanDefinition for \nguideline-based-care / determine-diagnosis / dispense-medications / provide-counseling\n based on Actioncode from the system cpg-common-process
 
+
+
+== executing the careplan ==
 L-> L : create the encounter
 
 
 note over HW, F
-    the section below, could be run at different time, for example the L4 might retrieve the "clinical interogation" Actions and run the other while the healthcare worker is filling questionnaires
+    the section below, could be run at multiple time, for example after the upload of the bundle created by applying the structure map to the submitted quesitonnaire
 end note
 loop
-    L -> F : PlanDefinition/EmCareDXX(interogation PlanDefinition)/$Apply,   with patient as subject
+    L -> F : PlanDefinition/EmCareDXX/$Apply,   with patient as subject and encounter in the launch context
     F -> L: reply with CarePlan, this CarePlan Action will refers to Activity or questionnaire
-    alt CarePlan hase "new Actions"
+    alt CarePlan has "new Actions"
         == clinical interogation ==
         loop  on all not-done Actions
             L->L: Save the Action "inMemory"
@@ -67,7 +65,8 @@ loop
             L -> UI: Send Questionnaire & QuestionnaireResponse
             HW -> UI : Fill the questionnaire and submit
             UI -> L: send the questionnaire response
-            L -> F: Save the QuestionnaireResponse & run the structureMap
+            L -> L: run the structureMap on the QuestionnaireResponse
+            L -> F: save the created bundle (QR ?  and observation/Patient/encounter/RelatedPsrsons)
         end
     else
         L->L: break 
@@ -76,48 +75,35 @@ end
 ==  determine-diagnosis ==
 
 group  Diagnostic :
-    L -> F : PlanDefinition/EmCareDXX(diagnostic PlanDefinition)/$Apply,  
-    F -> L: send the classification in the diagnostic "title" in Action title\n& description as infobox:  + ObservationDefinition inb Action.definition
+    L -> F : PlanDefinition/EmCareDXX/$Apply,  
+    F -> L: send the classification questionnaire
 
-    L->UI:  display the classification
+    L->UI:  display the classification questionnaire
     HW->UI: agree or disagree with classification
     HW->UI: add classification
-    UI -> L: send the list of approved classification
-    alt classification confirmed
-        L -> F : save observation 
-    end
+    UI -> L: send the questionnaire response
+    L -> L: run the structureMap on the QuestionnaireResponse
+    L -> F: save the created bundle (QR ?  and condition for confirmed classifications /update Encounter.diagnostic)
 end
 
 == dispense-medications	==
 
 loop 
 
-    L -> F : PlanDefinition/EmCareDXX(medication PlanDefinition)/$Apply,  
-    F-> : reply with CarePlan  
-    loop over the CarePlan Actions
-        alt  ActivityDefinition linked to "new" MedicationRequest
-            L->L: save MedicationRequest "inMemory"
-            L -> UI: propose medication
-            UI <-> HW : approve medicaiton (out of stock)
-            alt medication declined
-                L-> F : save DispenseMedication with declided status 
-            else medication 
-                L-> F: save DispenseMedication/AdministerMedication
-            end
-        end 
-    end
-    alt no new medicationRequest was recieve in the $Aplly
-        L->L:break
-    end 
+    L -> F : PlanDefinition/EmCareDXX/$Apply,  
+    F -> L: send the medication questionnaire
+    L->UI:  display the medication questionnaire
+    HW->UI: document if the medication is available 
+    UI -> L: send the questionnaire response
+    L -> L: run the structureMap on the QuestionnaireResponse
+    L -> F: save the created bundle (QR ?  and medicationRequest for treatment not available, DispenseMedication  for the treatment provided)
     
 end
 
 == provide-counseling ==
-
-  
-    L -> F : PlanDefinition/EmCareDXX(provide conseling)/$Apply,  ,  
-    F -> L: send the classification in the diagnostic "title" in Action title & description as infobox
-    L->UI:  display the conseling / addtionnal classification (measure like)
-    HW -> UI: act based on the conseling 
+ 
+ L -> F : PlanDefinition/EmCareDXX/$Apply,  
+    F -> L: send the counseling questionnaire
+    L->UI:  display the counseling questionnaire
 
 @enduml
