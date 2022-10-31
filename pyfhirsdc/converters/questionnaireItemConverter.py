@@ -51,8 +51,6 @@ def convert_df_to_questionitems(ressource,df_questions, parentId = None, strateg
     # recreate item if draft 
     ressource = ressource
 
-    # add timestamp
-    ressource.item.append(get_timestamp_item())
     for id, question in dict_questions.items():
         existing_item = next((ressource.item.pop(index) for index in range(len(ressource.item)) if ressource.item[index].linkId == id), None)
         # manage group
@@ -66,7 +64,7 @@ def convert_df_to_questionitems(ressource,df_questions, parentId = None, strateg
             if variable is not None:
                 ressource.extension.append(variable)
         
-        elif type == "group" :
+        else:
             item = add_questionnaire_item_line(df_questions, existing_item, id, question,  strategy)
             if item is not None:
                 # we save the the questionnaire 
@@ -75,10 +73,6 @@ def convert_df_to_questionitems(ressource,df_questions, parentId = None, strateg
   
                 ressource.item.append(item)
 
-        else:
-            item = add_questionnaire_item_line(df_questions, existing_item, id, question,  strategy)
-            if item is not None:
-                ressource.item.append(item)
     # close all open groups
 
 
@@ -140,7 +134,6 @@ def process_quesitonnaire_line(id, question, df_questions,  existing_item):
                     definition = get_question_definition(question),
                     initial = get_initial_value(question)
                 )
-        convert_df_to_questionitems(new_question,df_questions, id ,strategy = 'overwrite')
         if pd.notna(question['label']) and question['type'] != "select_boolean":
             new_question.text = question['label']
         #FIXME DEMO WORKARROUND REQUIRE NOT WORKING WITH SKIP LOGIC

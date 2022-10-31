@@ -13,7 +13,7 @@ from pyfhirsdc.config import get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.mappingConverter import (add_mapping_url,
                                                    get_questionnaire_mapping)
 from pyfhirsdc.converters.questionnaireItemConverter import (
-    convert_df_to_questionitems, init_questionnaire)
+    convert_df_to_questionitems, get_timestamp_item, init_questionnaire)
 from pyfhirsdc.serializers.librarySerializer import generate_plan_defnition_lib
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
@@ -40,6 +40,8 @@ def generate_questionnaire( name ,df_questions) :
 
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
     questionnaire = convert_df_to_questionitems(questionnaire, df_questions_item, strategy = 'overwriteDraft')
+        # add timestamp
+    questionnaire.item.append(get_timestamp_item())
     #### StructureMap ####
     #structure_maps = get_structure_map_bundle(name, df_questions)
     #structure_maps = get_structure_maps(name, df_questions)
