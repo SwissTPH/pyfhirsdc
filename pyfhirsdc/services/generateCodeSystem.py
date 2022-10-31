@@ -45,10 +45,12 @@ def generate_custom_code_system():
             obs_concepts+=obs_concept
     if len(question_concepts)>0:
         concept =  question_concepts    
-    valueset_concepts = generate_valueset_concept(df_value_set)
+    valueset_concepts, obs_val_concepts = generate_valueset_concept(df_value_set)
     if len(valueset_concepts)>0:
         concept = concept +  valueset_concepts
-        
+    if len(obs_val_concepts)>0:
+        obs_concepts +=  obs_val_concepts
+        concept = concept +  obs_concepts        
     generate_valuset_valueset_libs(valueset_concepts)
     generate_observation_valueset_libs(obs_concepts)
     

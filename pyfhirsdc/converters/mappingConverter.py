@@ -475,22 +475,28 @@ def get_generic_obs_cancelled_group():
 
  ####### SetObservation :  set the value of an observation, obs will never be cancelled  ###### 
  #args[0]: question name
+ #args[1]: none name
  # 
 def SetObservation(mode,  profile, question_id, *args):
-    if len(args)!= 1:
+    if len(args)< 1:
         print('Error SetObservation must have 1 parameters')
         return None
+    
     elif mode == 'group':
+        none_name = args[1] if len(args)>1 else 'none'
         code = args[0] if len(args) == 1 else question_id
         rule_name = clean_group_name(question_id)
-        return set_generic_observation_v2( profile, rule_name, code, get_obs_value_rules(code))
+        return set_generic_observation_v2( profile, rule_name, code, get_obs_value_rules(code, none_name))
 
-def get_obs_value_rules(question_id):
+def get_obs_value_rules(question_id, none_name):
     rule_name = clean_group_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, [MappingRule(
-                expression = "a   -> tgt.value = a, tgt.status = 'final'",
-                name = 'val-{}'.format(rule_name)
-            )])]
+        expression = "a.value as val  where val != '{}' -> tgt.value = val, tgt.status = 'final'".format(none_name),
+        name = 'final-{}'.format(rule_name)
+    ),MappingRule(
+        expression = " a  where a.value = '{}' -> tgt.status = 'cancelled' ".format(none_name),
+        name = 'notfound-{}'.format(rule_name)
+    )])]
             
     
 def wrapin_first_answers_rules(rule_name, question_id, rules):
@@ -504,6 +510,9 @@ def wrapin_first_answers_rules(rule_name, question_id, rules):
         )]
     )
 
+
+
+    
 ####### SetObservationQuantity :  set the value of an observation, obs will never be cancelled; Same
 ####### SetObservation but now accounting that the answer won't be the value itself
 ####### but will hold the value in the field value of Quantity  ###### 
@@ -564,7 +573,7 @@ def get_obs_yes_no_rules(question_id):
         expression = " a  where a.value = 'no' -> tgt.status = 'cancelled' ",
         name = 'notfound-{}'.format(rule_name)
     )])]
-
+    
 
  ####### SetObservationBoolean :  set an  observation from boolean, false result in obs beeing cancelled  ###### 
  #args[0]: question name
@@ -590,7 +599,7 @@ def get_obs_bool_rules(question_id):
 ####### SetOfficalGivenNameSetOfficalGivenName :  to have all the name under a single "official" ###### 
 #args[0]: question name given
 #args[1]: question name mid
-#args[2]: question name lasst
+#args[2]: question name last
 def SetOfficalGivenName(mode, profile, question_id, *args):
     rule_name = clean_group_name(profile)
     if len(args)!= 3:
@@ -631,49 +640,6 @@ def SetOfficalGivenName(mode, profile, question_id, *args):
         ]
     )
 
-####### SetOfficalGivenNameSetOfficalGivenName :  to have all the name under a single "official" ###### 
-#args[0]: question name given
-#args[1]: question name mid
-#args[2]: question name lasst
-def SetOfficalGivenName(mode, profile, question_id, *args):
-    rule_name = clean_group_name(profile)
-    if len(args)!= 3:
-        print('Error SetOfficalGivenName must have 3 parameters')
-        return None
-    if mode == 'main':
-        return   "src.item first as item  where linkId =  '{0}' or linkId =  '{1}' or linkId =  '{2}' -> tgt as target,  target.name as name then SetOfficalGivenName{3}(src, name)".format(args[0],args[1],args[2],rule_name)
-    return MappingGroup(
-        name = 'SetOfficalGivenName{}'.format(rule_name),
-        sources = [MappingGroupIO(name = 'src')],
-        targets = [MappingGroupIO(name = 'tgt')],
-        rules = [
-            MappingRule(
-                expression = "src -> tgt.use = 'official'",
-                rules = [
-                    MappingRule(    
-                        expression = "src.item as item where linkId  =  '{0}'".format(args[0]),
-                        rules = [
-                            MappingRule(expression = 'item.answer first as a',
-                                rules = [MappingRule(expression = 'a.value as val -> tgt.given = val ')])]
-                    ),
-                    MappingRule(    
-                        expression = "src.item as item where linkId  =  '{0}'".format(args[1]),
-                        rules = [
-                            MappingRule(expression = 'item.answer first as a',
-                                rules = [MappingRule(expression = 'a.value as val -> tgt.given = val ')])]
-                    ),
-                    MappingRule(    
-                        expression = "src.item as item where linkId  =  '{0}'".format(args[2]),
-                        rules = [
-                            MappingRule(expression = 'item.answer first as a',
-                                rules = [MappingRule(expression = 'a.value as val -> tgt.family = val ')])]
-                    )
-
-   
-                ]
-            )
-        ]
-    )
 
 ####### SetOfficalGivenNameSetOfficalGivenName :  to have all the name under a single "official" ###### 
 #args[0]: days
@@ -905,4 +871,28 @@ def SetCommunicationRequest(mode, profile, question_id,*args):
 # args[2] linkid relationship
   
 def SetRelatedPerson():
+    pass
+
+### create Classification
+# args[0] linkid for classificaiton
+
+  
+def SetClassification(mode, profile, question_id,*args):
+    #FIXME
+    if len(args)< 1:
+        print('Error SetObservation must have 1 parameters')
+        return None
+    elif mode == 'main':
+        pass
+    elif mode == 'group':
+        none_name = args[1] if len(args)>1 else 'none'
+        code = args[0] if len(args) == 1 else question_id
+        rule_name = clean_group_name(question_id)
+        return set_generic_observation_v2( profile, rule_name, code, get_obs_value_rules(code, none_name))
+
+### create Classification
+# args[0] linkid for classificaitonchoice, valueSet
+
+  
+def SetClassificationFromChoice():
     pass

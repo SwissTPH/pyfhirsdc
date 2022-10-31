@@ -7,12 +7,16 @@
 """
 
 
-from pyfhirsdc.converters.mappingConverter import add_mapping_url, get_questionnaire_mapping
-from pyfhirsdc.config import   get_dict_df, get_processor_cfg
-from pyfhirsdc.converters.questionnaireItemConverter import convert_df_to_questionitems, init_questionnaire
-from pyfhirsdc.serializers.librarySerializer import generate_plan_defnition_lib
-from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
 import numpy as np
+
+from pyfhirsdc.config import get_dict_df, get_processor_cfg
+from pyfhirsdc.converters.mappingConverter import (add_mapping_url,
+                                                   get_questionnaire_mapping)
+from pyfhirsdc.converters.questionnaireItemConverter import (
+    convert_df_to_questionitems, init_questionnaire)
+from pyfhirsdc.serializers.librarySerializer import generate_plan_defnition_lib
+from pyfhirsdc.serializers.utils import get_resource_path, write_resource
+
 
 def generate_questionnaires():
     dfs_questionnaire = get_dict_df()['questionnaires']

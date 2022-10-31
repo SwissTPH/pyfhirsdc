@@ -322,7 +322,7 @@ def get_valueset_cql_from_concepts(concepts, lib):
             concept.display=str(concept.display).lower()
             if concept.display not in list_of_display:
                 list_of_display.append(concept.display)
-                if (concept and concept.code):       
+                if (concept and concept.code):    
                     concept_cql = write_valueset(concept)
                     if concept_cql is not None:
                         append_used_valueset(concept.code)
@@ -421,7 +421,7 @@ def write_cql_df(library, df_actions,  type):
                 cql[i] = write_cql_action(ref, row, 'applicabilityExpressions', df_actions,row['description'])
                 i += 1
             ## questionnaire initial expression in CQL, FIXMDe
-            if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()):
+            if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()) and row['type'] != '{{cql}}' :
                 cql[i] = write_cql_action(ref, row,'initialExpression',df_actions)
                 i += 1
                 if pd.notna(row['label']):
@@ -449,6 +449,7 @@ def write_cql_action(id, row, expression_column, df, display = None):
 define "{1}{0}":
 """.format(str(display).lower(), str(prefix).lower(), name)
     sub =  get_additionnal_cql(id,df,expression_column)
+    sub = map_to_obs_valueset(sub)
     if len(sub)>0 and cql_exp != '':
         ret +=reindent("({})\n and ({})\n".format(cql_exp,sub),4)
     elif len(sub)>0:
@@ -464,7 +465,8 @@ def map_to_obs_valueset(cql_exp):
     changed = []
     matches = re.findall(r'(?<!\.)"([^"]+)"',cql_exp)
     out = cql_exp
-    out = out.replace('Has', 'Base.Has')
+    out = out.replace('HasCond', 'Base.HasCond')
+    out = out.replace('HasObs', 'Base.HasObs')
     for match in matches:
         if match not in changed:
             if match  in ("Yes", "No"):
@@ -502,7 +504,7 @@ def get_additionnal_cql(id,df,expression_column ):
                     else:
                         ret +=reindent("{}\n".format(cql_exp),4)
                     count_i += 1
-            return map_to_obs_valueset(ret)
+            return ret
     return ''
 
 

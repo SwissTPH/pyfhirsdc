@@ -1,7 +1,10 @@
-import requests
 import json
-from pyfhirsdc.serializers.json import read_file
+
+import requests
 from requests_toolbelt.multipart import decoder
+
+from pyfhirsdc.serializers.json import read_file
+
 
 def put_files(file_path, url):
     print("Sending the file {0}".format(url))

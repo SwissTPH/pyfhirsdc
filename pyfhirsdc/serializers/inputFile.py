@@ -1,9 +1,10 @@
 
-import pandas as pd
-
 import re
 
-from pyfhirsdc.config import get_dict_df, set_dict_df
+import pandas as pd
+
+from pyfhirsdc.config import set_dict_df
+
 
 def clean_str(str):
     tmp = re.sub(r'(\[\w+\])|(\([^\)]+\))','',str.lower())

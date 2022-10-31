@@ -2,6 +2,7 @@
  convert dataframe to to fhir coding system concept
 
 """
+import pandas as pd
 from fhir.resources.codesystem import CodeSystemConcept
 
 from pyfhirsdc.config import get_processor_cfg
@@ -79,7 +80,8 @@ def generate_diagnosis_concept(df_questions):
     return concept
 
 def generate_valueset_concept(df_value_set):
-    concept = []
+    concepts = []
+    obs_concepts= []
     # remove the line without id
     value_set = df_value_set[~df_value_set['code'].isin(
         get_value_set_additional_data_keyword()
@@ -93,11 +95,13 @@ def generate_valueset_concept(df_value_set):
     value_set = value_set.dropna(axis=0, subset=['code']).set_index('code').to_dict('index')
     # remove the line without id
     for code, question in value_set.items():
-        concept.append(
-            CodeSystemConcept(
+        concept = CodeSystemConcept(
                 definition = question["definition"],
                 code = code,
                 display =  question["display"],
             )
-        )
-    return concept
+        if "observation" in  question and  pd.notna(question["observation"]):
+            obs_concepts.append(concept)
+        else:
+            concepts.append(concept)
+    return concepts, obs_concepts

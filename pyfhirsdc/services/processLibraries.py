@@ -5,17 +5,22 @@
         - valueSet
 """
 
+import base64
 import json
 import os
-import base64
 import re
-from pyfhirsdc.config import  get_defaut_path, get_fhir_cfg, get_processor_cfg,  read_config_file
-from ..converters.utils import get_resource_url
-from pyfhirsdc.serializers.http import check_internet, post_multipart
-from pyfhirsdc.serializers.json import  read_file, read_resource
-from fhir.resources.relatedartifact import RelatedArtifact
-from fhir.resources.library import Library
+
 from fhir.resources.attachment import Attachment
+from fhir.resources.library import Library
+from fhir.resources.relatedartifact import RelatedArtifact
+
+from pyfhirsdc.config import (get_defaut_path, get_fhir_cfg, get_processor_cfg,
+                              read_config_file)
+from pyfhirsdc.serializers.http import check_internet, post_multipart
+from pyfhirsdc.serializers.json import read_file, read_resource
+
+from ..converters.utils import get_resource_url
+
 
 def is_content_to_update(content, lib):
     return content.id.startswith("ig-loader-" + lib.name)

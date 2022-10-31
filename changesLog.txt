@@ -1,0 +1,62 @@
+Bundle 28.10
+Rework skip logic 
+    "emcareb.registration.e",
+    "emcarea.registration.p",
+    "emcare.b7.lti-dangersigns",
+    "emcare.b10-14.symptoms.2m.p",
+rework calculated  dob emcarea.registration.p",
+fix missing sub item in     "emcare.b23.classification"
+
+Bundle 27.10 -  2 
+No crash for Q and SM
+    "emcareb.registration.e",
+    "emcarea.registration.p",
+    "emcare.b7.lti-dangersigns",
+    "emcare.b18-21.symptoms.2m.m",
+    "emcare.b10-14.symptoms.2m.p",
+    "emcare.b18-21.signs.2m.m",
+    "emcare.b10-16.signs.2m.p", 
+    "emcare.b23.classification"
+Bundle 27.10
+All classification CQL done + questionnaire (but list for additinnal questionnaire)
+Fix the Quantity StructureMap
+
+Bundle 21.10:
+[SM_RegistrationE] : Fixed rules creation for patient and general observation
+[classification]: (* means just CQL not showed)
+measles in last 3 months*
+Very Severe Disease*
+Danger Signs*
+Severe Classification up to assessments and tests excluding Severe Dehydration*
+Fever*
+Severe Pneumonia or Very Severe Disease + 2 qualifiers
+Pneumonia + 2 qualifiers
+Cough or Cold+ 2 qualifiers
+Severe Dehydration*
+Some Dehydration*
+No Dehydration*
+Severe Persistent Diarrhoea
+Persistent Diarrhoea
+Dysentery
+Possible Shigella
+Throat Abscess or Possible Diptheria
+Streptococcal Sore Throat
+Non-Streptococcal Sore Throat
+No Throat Problem
+Mastoiditis
+Acute Ear Infection
+Chronic Ear Infection+ 1 qualifier
+No Ear Infection
+Very Severe Febrile Disease
+Fever: possible bacterial infection+ 1 qualifier
+Fever: bacterial infection unlikely
+Severe Complicated Measles
+Measles with Eye or Mouth Complication
+Possible Measles
+[tooling] creationg of the helper HasConditionHistory
+[misc] Datadictionnary fixes (update not done)
+
+Bundle 18.10:
+[Q_RegistrationE] : Updated calculated expression for Reason for Consultation [EmCare.B3.DE01]
+[Q_DangerSigns] : Fixed bug where questions where not being shown even if correct age
+[Q_Classifications] : Fixed issue with labels of some questions in the Questionnaire

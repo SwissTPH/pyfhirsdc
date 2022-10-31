@@ -138,8 +138,9 @@ def process_quesitonnaire_line(id, question, df_questions,  existing_item):
                     repeats= get_question_repeats(question),
                     design_note = "status::draft",
                     definition = get_question_definition(question),
-                    initial = get_initial_uuid(question)
+                    initial = get_initial_value(question)
                 )
+        convert_df_to_questionitems(new_question,df_questions, id ,strategy = 'overwrite')
         if pd.notna(question['label']) and question['type'] != "select_boolean":
             new_question.text = question['label']
         #FIXME DEMO WORKARROUND REQUIRE NOT WORKING WITH SKIP LOGIC
@@ -150,12 +151,22 @@ def process_quesitonnaire_line(id, question, df_questions,  existing_item):
                     
                 
         return new_question
+    
+    
 
-def get_initial_uuid(question): #TODO remove when uuid will be supported in cal/fhirpath
+def get_initial_value(question): #TODO remove when uuid will be supported in cal/fhirpath
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
         if question["initialExpression"].strip() == "uuid()":
             return [QuestionnaireItemInitial(
                 valueString = "uuid()"
+            )]
+        elif question["initialExpression"].strip() == "AgeInMonths()>= 2 and AgeInMonths()<60": 
+            return [QuestionnaireItemInitial(
+                valueBoolean= True
+            )]       
+        elif question["initialExpression"].strip() == "AgeInMonths()":
+            return [QuestionnaireItemInitial(
+                valueInteger = "2"
             )]
 
 QUESTION_TYPE_MAPPING = {

@@ -39,7 +39,7 @@ def get_variable_extension(name,expression):
         valueExpression = ExpressionType(
                 name = name,
                 language = "text/fhirpath",
-                expression = expression))
+                expression = convert_reference_to_firepath(expression)))
 
 
 def get_candidate_expression_ext(desc, uri):
