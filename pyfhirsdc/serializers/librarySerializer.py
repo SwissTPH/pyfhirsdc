@@ -103,9 +103,11 @@ def get_lib_parameters_list(df_in, type = "pd"):
     #TODO add observation, condition and Zscore function parsing here   maybe using {{paramter}}  
 
     return parameters
+
 MAPPING_TYPE_LIB ={
     "choice":"code",
-    "mapping":"boolean"
+    "mapping":"boolean",
+    "quantity":"Quantity"
 }
 
 def get_lib_type(type):
@@ -182,7 +184,7 @@ def get_patient_observation_codes(row):
     codes = []
     for name, exp in ROW_EXPRESSIONS.items():
         if name in row and pd.notna(row[name]):
-            matches = re.findall("Has\w*Obs\w*\(P<list>[\[\{]([^\]\})]+)[\]\})]",row[name] )
+            matches = re.findall("Has\w*Obs\w*\(?P<list>[\[\{]([^\]\})]+)[\]\})]",row[name] )
             for match in matches:
                 list_list.append( match.groupdict()['list'])
     for code_list in list_list:
@@ -463,7 +465,7 @@ def map_to_obs_valueset(cql_exp):
     valueset_list = [x.lower() for x in  get_used_valueset()]
     obs_list = [x.lower() for x in get_used_obs()]
     changed = []
-    matches = re.findall(r'(?<!\.)"([^"]+)"',cql_exp)
+    matches = re.findall(r'(?<!\.)"([^"\.]+)"',cql_exp)
     out = cql_exp
     out = out.replace('HasCond', 'Base.HasCond')
     out = out.replace('HasObs', 'Base.HasObs')
