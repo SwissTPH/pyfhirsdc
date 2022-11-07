@@ -28,7 +28,7 @@ from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
                                                QuestionnaireSDC)
 
 
-def convert_df_to_questionitems(ressource,df_questions, parentId = None, strategy = 'overwrite'):
+def convert_df_to_questionitems(ressource,df_questions, parentId = None):
     # create a dict to iterate
     if parentId is None:
         if 'parentId' in df_questions:
@@ -43,34 +43,25 @@ def convert_df_to_questionitems(ressource,df_questions, parentId = None, strateg
     # Use first part of the id (before DE) as an ID
     # questionnaire.id = list(dict_questions.keys())[0].split(".DE")[0]
     # delete all item in case of overwrite strategy
-    
-    if strategy == "overwrite" or ressource.item :
-        ressource.item =[]
-    if ressource.item is None:
-       ressource.item =[]
-    # recreate item if draft 
-    ressource = ressource
-
-    for id, question in dict_questions.items():
-        existing_item = next((ressource.item.pop(index) for index in range(len(ressource.item)) if ressource.item[index].linkId == id), None)
+    for  question in dict_questions.values():
         # manage group
         type, detail_1, detail_2 = get_type_details(question)
         if type is None:
-            print("${0} is not a valid type, see question ${1}".format(question['type'], id))       
+            print("${0} is not a valid type, see question ${1}".format(question['type'], question['id']))       
         elif type == "skipped":
             pass
         elif  type == 'variable':
-            variable = get_variable_extension(id,question['calculatedExpression'])
+            variable = get_variable_extension(question['id'],question['calculatedExpression'],df_questions)
             if variable is not None:
                 ressource.extension.append(variable)
         
         else:
-            item = add_questionnaire_item_line(df_questions, existing_item, id, question,  strategy)
+            item = process_quesitonnaire_line(question['id'], question,df_questions )
             if item is not None:
-                # we save the the questionnaire 
-                convert_df_to_questionitems(item,df_questions, id ,strategy = 'overwrite')
+                
                 # we save the question as a new ressouce
-  
+                if ressource.item is None:
+                    ressource.item = []
                 ressource.item.append(item)
 
     # close all open groups
@@ -83,24 +74,10 @@ def get_timestamp_item():
                 linkId = 'timestamp',
                 type = 'dateTime',
                 required= False,
-                extension = [get_calculated_expression_ext("now()"), get_hidden_ext()],
+                extension = [get_calculated_expression_ext("now()",None), get_hidden_ext()],
                 #design_note = "status::draft"            
                 )
 
-def add_questionnaire_item_line(df_questions, existing_item, id, question,  strategy):
-    # pop the item if it exists
-    
-    # create or update the item based on the strategy
-    if existing_item is None\
-    or strategy in ( "overwriteDraft", "overwriteDraftAddOnly" ) and\
-        (existing_item.design_note is not None and "status::draft"  in existing_item.design_note):
-        new_question = process_quesitonnaire_line(id, question,df_questions,   existing_item )
-        if new_question is not None:
-            return new_question
-    elif existing_item is not None:
-        #put back the item if no update
-        return existing_item
-    return None
 
 def get_question_answeroption(question, id):
     if question["type"] == 'select_boolean':
@@ -110,27 +87,23 @@ def get_question_repeats(question):
     return True if question['type'] == 'select_boolean' or question['type'].startswith('select_multiple') else False
 
 
-def process_quesitonnaire_line(id, question, df_questions,  existing_item):
+def process_quesitonnaire_line(id, question, df_questions):
     type =get_question_fhir_data_type(question['type'])
     if pd.notna(question['required']):
         if int(question['required']) == 1:
             question['required']=1
         else : question['required']=0
     else : question['required']=0
-    if 'parentId' in  df_questions:
-        df_question = df_questions[df_questions.parentId==id]
-    else:
-        df_question = None
     if type is not None:
         new_question = QuestionnaireItemSDC(
                     linkId = id,
                     type = type,
                     required= question['required'],
-                    extension = get_question_extension(question, id, df_question),
+                    extension = get_question_extension(question, id, df_questions),
                     answerValueSet = get_question_valueset(question),
                     answerOption=get_question_answeroption(question, id),
                     repeats= get_question_repeats(question),
-                    design_note = "status::draft",
+                    #design_note = "status::draft",
                     definition = get_question_definition(question),
                     initial = get_initial_value(question)
                 )
@@ -140,9 +113,9 @@ def process_quesitonnaire_line(id, question, df_questions,  existing_item):
         #for ext in new_question.extension:
         #    if ext.url == 'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression':
         #        new_question.required = False
-                        
-                    
-                
+        # we save the the questionnaire 
+        if 'parentId' in  df_questions:
+            convert_df_to_questionitems(new_question,df_questions, id )                     
         return new_question
     
     
@@ -171,13 +144,16 @@ QUESTION_TYPE_MAPPING = {
                 'variable':None,
                 "checkbox" : "boolean",
                 "phone" : "integer",
-                "text" : "string",
+                "text" : "text",
+                "string" : "string",
                 "boolean" : "boolean",
                 "date" : "date",
                 "dateTime" : "dateTime",
                 "time" : "time",
                 "dateTime" : "dateTime",
                 "decimal" :"decimal",
+                "display": "display",
+                "note":"display",
                 "quantity" :"quantity",
                 "integer" :"integer",
                 "number" :"integer",
@@ -197,7 +173,7 @@ def get_question_fhir_data_type(question_type):
         return QUESTION_TYPE_MAPPING.get(fhir_type)
 
 
-def get_question_extension(question, question_id, df_question = None ):
+def get_question_extension(question, question_id, df_questions = None ):
     
     extensions = []
     display= get_display(question)
@@ -218,7 +194,7 @@ def get_question_extension(question, question_id, df_question = None ):
     elif type == "select_multiple":
         # only way to have select multiple repeat = true is not enough
         extensions.append(get_open_choice_ext())
-    if type.lower() in ('decimal','integer','number') and len(unit) == 1 :
+    if type.lower() in ('decimal','integer','number','quantity') and len(unit) == 1 :
         extensions.append(get_unit_ext(unit[0]))
     if type.lower() in ('decimal','integer','number') and len(slider) == 1 :
         extensions = extensions+(get_slider_ext(slider[0], question["label"]))
@@ -227,16 +203,16 @@ def get_question_extension(question, question_id, df_question = None ):
     if "hidden"  in display:
         extensions.append(get_hidden_ext())
     if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]):
-        extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"]))    
+        extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"],df_questions))    
     if "calculatedExpression" in question and pd.notna(question["calculatedExpression"]):
-        extensions.append(get_calculated_expression_ext(question["calculatedExpression"]))
+        extensions.append(get_calculated_expression_ext(question["calculatedExpression"],df_questions))
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
         if not question["initialExpression"].strip() == "uuid()": #TODO remove when uuid will be supported
             extensions.append(get_initial_expression_identifier_ext(question_id))
-    if df_question is not None and len(df_question)>0:
-        df_variables = df_question[df_question.type=='variable'].dropna(axis=0, subset=['calculatedExpression'])
+    if 'parentId' in  df_questions:
+        df_variables = df_questions[(df_questions.parentId==id) & (df_questions.type=='variable')].dropna(axis=0, subset=['calculatedExpression'])
         for index, var in df_variables.iterrows():
-            extensions.append(get_variable_extension(var['id'], var['calculatedExpression']))
+            extensions.append(get_variable_extension(var['id'], var['calculatedExpression'],df_questions))
     return extensions
 
 def get_display(question):

@@ -7,7 +7,7 @@ from fhir.resources.extension import Extension
 from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
 
 from pyfhirsdc.config import get_fhir_cfg
-from pyfhirsdc.converters.utils import clean_name
+from pyfhirsdc.converters.utils import clean_name, get_breadcrumb
 
 
 def get_dropdown_ext():
@@ -33,13 +33,13 @@ def get_open_choice_ext():
 )    
 
 
-def get_variable_extension(name,expression):
+def get_variable_extension(name,expression,df_questions):
     return Extension(
         url ="http://hl7.org/fhir/StructureDefinition/variable",
         valueExpression = ExpressionType(
                 name = name,
                 language = "text/fhirpath",
-                expression = convert_reference_to_firepath(expression)))
+                expression = convert_reference_to_firepath(expression, df_questions)))
 
 
 def get_candidate_expression_ext(desc, uri):
@@ -209,39 +209,65 @@ def get_hidden_ext():
     valueBoolean = True
     )
 
-def convert_reference_to_firepath(expression):
-    # replace value check
-    expression = re.sub(pattern = r'\$\{([^}]+)\}\.(?!code)', repl = r"%resource.repeat(item).where(linkId='\1').answer.", string = expression )
+    # if yes recursive call until no parent or loop
+QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION = ['code']
+
+def convert_reference_to_firepath(expression, df_questions):
+    # find all the reference
+    matches = re.findall(pattern = r'\$\{(?P<linkid>[^}]+)\}(?:\.(?P<sufix>\w+))?', string = expression.replace('"',"'") )
     
+    for match in matches:
+        breadcrumb = []
+        linkid = match[0]
+        sufix = match[1]  
+        # find all the parent
+        if df_questions is None:
+            print("warning: cannot resolve the expression {} because not questions df avaiable".format(expression))
+            breadcrumb = [linkid]       
+        else:
+            breadcrumb = get_breadcrumb(df_questions, linkid, breadcrumb)
+        # do the replaces : if prefix and prefix != code replace with answers else repalce with value
+        path = ''
+        for elm in breadcrumb:
+            path= ".repeat(item).where(linkId='{}')".format(elm) +path
+        # addin the answer
+        path = path + ".answer.first()"
+        if sufix is '' or sufix in QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION:
+            path = path + ".value"     
+        if sufix is not '':
+            term = "${{{0}}}.{1}".format(linkid, sufix)
+            replace = "%resource"+path+"."+sufix
+        else:
+            term = "${{{0}}}".format(linkid)
+            replace = "%resource"+path
+        expression = expression.replace(term,replace  )  
 
-    # other value
-    return  re.sub(pattern = r'\$\{([^}]+)\}', repl = r"%resource.repeat(item).where(linkId='\1').answer.first().value", string = expression.replace('"',"'") )
 
+    return expression
 
-def get_enable_when_expression_ext(expression, desc = None ):
-  
+def get_enable_when_expression_ext(expression, df_questions, desc = None ):
     return Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/fhirpath",
-                expression = convert_reference_to_firepath(expression)))
+                expression = convert_reference_to_firepath(expression, df_questions)))
 
-def get_calculated_expression_ext(expression, desc = None ):
+def get_calculated_expression_ext(expression, df_questions, desc = None ):
     return Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/fhirpath",
-                expression = convert_reference_to_firepath(expression)))
+                expression = convert_reference_to_firepath(expression, df_questions)))
 
-def get_initial_expression_ext(expression, desc = None ):
+def get_initial_expression_ext(expression, df_questions, desc = None ):
     return Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/cql-expression",
-                expression = convert_reference_to_firepath(expression)))
+                expression = convert_reference_to_firepath(expression, df_questions)))
 
 def get_initial_expression_identifier_ext(quesiton_id, desc = None ):
     return Extension(

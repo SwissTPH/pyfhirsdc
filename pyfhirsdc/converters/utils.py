@@ -1,10 +1,11 @@
-from datetime import datetime
-from datetime import timezone
-import os
-from pathlib import Path
-from pyfhirsdc.config import  get_fhir_cfg,  get_processor_cfg
+from datetime import datetime, timezone
+
+import pandas as pd
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
+
+from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
+
 
 def get_resource_name(resource_type, name):
     return resource_type.lower()+ "-"+ clean_name(name)
@@ -45,3 +46,29 @@ def get_code(system, code, display = None ):
                 display = display
                 )
     
+def get_breadcrumb(df_questions, linkid, breadcrumb = [] ):
+    # get the questions
+    question = df_questions[(df_questions['id'] == linkid) | (df_questions['label'] == linkid) ]
+    if len(question) == 0:
+        # look but with the
+        question = df_questions[df_questions['id'] == linkid]
+        print("error: {} not found in id or label".format(linkid))
+        exit()
+    elif len(question) > 1:
+        # look but with the
+        question = df_questions[df_questions['id'] == linkid]
+        print("error: {}  found several times in id or label ".format(linkid))
+        exit()
+    #find if there is parent
+    question = question.iloc[0]
+    breadcrumb.append(question['id'])
+    
+    if "parentId" in question and pd.notna(question.parentId) :
+        if question.parentId not in breadcrumb:
+            return get_breadcrumb(df_questions, question.parentId, breadcrumb)
+        else:
+            print("error: loop detected involving {} and {} ".format(linkid, question.parentId))
+            exit()
+    else:
+        return breadcrumb
+    # if yes recursive call until no parent or loop

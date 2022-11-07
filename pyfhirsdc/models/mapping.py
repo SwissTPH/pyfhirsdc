@@ -1,11 +1,15 @@
 from __future__ import annotations
+
 import hashlib
-import json 
-from typing import List, Optional
-from pydantic import BaseModel
+import json
 # for recursive definition
 import random
-import string 
+import string
+from typing import List, Optional
+
+from pydantic import BaseModel
+
+
 class MappingIO(BaseModel):
     url : str
     alias: Optional[str]

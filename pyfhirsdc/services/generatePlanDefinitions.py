@@ -1,20 +1,19 @@
 
 
-from pyfhirsdc.config import get_defaut_path, get_fhir_cfg, get_processor_cfg, get_defaut_fhir
-from pyfhirsdc.converters.utils import clean_group_name, clean_name, get_resource_url
-from pyfhirsdc.serializers.json import  read_resource
-from fhir.resources.plandefinition import PlanDefinition
-from fhir.resources.identifier import Identifier
-
-from pyfhirsdc.converters.planDefinitionConverter import   \
-      process_decisiontable
-
-import os
 import json
-from pyfhirsdc.serializers.librarySerializer import generate_plan_defnition_lib
-from pyfhirsdc.serializers.planDefinitionIndexSerializer import write_plan_definition_index
+import os
 
-from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
+from fhir.resources.identifier import Identifier
+from fhir.resources.plandefinition import PlanDefinition
+
+from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
+from pyfhirsdc.converters.planDefinitionConverter import process_decisiontable
+from pyfhirsdc.converters.utils import clean_group_name, get_resource_url
+from pyfhirsdc.serializers.librarySerializer import generate_plan_defnition_lib
+from pyfhirsdc.serializers.planDefinitionIndexSerializer import \
+    write_plan_definition_index
+from pyfhirsdc.serializers.utils import get_resource_path, write_resource
+
 
 def generate_plandefinitions(decisionTable):
     root_output_path = get_processor_cfg().outputPath
