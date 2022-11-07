@@ -11,6 +11,7 @@ from pyfhirsdc.config import (get_defaut_path, get_dict_df, get_fhir_cfg,
 from pyfhirsdc.converters.extensionsConverter import (
     get_questionnaire_library, get_structure_map_extension)
 from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
+                                        get_breadcrumb,
                                         get_custom_codesystem_url,
                                         get_resource_url)
 from pyfhirsdc.converters.valueSetConverter import get_valueset_df
@@ -32,16 +33,16 @@ FHIR_BASE_PROFILES = [
 FHIR_ONELINER_PROFILES = [
     "Condition",
     "Observation",
-    "CommunicationRequest"
+    "CommunicationRequest",
 ]
 
 VAL_REGEX = "[ =]*val(?:[^\w]|$)"
 
-def get_questionnaire_mapping(questionnaire_name, df_questions):
+def get_questionnaire_mapping(questionnaire_name, df_questions_item):
     structure_maps = []
     sm_name = clean_name(questionnaire_name)  
     map_filepath = os.path.join(get_defaut_path("Mapping","mapping") ,sm_name+".map")
-    profiles = get_question_profiles(df_questions)
+    profiles = get_question_profiles(df_questions_item)
     filepath = get_resource_path(
         "StructureMap", 
         sm_name
@@ -58,7 +59,7 @@ def get_questionnaire_mapping(questionnaire_name, df_questions):
         targets = [MappingIO(
             url =  'http://hl7.org/fhir/StructureDefinition/Bundle',
             alias = 'Bundle')],
-        groups =  get_mapping_groups(questionnaire_name, df_questions)
+        groups =  get_mapping_groups(questionnaire_name, df_questions_item)
     )
     for profile in profiles:
         base_profile = get_base_profile(profile)
@@ -81,7 +82,7 @@ def get_questionnaire_mapping(questionnaire_name, df_questions):
 
     return mapping
 
-def get_bundle_group(df_questions):
+def get_bundle_group(df_questions_item):
     return MappingGroup(
         name = 'bundletrans',
         sources = [MappingGroupIO(
@@ -92,12 +93,12 @@ def get_bundle_group(df_questions):
             name = 'bundle',
             type = 'Bundle'
         )],
-        rules = get_bundle_rules(df_questions)
+        rules = get_bundle_rules(df_questions_item)
 
     )
     
-def get_bundle_rules(df_questions):
-    profiles = get_question_profiles(df_questions)
+def get_bundle_rules(df_questions_item):
+    profiles = get_question_profiles(df_questions_item)
     # bassic bundle rules
     rules = [
         MappingRule(expression = "src -> bundle.id = uuid()", name = 'id'),
@@ -106,9 +107,9 @@ def get_bundle_rules(df_questions):
     for profile in profiles:
         rule = None
         if is_oneliner_profile(profile):
-            questions =  get_question_profiles_detail(df_questions, profile)
-            for question_id, row in questions.items():
-                rule = get_post_bundle_profile_rule(profile,question_id, row )
+            questions =  get_question_profiles_detail(df_questions_item, profile)
+            for  row in questions.values():
+                rule = get_post_bundle_profile_rule(profile,row['id'], row )
                 if rule is not None:
                     rules.append(rule)
         else:
@@ -126,6 +127,7 @@ def get_post_bundle_profile_rule(profile, question_id, row):
     else:
         expression =  "src where src.item.where(linkId='{0}').exists() and src.item.where(linkId='{1}id').first().answer.exists()".format(question_id, rule_name )
     group_name = clean_group_name(profile+question_id)
+    #FIXME should use the helper for ontime
     return MappingRule(
         name = rule_name,
         expression = expression,
@@ -135,22 +137,48 @@ def get_post_bundle_profile_rule(profile, question_id, row):
                 base_profile,
                 group_name))]
     )
+ 
+def get_test_breadcrumbs(linkid,df_questions,rules):
+    pass
     
-        
-    
+def wrapin_breacrumb(breadcrumbs,df_questions,rules, ):
+    linkid = breadcrumbs.pop()
+    breadcrumbs = get_breadcrumb(df_questions,linkid, breadcrumbs)
+    leaf_rule = None
+    breadcrumbs_len = len(breadcrumbs)
+    if breadcrumbs_len==1:
+        return MappingRule(
+            expression = "src.item first as item  where linkId = '{}'".format(linkid),
+            rules = rules
+        )
+    else:
+        breadcrumb = breadcrumbs.pop()
+        leaf_rule = MappingRule(
+            expression = "itm{}.item first as item  where linkId =  '{}'".format(len(breadcrumbs),breadcrumb),
+            rules = rules
+        )
+        while len(breadcrumbs)>0:
+            breadcrumb = breadcrumbs.pop()
+            itm_name = "src" if len(breadcrumbs) == 0 else "itm{}".format(len(breadcrumbs)) 
+            leaf_rule = MappingRule(
+                expression = "{}.item first as itm{}  where linkId =  '{}'".format(itm_name, len(breadcrumbs)+1,breadcrumb),
+                rules = [leaf_rule]
+            )
+    return leaf_rule
 
 
 def get_put_bundle_profile_rule(profile):
     rule_name = clean_group_name(profile)
     base_profile = get_base_profile(profile)
+    
     rule =  MappingRule(
         expression = get_rule_entry_expression(base_profile, rule_name) ,
         name = 'put-{0}'.format(rule_name),
         rules = [
             get_request_rule(base_profile, rule_name),
             MappingRule(expression = 'src -> entry.resource = create("{0}") as tgt'.format(base_profile),
-                rules = [MappingRule(expression = 'src -> tgt then {0}(src, tgt)'.format(rule_name))] )#,
-                #get_id_rule(base_profile,rule_name)] )
+                rules = [MappingRule(expression = 'src -> tgt then {0}(src, tgt)'.format(rule_name)),
+                ] ) # get_id_rule(base_profile,rule_name)
         ]
     )
     if  base_profile == 'Encounter':
@@ -162,7 +190,7 @@ def get_rule_entry_expression(base_profile, cleanned_profile):
     if base_profile in  ('Patient', 'Encounter'):
         return "src -> bundle.entry as entry"
     else:
-        return "src where src.item.where(linkId='{}id').answer.exists()-> bundle.entry as entry".format(cleanned_profile)
+        return "src where src.item.where(linkId='{0}id').exists()-> bundle.entry as entry".format(cleanned_profile)
 
 
 def get_request_rule(base_profile, cleanned_profile):
@@ -173,11 +201,17 @@ def get_request_rule(base_profile, cleanned_profile):
         return MappingRule( expression = 'src.encounter as encounter', 
             rules = [MappingRule(expression = "encounter.id as idval  -> entry.request as request, request.method = 'PUT', request.url = append('/Encounter/',idval)")])
     else:
+        # id issue on the android SDK prevent the PUT / reuse of id 
+        return MappingRule(
+                expression = "src.item first as item where linkId  =  '{0}id' -> entry.request as request, request.method = 'POST'".format(cleanned_profile))
         return MappingRule(
                 expression = "src.item first as item where linkId  =  '{0}id' -> entry.request as request, request.method = 'PUT'".format(cleanned_profile),
                 rules = [MappingRule( 
                             expression  ="item.answer first as a ->  request", 
-                            rules = [MappingRule(expression="a.value as val ->  request.url = append('/RelatedPerson/', val)")])])
+                            rules = [MappingRule(expression="a.value as val ->  request.url = append('/{}/', val)".format(base_profile)),
+                         MappingRule( 
+                            expression  =" a.value as val ->  tgt.id =  val",)
+                ]),])
         
        # return MappingRule( expression = 'src -> entry then getFullUrl{0}(src, entry)'.format(group_sufix))
         
@@ -194,15 +228,15 @@ def get_id_rule(base_profile, group_sufix):
     
     
         
-def get_mapping_groups(questionnaire_name, df_questions):
-    profiles = get_question_profiles(df_questions)
-    out_groups = [get_bundle_group(df_questions)]
+def get_mapping_groups(questionnaire_name, df_questions_item):
+    profiles = get_question_profiles(df_questions_item)
+    out_groups = [get_bundle_group(df_questions_item)]
     for profile in profiles:
         if is_oneliner_profile(profile):
-            rules, sub_groups_tmp = get_mapping_details(profile, df_questions)
+            rules, sub_groups_tmp = get_mapping_details(profile, df_questions_item)
             group_tmp = None
         else:
-            group_tmp, sub_groups_tmp = get_mapping_group(profile, questionnaire_name, df_questions)
+            group_tmp, sub_groups_tmp = get_mapping_group(profile, questionnaire_name, df_questions_item)
             sub_groups_tmp += get_ref_groups(profile)
             
         if group_tmp is not None :            
@@ -212,9 +246,9 @@ def get_mapping_groups(questionnaire_name, df_questions):
                 out_groups.append(sub_group_tmp)
     return out_groups
 
-def get_mapping_group(profile, questionnaire_name, df_questions):
+def get_mapping_group(profile, questionnaire_name, df_questions_item):
     # in case of obsdervation, we need to make at least 1 goup per item
-    rules, sub_group = get_mapping_details(profile, df_questions)
+    rules, sub_group = get_mapping_details(profile, df_questions_item)
     group = MappingGroup(
         name = clean_group_name(profile),
         sources = [MappingGroupIO(
@@ -230,12 +264,12 @@ def get_mapping_group(profile, questionnaire_name, df_questions):
     )
     return group, sub_group
 
-def get_mapping_details(profile, df_questions):
+def get_mapping_details(profile, df_questions_item):
     rules = []
     groups = []
-    questions =  get_question_profiles_detail(df_questions, profile)
-    for question_name, question in questions.items():
-        rule, group = get_mapping_detail(question_name,  question)
+    questions =  get_question_profiles_detail(df_questions_item, profile)
+    for question in questions.values():
+        rule, group = get_mapping_detail(question['id'],  question,  df_questions_item)
         if rule is not None:
             rules.append(rule)
         if group is not None:
@@ -247,7 +281,7 @@ def get_mapping_details(profile, df_questions):
             
     return rules, groups
 
-def get_mapping_detail(question_name, question):
+def get_mapping_detail(question_name, question, df_questions_item):
     #TODO manage transform evaluate/create
     # item that have childen item are created then the children rule will create the children Items
     # example rule 13 and 14 http://build.fhir.org/ig/HL7/sdc/StructureMap-SDOHCC-StructureMapHungerVitalSign.json.html
@@ -263,14 +297,14 @@ def get_mapping_detail(question_name, question):
             helper_array = str(question['map_resource']).split('::')
             helper_func = helper_array[0].strip()
             helper_args = helper_array[1].split('||') if len(helper_array)>1 else []
-            fhirmapping = generate_helper(helper_func, 'main', question['map_profile'], question_name, *helper_args)
+            fhirmapping = generate_helper(helper_func, 'main', question['map_profile'], question_name, df_questions_item ,*helper_args)
             if fhirmapping is not None:
                 fhirmapping= inject_config(fhirmapping)
                 rule = MappingRule(
                     name = clean_group_name(question_name),
                     expression = fhirmapping,
                     )
-            group  =  generate_helper(helper_func, 'group', question['map_profile'], question_name, *helper_args)
+            group  =  generate_helper(helper_func, 'group', question['map_profile'], question_name,df_questions_item, *helper_args)
 
         else:
             rule_name = clean_group_name(question_name)
@@ -334,18 +368,18 @@ def get_question_profiles_detail(df_questions, profile):
     return df_questions[df_questions['map_profile'] == profile ].to_dict('index')
 
 
-def generate_helper(helper_func, mode, profile, question_id, *helper_args):
-    return  globals()[helper_func](mode,profile , question_id, *helper_args )        
+def generate_helper(helper_func, mode, profile, question_id,df_questions, *helper_args):
+    return  globals()[helper_func](mode,profile , question_id,df_questions, *helper_args )        
 
 
 
         
-def get_timestamp_rule(rule_name):
+def get_timestamp_rule(rule_name, target = 'tgt.issued' ):
     return MappingRule(    
                         expression = "src.item as item where linkId  =  'timestamp'",
                         rules = [
                             MappingRule(expression = 'item.answer first as a',
-                                rules = [MappingRule(expression = 'a.value as val -> tgt.issued = val ')])]
+                                rules = [MappingRule(expression = 'a.value as val -> {} = val '.format(target))])]
         )
 
 
@@ -395,7 +429,7 @@ def get_rand_identifier_rule(rule_name):
 
  ####### SetObservationMultiple :  works only with valueset, will generate an obs for all, cancelled is not selected but for the one with value none   ###### 
 # args[0] : valueSet name
-def SetObservationMultiple(mode, profile, question_id, *args):
+def SetObservationMultiple(mode, profile, question_id, df_questions, *args):
     if len(args)!= 1:
         print('Error SetObservation must have 1 parameters')
         return None
@@ -477,7 +511,7 @@ def get_generic_obs_cancelled_group():
  #args[0]: question name
  #args[1]: none name
  # 
-def SetObservation(mode,  profile, question_id, *args):
+def SetObservation(mode,  profile, question_id,df_questions, *args):
     if len(args)< 1:
         print('Error SetObservation must have 1 parameters')
         return None
@@ -518,7 +552,7 @@ def wrapin_first_answers_rules(rule_name, question_id, rules):
 ####### but will hold the value in the field value of Quantity  ###### 
  #args[0]: question name
  # 
-def SetObservationQuantity(mode,  profile, question_id, *args):
+def SetObservationQuantity(mode,  profile, question_id,df_questions, *args):
     if len(args)!= 1:
         print('Error SetObservationQuantity must have 1 parameter')
         return None
@@ -536,7 +570,7 @@ def get_obs_qty_value_rules(question_id):
 
  ####### SetObservationNotFound :  if yes, set the related obs to cancelled  ###### 
  #args[0]: question name 
-def SetObservationNotFound(mode, profile, question_id, *args):
+def SetObservationNotFound(mode, profile, question_id,df_questions, *args):
     if len(args)> 1:
         print('Error SetObservation must have 1 or 0 parameters')
         return None
@@ -553,7 +587,7 @@ def get_notfound_rules(rule_name):
 
  ####### SetObservationYesNo :  set an  observation from yes/no, No result in obs beeing cancelled  ######
   #args[0]: question name
-def SetObservationYesNo(mode, profile, question_id, *args):
+def SetObservationYesNo(mode, profile, question_id,df_questions, *args):
     if len(args)!= 1:
         print('Error SetObservation must have 1 parameters')
         return None
@@ -577,7 +611,7 @@ def get_obs_yes_no_rules(question_id):
 
  ####### SetObservationBoolean :  set an  observation from boolean, false result in obs beeing cancelled  ###### 
  #args[0]: question name
-def SetObservationBoolean(mode, profile, question_id, *args):
+def SetObservationBoolean(mode, profile, question_id,df_questions, *args):
     if len(args)!= 1:
         print('Error SetObservation must have 1 parameters')
         return None
@@ -600,7 +634,7 @@ def get_obs_bool_rules(question_id):
 #args[0]: question name given
 #args[1]: question name mid
 #args[2]: question name last
-def SetOfficalGivenName(mode, profile, question_id, *args):
+def SetOfficalGivenName(mode, profile, question_id,df_questions, *args):
     rule_name = clean_group_name(profile)
     if len(args)!= 3:
         print('Error SetOfficalGivenName must have 3 parameters')
@@ -642,16 +676,20 @@ def SetOfficalGivenName(mode, profile, question_id, *args):
 
 
 ####### SetOfficalGivenNameSetOfficalGivenName :  to have all the name under a single "official" ###### 
-#args[0]: days
-#args[1]: month
-#args[2]: years
-def SetDoBFromPart(mode, profile, question_id, *args):
+#args[0]: dob
+#args[1]: dob estimated
+#args[2]: days
+#args[3]: weeks
+#args[4]: month
+#args[5]]: years
+[]
+def SetDoBFromPart(mode, profile, question_id,df_questions, *args):
     rule_name = clean_group_name(profile)
-    if len(args)!= 3:
-        print('Error SetDoBFromPart must have 3 parameters')
+    if len(args)!= 6:
+        print('Error SetDoBFromPart must have 6 parameters')
         return None
     if mode == 'main':
-        return   "src.item first as item  where linkId =  '{0}' or linkId =  '{1}' or linkId =  '{2}' -> tgt as target,  target.name as name then SetDoBFromPart{3}(src, name)".format(args[0],args[1],args[2],rule_name)
+        return   "src.item first as item  where linkId =  '{0}' or linkId =  '{1}' or linkId =  '{2}' or linkId =  '{3}' or linkId =  '{4}' or linkId =  '{5}' -> tgt as target,  target.name as name then SetDoBFromPart{3}(src, name)".format(args[0],args[1],args[2],rule_name)
     return MappingGroup(
         name = 'SetDoBFromPart{}'.format(rule_name),
         sources = [MappingGroupIO(name = 'src')],
@@ -663,7 +701,16 @@ def SetDoBFromPart(mode, profile, question_id, *args):
             targets = [MappingGroupIO(name = 'tgt')],
             rules = [
                 MappingRule(
-                expression = "src.item as itemD where linkId  =  {0}".format(args[0])
+                expression = "src.item as itemD where linkId  =  {0}".format(args[2])
+                )
+            ]
+            ),
+            MappingGroup(name = 'SetDoBFromPartW{}'.format(rule_name),        
+            sources = [MappingGroupIO(name = 'src')],
+            targets = [MappingGroupIO(name = 'tgt')],
+            rules = [
+                MappingRule(
+                expression = "src.item as itemW where linkId  =  {0}".format(args[3])
                 )
             ]
             ),
@@ -672,7 +719,7 @@ def SetDoBFromPart(mode, profile, question_id, *args):
             targets = [MappingGroupIO(name = 'tgt')],
             rules = [
                 MappingRule(
-                expression = "src.item as itemM where linkId  =  {0}".format(args[1])
+                expression = "src.item as itemM where linkId  =  {0}".format(args[4])
                 )
             ]
             ),
@@ -696,14 +743,16 @@ def SetDoBFromPart(mode, profile, question_id, *args):
 ####### MapValueSetExtCode :  to avoid concept maps when the system is predefined ###### 
 #args[0]: valueset
 #args[1]: path to map
-def MapValueSetExtCode(mode, profile,question_id, *args):
+#args[2] : coding /codeableConcept
+def MapValueSetExtCode(mode, profile,question_id,df_questions, *args):
     rule_name = clean_group_name(question_id)
+    tgttype = args[2] if len(args) == 3 else None
     if mode == 'main':
         return   "src.item as item where linkId =  '{0}' then {{ item.answer first as a then MapValueSetExtCode{1}(a, tgt) '{1}d'; }}".format(question_id,rule_name)
-    if len(args)!= 2:
+    if len(args)< 2:
         print('Error SetOfficalGivenName must have 2 parameters, valueset name and mappath')
     # get Value set df
-    maprules = get_valueset_map_source(args[0], args[1])
+    maprules = get_valueset_map_source(args[0], args[1],tgttype)
     if maprules is not None:
         return MappingGroup(
             name = 'MapValueSetExtCode{}'.format(rule_name),
@@ -716,8 +765,8 @@ def MapValueSetExtCode(mode, profile,question_id, *args):
                 )
             ]
         )
-
-def get_valueset_map_source(valueset_name, map_path):
+# maptype :: system :: code 
+def get_valueset_map_source(valueset_name, map_path, tgttype):
     sub_rules = []
     df = get_valueset_df(valueset_name, True)
     if df is not None:
@@ -727,11 +776,30 @@ def get_valueset_map_source(valueset_name, map_path):
                 map_concepts = row['map_concept'].split('||')
                 for mapping in map_concepts:
                     mapping_details = mapping.split('::')
-                    if len(mapping_details)-1>0:
+                    if len(mapping_details)>0:
                         to_code = mapping_details[len(mapping_details)-1]
-                        sub_rules.append(MappingRule(
+                        if tgttype is not None and len(mapping_details)>1:
+                            to_system = mapping_details[len(mapping_details)-2]
+                            sub_rules.append(MappingRule(
+                                expression = "src where value.code = '{0}'-> coding.code = '{1}',coding.system = '{2}' ".format(row['code'],to_code, to_system)
+                            ))
+                        else:
+                            sub_rules.append(MappingRule(
                                 expression = "src where value.code = '{0}' -> {1} = '{2}'".format(row['code'],map_path_list[len(map_path_list)-1] ,to_code)
                             ))
+        
+                        
+        if tgttype is not None and tgttype.lower() == "coding":
+            sub_rules = [MappingRule(
+                expression = "{0}= create('Coding') as coding  ".format(map_path_list[len(map_path_list)-1],),
+                rules = sub_rules
+            )]
+        elif  tgttype is not None and tgttype.lower() == "codeableconcept":
+            sub_rules = [MappingRule(
+                expression = "src -> {0}= create('CodeableConcept') as cc, cc.coding=create('Coding') as coding  ".format(map_path_list[len(map_path_list)-1]),
+                rules = sub_rules
+            )]
+
         return get_map_path_rule(map_path_list, sub_rules)
         
 
@@ -739,7 +807,7 @@ def get_valueset_map_source(valueset_name, map_path):
 
 ####### WalkMap :  to avoid concept maps when the system is predefined ###### 
 #args[0]: path to map " assing ex " parent.childlvl1.childlvl2 = val
-def MapWalk(mode, profile, question_id,*args):
+def MapWalk(mode, profile, question_id,df_questions,*args):
     # TODO support slicing and create
     val_a = "val" if  re.search(VAL_REGEX,args[0]) else "a"
     rule_name = clean_group_name(question_id)
@@ -782,10 +850,10 @@ def get_map_path_rule(map_path_list, rules, src_name = "src"):
         else:
             last_map = map_path_list[0].split('.')[0]
             return MappingRule(
-                name = "mapbase",
-                expression = "{0} -> {1}".format(src_name,last_map),
-                rules = rules
-            )
+                    name = "mapbase",
+                    expression = "{0} -> {1}".format(src_name,last_map),
+                    rules = rules
+                )
     else:
         return MappingRule(
                 name = "map"+len(map_path_list),
@@ -835,7 +903,7 @@ def get_ref_groups(profile):
 ### create related person
 # args[0] linkid for relatedPerson
 # args[1]  reference of PD 
-def SetCommunicationRequest(mode, profile, question_id,*args):
+def SetCommunicationRequest(mode, profile, question_id,df_questions,*args):
     rule_name = clean_group_name(profile+question_id)
     id_prefix = clean_group_name(profile)
     if mode == 'main':
@@ -862,33 +930,68 @@ def SetCommunicationRequest(mode, profile, question_id,*args):
                             rules = [MappingRule(expression="a.value as val ->  ref.reference = append('/RelatedPerson/', val)")])])
                     ])
                 
-            ]
+            ],  
+
     )    
 
-### create related person
-# args[0] linkid for relatedPerson
-# args[1] linkid for patient
-# args[2] linkid relationship
-  
-def SetRelatedPerson():
-    pass
 
 ### create Classification
-# args[0] linkid for classificaiton
-
-  
-def SetClassification(mode, profile, question_id,*args):
+# args[x] post-coordination linkid under the item
+def SetClassification(mode, profile, question_id,df_questions,*args):
     #FIXME
+    rule_name = clean_group_name(question_id)
     if len(args)< 1:
-        print('Error SetObservation must have 1 parameters')
+        print('Error SetCondition must have 1 parameters')
         return None
     elif mode == 'main':
-        pass
+        return   "src.item as item where linkId =  '{0}' then {2}{1}(src,item, tgt)".format(question_id,rule_name,clean_group_name(profile))
     elif mode == 'group':
-        none_name = args[1] if len(args)>1 else 'none'
-        code = args[0] if len(args) == 1 else question_id
-        rule_name = clean_group_name(question_id)
-        return set_generic_observation_v2( profile, rule_name, code, get_obs_value_rules(code, none_name))
+        
+        # clinicalStatus active | recurrence | relapse | inactive | remission | resolved
+        # subjet: Reference
+        # encounter : Reference
+        # verificationStatus
+        # recordedDate: dateTime
+        return MappingGroup(
+            name = clean_group_name(profile)+rule_name,
+            sources = [MappingGroupIO(name = 'src')],
+            targets = [MappingGroupIO(name = 'tgt')],
+            rules = [
+                MappingRule(expression= "src.item first as item where linkId =  '{0}'".format(question_id),
+                    rules = [
+                        MappingRule(expression= "item.answer first as a",
+                            rules = [
+                            MappingRule(expression= "src.subject as sub -> tgt.subject = sub"),
+                            MappingRule(expression= "src.encounter as en -> tgt.encounter = en"),
+                            get_timestamp_rule(rule_name, target = 'tgt.recordedDate' ),
+                            MappingRule(expression= "src -> tgt.code = create('CodeableConcept') as cs",
+                                rules = [MappingRule(expression= "src -> tgt.code = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= '{}', ccs.system = '{}'".format(question_id, get_custom_codesystem_url()))]),
+                            MappingRule(expression= "a where value.code = 'yes'",
+                                rules = [
+                                    MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'active', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
+                                    MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'differential', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
+                                ]
+                            ),
+                            MappingRule(expression= "a where value.code = 'no'",
+                                rules = [
+                                    MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'inactive', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
+                                    MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'refuted', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
+                                ])
+                        ]),*get_post_coordination_rules(question_id,df_questions,*args)]),         
+                ]
+        )
+
+def get_post_coordination_rules(stem_code,df_questions, *args):
+    rules = []
+
+    for arg in args:
+        rules.append(wrapin_breacrumb([arg],
+            df_questions,
+            [MappingRule(expression= "src -> tgt.contained = create('Coding') as ccs, ccs.code= '{}', ccs.system = '{}'".format(arg, get_custom_codesystem_url()))]
+            )
+        
+        )
+    return rules
 
 ### create Classification
 # args[0] linkid for classificaitonchoice, valueSet
