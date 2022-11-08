@@ -62,6 +62,15 @@ Content-Type: application/json
 < C:\Users\delcpa\Development\smart-emcare\input\resources\questionnaire\questionnaire-emcarea.registration.p.json
 
 
+### PAtient
+
+####
+
+PUT {{host}}/Patient/patient0
+Content-Type: application/json
+
+< /home/delcpa/Development/DAK-tools/test/patient.json
+
 ### ANthro
 
 

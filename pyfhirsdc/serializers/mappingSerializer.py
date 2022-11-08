@@ -1,12 +1,13 @@
 import json
+
 import requests
+from fhir.resources.structuremap import StructureMap
 
 from pyfhirsdc.serializers.http import check_internet
+from pyfhirsdc.serializers.utils import reindent, write_resource
+
 from ..config import add_tail_slash, get_processor_cfg
 
-from pyfhirsdc.converters.utils import  get_resource_url
-from pyfhirsdc.serializers.utils import  reindent, write_resource
-from fhir.resources.structuremap import StructureMap
 
 def write_mapping_file(filepath, mapping, update_map = True):
 

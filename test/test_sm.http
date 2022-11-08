@@ -1,16 +1,7 @@
 @host =https://fhir.dk.swisstph-mis.ch/matchbox/fhir/
 #@host=https://fhir.ruler.dk.swisstph-mis.ch/fhir/
-@rootemcare=/Users/perema/Documents/Projects/smart-emcare/
-### update the SM 
-
-PUT {{host}}StructureMap/emcarea.registration.p HTTP/1.1
-Content-Type: text/fhir-mapping
-Accept: application/fhir+json;fhirVersion=4.0
-
-
-
-< /home/delcpa/Development/smart-emcare/input/resources/structuremap/structuremap-emcarea.registration.p.map
-
+@rootemcare=/home/delcpa/Development/smart-emcare
+##################3 REGISTRATIOn E #############################
 ###
 ### update the SM  Encounter
 
@@ -27,14 +18,9 @@ POST {{host}}StructureMap/$transform?source=https://fhir.dk.swisstph-mis.ch/matc
 Accept: application/fhir+json;fhirVersion=4.0
 Content-Type: application/fhir+json;fhirVersion=4.0
 
-< /home/delcpa/Development/DAK-tools/test/QR.E.json
+< ./QR.E.json
 
-### Test SM against QR
-POST {{host}}StructureMap/$transform?source=https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureMap/emcarea.registration.p
-Accept: application/fhir+json;fhirVersion=4.0
-Content-Type: application/fhir+json;fhirVersion=4.0
 
-< /home/delcpa/Development/DAK-tools/test/QR.json
 
 ### update the SM DS
 
@@ -45,121 +31,37 @@ Accept: application/fhir+json;fhirVersion=4.0
 < {{rootemcare}}/input/mapping/emcareb.registration.e.map
 
 ### Test SM against QR  Encounter
-POST {{host}}StructureMap/$transform?source=https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureMap/emcareb.registration.e
+POST {{host}}StructureMap/$transform?source={{host}}StructureMap/emcareb.registration.e
 Accept: application/fhir+json;fhirVersion=4.0
 Content-Type: application/fhir+json;fhirVersion=4.0
 
-< ./QR_E.json
+< ./QR.E.json
 
+##################3 REGISTRATIOn P #############################
+### update the SM 
+
+PUT {{host}}StructureMap/emcarea.registration.p HTTP/1.1
+Content-Type: text/fhir-mapping
+Accept: application/fhir+json;fhirVersion=4.0
+
+
+
+< {{rootemcare}}/input/mapping/emcarea.registration.p.map
+
+### get the SM 
+
+GET {{host}}StructureMap/emcarea.registration.p HTTP/1.1
+
+### Test SM against QR
+POST {{host}}StructureMap/$transform?source={{host}}StructureMap/emcarea.registration.p
+Accept: application/fhir+json;fhirVersion=4.0
+Content-Type: application/fhir+json;fhirVersion=4.0
+
+< ./QR_P.json
 
 ### send bundle
 
 POST {{host}} HTTP/1.1
 Content-Type: application/json
 
-{
-  "resourceType": "Bundle",
-  "id": "85121485-03ee-4f78-bbfd-0f9c821db4ab",
-  "type": "batch",
-  "entry": [
-    {
-      "id": "4503c065-c965-4267-8dc8-cf42f410736f",
-      "resource": {
-        "resourceType": "Patient",
-        "identifier": [
-          {
-            "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
-            "value": "EmCare.A.DE03"
-          }
-        ],
-        "gender": "male",
-        "birthDate": "2022-08-18",
-        "address": [
-          {
-            "text": "this is the address"
-          }
-        ]
-      },
-      "request": {
-        "url": "/Patient/4503c065-c965-4267-8dc8-cf42f410736f",
-        "method": "PUT"
-      }
-    },
-    {
-      "id": "4503c065-c965-4267-8dc8-cf42f410736f",
-      "resource": {
-        "resourceType": "Encounter",
-        "subject": {
-          "type": "Patient",
-          "identifier": {
-            "value": "4503c065-c965-4267-8dc8-cf42f410736f"
-          }
-        }
-      },
-      "request": {
-        "url": "/Encounter/4503c065-c965-4267-8dc8-cf42f410736f",
-        "method": "PUT"
-      }
-    },
-    {
-      "id": "eessssd-324534-34534-3455",
-      "resource": {
-        "resourceType": "RelatedPerson",
-        "telecom": [
-          {
-            "system": "phone",
-            "value": "123",
-            "use": "mobile"
-          },
-          {
-            "system": "phone",
-            "value": "124",
-            "use": "home"
-          },
-          {
-            "system": "phone",
-            "value": "123",
-            "use": "work"
-          }
-        ]
-      },
-      "request": {
-        "url": "/RelatedPerson/eessssd-324534-34534-3455",
-        "method": "PUT"
-      }
-    },
-    {
-      "resource": {
-        "resourceType": "CommunicationRequest",
-        "category": [
-          {
-            "coding": [
-              {
-                "system": "http://hl7.org/fhir/ValueSet/communication-category",
-                "code": "notification"
-              }
-            ]
-          }
-        ],
-        "subject": {
-          "type": "Patient",
-          "identifier": {
-            "value": "4503c065-c965-4267-8dc8-cf42f410736f"
-          }
-        },
-        "about": [
-          null
-        ],
-        "recipient": [
-          {
-            "reference": "/RelatedPerson/eessssd-324534-34534-3455",
-            "type": "RelatedPerson"
-          }
-        ]
-      },
-      "request": {
-        "method": "POST"
-      }
-    }
-  ]
-}
+{"resourceType":"Bundle","id":"cd697791-36a2-4e87-805b-a9c9b06f54c4","type":"batch","entry":[{"resource":{"resourceType":"Condition","clinicalStatus":{"coding":[{"system":"http://terminology.hl7.org/CodeSystem/condition-clinical","code":"active"}]},"verificationStatus":{"coding":[{"system":"http://terminology.hl7.org/CodeSystem/condition-ver-status","code":"differential"}]},"code":{"coding":[{"system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes","code":"EmCare.B23.DE06"}]},"subject":{"type":"Patient","identifier":{"value":"e39ee194-4205-4ba5-8bac-9806f544e4a0"}},"encounter":{"id":"4762c463-dbba-4ba9-976d-b05e74f10dfc","type":"Encounter","identifier":{"value":"4762c463-dbba-4ba9-976d-b05e74f10dfc"}}},"request":{"method":"POST"}},{"resource":{"resourceType":"Condition","clinicalStatus":{"coding":[{"system":"http://terminology.hl7.org/CodeSystem/condition-clinical","code":"inactive"}]},"verificationStatus":{"coding":[{"system":"http://terminology.hl7.org/CodeSystem/condition-ver-status","code":"refuted"}]},"code":{"coding":[{"system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes","code":"EmCare.B23.DE10"}]},"subject":{"type":"Patient","identifier":{"value":"e39ee194-4205-4ba5-8bac-9806f544e4a0"}},"encounter":{"id":"4762c463-dbba-4ba9-976d-b05e74f10dfc","type":"Encounter","identifier":{"value":"4762c463-dbba-4ba9-976d-b05e74f10dfc"}}},"request":{"method":"POST"}}]}

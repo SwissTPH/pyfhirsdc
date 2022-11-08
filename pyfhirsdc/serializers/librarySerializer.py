@@ -15,13 +15,12 @@ from pyfhirsdc.config import (append_used_obs, append_used_valueset,
                               get_defaut_path, get_fhir_cfg, get_processor_cfg,
                               get_used_obs, get_used_valueset)
 from pyfhirsdc.converters.extensionsConverter import add_library_extentions
-from pyfhirsdc.converters.mappingConverter import inject_config
 from pyfhirsdc.converters.questionnaireItemConverter import \
     get_question_fhir_data_type
 from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
                                         get_codableconcept_code,
                                         get_custom_codesystem_url,
-                                        get_resource_url)
+                                        get_resource_url, inject_config)
 
 from .utils import reindent, write_resource
 

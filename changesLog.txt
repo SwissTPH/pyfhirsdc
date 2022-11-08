@@ -1,3 +1,10 @@
+Bundle 7.11
+
+enableWhen and SM with group support
+id worarround
+fix some skip logic (validation in place)
+Classification lib broken will be fix in next bundle
+
 Bundle 28.10
 Rework skip logic 
     "emcareb.registration.e",
