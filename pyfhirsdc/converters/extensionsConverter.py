@@ -7,7 +7,7 @@ from fhir.resources.extension import Extension
 from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
 
 from pyfhirsdc.config import get_fhir_cfg
-from pyfhirsdc.converters.utils import clean_name, get_breadcrumb
+from pyfhirsdc.converters.utils import clean_name, get_fpath, inject_config
 
 
 def get_dropdown_ext():
@@ -217,33 +217,33 @@ def convert_reference_to_firepath(expression, df_questions):
     matches = re.findall(pattern = r'\$\{(?P<linkid>[^}]+)\}(?:\.(?P<sufix>\w+))?', string = expression.replace('"',"'") )
     
     for match in matches:
-        breadcrumb = []
+        fpath = []
         linkid = match[0]
         sufix = match[1]  
         # find all the parent
         if df_questions is None:
             print("warning: cannot resolve the expression {} because not questions df avaiable".format(expression))
-            breadcrumb = [linkid]       
+            fpath = [linkid]       
         else:
-            breadcrumb = get_breadcrumb(df_questions, linkid, breadcrumb)
+            fpath = get_fpath(df_questions, linkid, fpath)
         # do the replaces : if prefix and prefix != code replace with answers else repalce with value
         path = ''
-        for elm in breadcrumb:
+        for elm in fpath:
             path= ".repeat(item).where(linkId='{}')".format(elm) +path
         # addin the answer
         path = path + ".answer.first()"
-        if sufix is '' or sufix in QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION:
+        if sufix == '' or sufix in QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION:
             path = path + ".value"     
-        if sufix is not '':
+        if sufix != '':
             term = "${{{0}}}.{1}".format(linkid, sufix)
             replace = "%resource"+path+"."+sufix
         else:
             term = "${{{0}}}".format(linkid)
             replace = "%resource"+path
-        expression = expression.replace(term,replace  )  
+        expression = expression.replace(term,replace )
 
 
-    return expression
+    return inject_config(expression) 
 
 def get_enable_when_expression_ext(expression, df_questions, desc = None ):
     return Extension(

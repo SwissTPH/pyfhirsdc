@@ -46,7 +46,7 @@ def get_code(system, code, display = None ):
                 display = display
                 )
     
-def get_breadcrumb(df_questions, linkid, breadcrumb = [] ):
+def get_fpath(df_questions, linkid, fpath = [] ):
     # get the questions
     question = df_questions[(df_questions['id'] == linkid) | (df_questions['label'] == linkid) ]
     if len(question) == 0:
@@ -61,14 +61,17 @@ def get_breadcrumb(df_questions, linkid, breadcrumb = [] ):
         exit()
     #find if there is parent
     question = question.iloc[0]
-    breadcrumb.append(question['id'])
+    fpath.append(question['id'])
     
     if "parentId" in question and pd.notna(question.parentId) :
-        if question.parentId not in breadcrumb:
-            return get_breadcrumb(df_questions, question.parentId, breadcrumb)
+        if question.parentId not in fpath:
+            return get_fpath(df_questions, question.parentId, fpath)
         else:
             print("error: loop detected involving {} and {} ".format(linkid, question.parentId))
             exit()
     else:
-        return breadcrumb
+        return fpath
     # if yes recursive call until no parent or loop
+    
+def inject_config(value):
+    return value.replace('{{cs_url}}',  get_custom_codesystem_url()).replace('{{canonical_base}}',  get_fhir_cfg().canonicalBase)
