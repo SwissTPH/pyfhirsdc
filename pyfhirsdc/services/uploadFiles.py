@@ -1,11 +1,11 @@
 # importing the module
 import os
-from pyfhirsdc.config import  get_fhir_cfg, get_processor_cfg,  read_config_file
-import re
-from pyfhirsdc.serializers.http import put_files
 
-from pyfhirsdc.serializers.json import read_resource 
- 
+from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg, read_config_file
+from pyfhirsdc.serializers.http import put_files
+from pyfhirsdc.serializers.json import read_resource
+
+
 def upload_files (conf, bundle):
     # Read the config file
     config_obj = read_config_file(conf)
