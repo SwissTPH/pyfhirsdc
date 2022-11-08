@@ -19,7 +19,7 @@ from pyfhirsdc.config import (get_defaut_path, get_fhir_cfg, get_processor_cfg,
 from pyfhirsdc.serializers.http import check_internet, post_multipart
 from pyfhirsdc.serializers.json import read_file, read_resource
 
-from ..converters.utils import get_resource_url
+from ..converters.utils import get_custom_codesystem_url, get_resource_url
 
 
 def is_content_to_update(content, lib):
@@ -209,7 +209,7 @@ def update_lib_version(src,dst):
 
     # Replace the target string
     filedata = filedata.replace("{{LIB_VERSION}}",get_fhir_cfg().lib_version)\
-        .replace("{{cs_url}}",get_fhir_cfg().canonicalBase)\
+        .replace("{{cs_url}}",get_custom_codesystem_url())\
         .replace("{{FHIR_VERSION}}",get_fhir_cfg().version)
 
     # Write the file out 
