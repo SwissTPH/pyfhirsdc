@@ -7,7 +7,8 @@ from fhir.resources.extension import Extension
 from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
 
 from pyfhirsdc.config import get_fhir_cfg
-from pyfhirsdc.converters.utils import clean_name, get_fpath, inject_config
+from pyfhirsdc.converters.utils import (clean_name, get_fpath,
+                                        get_resource_url, inject_config)
 
 
 def get_dropdown_ext():
@@ -20,6 +21,14 @@ def get_dropdown_ext():
                 display = "Drop down")],
             text ="Drop down")
 )
+ 
+ 
+def get_subquestionnaire_ext(questionnaire_id):
+ return Extension(
+    url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-subQuestionnaire",
+    valueCanonical = Canonical(get_resource_url('Questionnaire',questionnaire_id))
+    )
+
 
 def get_open_choice_ext():
  return Extension(
