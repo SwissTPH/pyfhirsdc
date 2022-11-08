@@ -468,6 +468,7 @@ def map_to_obs_valueset(cql_exp):
     out = cql_exp
     out = out.replace('HasCond', 'Base.HasCond')
     out = out.replace('HasObs', 'Base.HasObs')
+    out = out.replace('GetObsValue', 'Base.GetObsValue')
     for match in matches:
         if match not in changed:
             if match  in ("Yes", "No"):
