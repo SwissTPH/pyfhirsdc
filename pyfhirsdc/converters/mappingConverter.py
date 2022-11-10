@@ -10,8 +10,7 @@ from pyfhirsdc.config import get_defaut_path, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import \
     get_structure_map_extension
 from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
-                                        get_fpath,
-                                        get_custom_codesystem_url,
+                                        get_custom_codesystem_url, get_fpath,
                                         get_resource_url, inject_config)
 from pyfhirsdc.converters.valueSetConverter import get_valueset_df
 from pyfhirsdc.models.mapping import (Mapping, MappingGroup, MappingGroupIO,
@@ -153,7 +152,8 @@ def wrapin_fpath(fpaths,df_questions,rules):
             rules = rules
         )
     else:
-        a_ids = fpaths.pop(0).split('||')
+        # we trust the content of a_ids and remove the result from get_fpath
+        fpaths.pop(0)
         leaf_rule = MappingRule(
             expression = "itm{}.item first as item  where linkId =  '{}'".format(len(fpaths),"' or linkId= '".join(a_ids)),
             rules = rules
@@ -525,13 +525,8 @@ def get_obs_value_rules(question_id, df_questions_item,none_name):
             
     
 def wrapin_first_answers_rules(rule_name, question_id,df_questions_item, rules):
-    
-    return MappingRule(
-        expression = "src.item first as item  where linkId =  '{}'".format(question_id),
-        name = 'it-{}'.format(rule_name),
-        rules = [MappingRule(
+    return wrapin_fpath([question_id],df_questions_item,[MappingRule(
             expression = "item.answer first as a",
-            name = 'an-{}'.format(rule_name),
             rules = rules
         )]
     )
@@ -593,10 +588,10 @@ def SetObservationYesNo(mode, profile, question_id,df_questions_item, *args):
 def get_obs_yes_no_rules(question_id,df_questions_item,):
     rule_name = clean_group_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
-        expression = "a  where a.value = 'yes' -> tgt.status = 'final' ",
+        expression = "a  where a.value = 'yes' -> tgt.status = 'final', tgt.value = true ",
         name = 'final-{}'.format(rule_name)
     ),MappingRule(
-        expression = " a  where a.value = 'no' -> tgt.status = 'cancelled' ",
+        expression = " a  where a.value = 'no' -> tgt.status = 'cancelled' , tgt.value = false",
         name = 'notfound-{}'.format(rule_name)
     )])]
     
@@ -615,28 +610,34 @@ def SetObservationBoolean(mode, profile, question_id,df_questions_item, *args):
 def get_obs_bool_rules(question_id, df_questions_item):
     rule_name = clean_group_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
-        expression = "a  where a.value = true -> tgt.status = 'final'",
+        expression = "a  where a.value = true -> tgt.status = 'final', tgt.value = true",
         name = 'final-{}'.format(rule_name)
     ),MappingRule(
-        expression = "a  where a.value = false -> tgt.status = 'cancelled'",
+        expression = "a  where a.value = false -> tgt.status = 'cancelled', tgt.value = false",
         name = 'notfound-{}'.format(rule_name)
     )])]
 
 ####### SetOfficalGivenNameSetOfficalGivenName :  to have all the name under a single "official" ###### 
-#args[0]: question name given
-#args[1]: question name mid
-#args[2]: question name last
-def SetOfficalGivenName(mode, profile, question_id,df_questions, *args):
+#args[0]: question name last
+#args[1]: question name first
+#args[2]: question name mid
+def SetOfficalGivenName(mode, profile, question_id,df_questions_item, *args):
     rule_name = clean_group_name(profile)
-    if len(args)!= 3:
+    if len(args)< 2:
         print('Error SetOfficalGivenName must have 3 parameters')
         return None
     if mode == 'main':
         return wrapin_fpath(
             ["||".join(args)],
-            df_questions,
+            df_questions_item,
             [MappingRule(expression= "src -> tgt as target,  target.name as name then SetOfficalGivenName{}(src, name)".format(rule_name))])
-
+    rules = [
+        wrapin_first_answers_rules(rule_name, args[0],df_questions_item,[MappingRule(expression = 'a.value as val -> tgt.family = val')]),
+        wrapin_first_answers_rules(rule_name, args[1],df_questions_item,[MappingRule(expression = 'a.value as val -> tgt.given = val')]),
+    ]
+    if len(args) == 3:
+        rules.append(wrapin_first_answers_rules(rule_name, args[2],df_questions_item,[MappingRule(expression = 'a.value as val -> tgt.given = val')]))
+    
     return MappingGroup(
         name = 'SetOfficalGivenName{}'.format(rule_name),
         sources = [MappingGroupIO(name = 'src')],
@@ -644,28 +645,7 @@ def SetOfficalGivenName(mode, profile, question_id,df_questions, *args):
         rules = [
             MappingRule(
                 expression = "src -> tgt.use = 'official'",
-                rules = [
-                    MappingRule(    
-                        expression = "src.item as item where linkId  =  '{0}'".format(args[0]),
-                        rules = [
-                            MappingRule(expression = 'item.answer first as a',
-                                rules = [MappingRule(expression = 'a.value as val -> tgt.given = val ')])]
-                    ),
-                    MappingRule(    
-                        expression = "src.item as item where linkId  =  '{0}'".format(args[1]),
-                        rules = [
-                            MappingRule(expression = 'item.answer first as a',
-                                rules = [MappingRule(expression = 'a.value as val -> tgt.given = val ')])]
-                    ),
-                    MappingRule(    
-                        expression = "src.item as item where linkId  =  '{0}'".format(args[2]),
-                        rules = [
-                            MappingRule(expression = 'item.answer first as a',
-                                rules = [MappingRule(expression = 'a.value as val -> tgt.family = val ')])]
-                    )
-
-   
-                ]
+                rules = rules
             )
         ]
     )
