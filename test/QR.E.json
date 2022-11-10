@@ -1,1 +1,145 @@
-{"resourceType":"QuestionnaireResponse","questionnaire":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/Questionnaire/emcareb.registration.e","subject":{"type":"Patient","identifier":{"value":"b03ea79d-07bb-4de9-bcc8-ded1bec5d087"}},"encounter":{"id":"9589ff84-a440-40d6-a257-2d3cc5f79773","type":"Encounter","identifier":{"value":"9589ff84-a440-40d6-a257-2d3cc5f79773"}},"item":[{"linkId":"timestamp"},{"linkId":"EmCare.A.DE07","text":"Visit date"},{"linkId":"EmCare.A.DE39","text":"Person accompanying child Today is the primary Caregiver","answer":[{"valueBoolean":true}]},{"linkId":"EmCare.B2.DE01","text":"Type of Visit","answer":[{"valueCoding":{"system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes","code":"EmCare.B2.DE02","display":"Planned"}}]},{"linkId":"EmCare.B3.DE01","text":"Reason for Consultation","answer":[{"valueCoding":{"system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes","code":"EmCare.B3.DE03","display":"Sick Child"}}]},{"linkId":"EmCare.B3.DE05","text":"Is the child sick Today?","answer":[{"valueCoding":{"system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes","code":"yes","display":"Yes"}}]},{"linkId":"EmCare.B3.DE09","text":"Referred by a Health Care Worker or Health Care Facility","answer":[{"valueBoolean":true}]}]}
+{
+   "resourceType":"QuestionnaireResponse",
+   "questionnaire":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/Questionnaire/emcareb.registration.e",
+   "subject":{
+      "type":"Patient",
+      "identifier":{
+         "value":"a122b5ac-a9b5-4fad-93a8-b6a983e6821d"
+      }
+   },
+   "encounter":{
+      "id":"58868e86-3518-44b3-bf08-56d7aa8d9ed0",
+      "type":"Encounter",
+      "identifier":{
+         "value":"58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+      }
+   },
+   "item":[
+      {
+         "linkId":"EmCare.A.DE07",
+         "text":"Visit date"
+      },
+      {
+         "linkId":"EmCare.A.DE39",
+         "text":"Person accompanying child Today is the primary Caregiver",
+         "answer":[
+            {
+               "valueCoding":{
+                  "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                  "code":"no",
+                  "display":"No"
+               }
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE49",
+         "text":"Person accompanying child Today"
+      },
+      {
+         "linkId":"emcarerelatedpersonaccompanyingid",
+         "answer":[
+            {
+               "valueBoolean":true
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE49.1",
+         "text":"EmCare.A.DE21.1",
+         "item":[
+            {
+               "linkId":"EmCare.A.DE40",
+               "text":"Person accompanying child Today's First Name",
+               "answer":[
+                  {
+                     "valueString":"fdsg"
+                  }
+               ]
+            },
+            {
+               "linkId":"EmCare.A.DE41",
+               "text":"Person accompanying child Today's Last Name",
+               "answer":[
+                  {
+                     "valueString":"fgds"
+                  }
+               ]
+            },
+            {
+               "linkId":"EmCare.A.DE42",
+               "text":"Person accompanying child Today's contact's phone number",
+               "answer":[
+                  {
+                     "valueInteger":6445645
+                  }
+               ]
+            },
+            {
+               "linkId":"EmCare.A.DE43",
+               "text":"Person accompanying child Today's Relationship to Client",
+               "answer":[
+                  {
+                     "valueCoding":{
+                        "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code":"EmCare.A.DE25",
+                        "display":"Mother"
+                     }
+                  }
+               ]
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.B2.DE01",
+         "text":"Type of Visit",
+         "answer":[
+            {
+               "valueCoding":{
+                  "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                  "code":"EmCare.B2.DE03",
+                  "display":"Unplanned"
+               }
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.B3.DE01",
+         "text":"Reason for Consultation",
+         "answer":[
+            {
+               "valueCoding":{
+                  "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                  "code":"EmCare.B3.DE03",
+                  "display":"Sick Child"
+               }
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.B3.DE05",
+         "text":"Is the child sick Today?",
+         "answer":[
+            {
+               "valueCoding":{
+                  "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                  "code":"yes",
+                  "display":"Yes"
+               }
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.B3.DE09",
+         "text":"Referred by a Health Care Worker or Health Care Facility",
+         "answer":[
+            {
+               "valueBoolean":false
+            }
+         ]
+      },
+      {
+         "linkId":"timestamp"
+      }
+   ]
+}

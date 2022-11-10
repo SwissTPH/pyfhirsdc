@@ -24,6 +24,13 @@ def get_used_obs():
 def get_used_valueset():
     return used_valueset
 
+#        "questionnaires" : dfs_questionnaire,
+#        "decisions_tables" : dfs_decision_table,
+#        "valueset" : df_value_set,
+#        "profile" : df_profile,
+#        "extension" : df_extension,
+#        "cql" : df_cql
+
 def set_dict_df(dict_in):
     global dict_df
     dict_df = dict_in

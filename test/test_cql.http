@@ -1,17 +1,15 @@
 @host=https://fhir.ruler.dk.swisstph-mis.ch/fhir
 #@host=https://fhir.dk.swisstph-mis.ch/matchbox/fhir
 
-
-### library eval POST with get data
+@rootemcare=/home/delcpa/Development/smart-emcare
+### library post
 PUT {{host}}/Library/emcaredt01
 content-type: application/json
 
-
-
-< /home/delcpa/Development/smart-emcare/input/resources/library/library-emcaredt01.json
+< {{rootemcare}}/input/resources/library/library-emcaredt01.json
 
 ### library eval POST with get data
-POST {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0
+POST {{host}}/Library/emcaredt01/$evaluate?subject=/Patient/patient0
 
 ### library eval POST with get data
 PUT {{host}}/Library/emcareb6measurements
@@ -37,7 +35,7 @@ content-type: text/cql
 POST {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0
 
 ### library eval POST with get data
-GET {{host}}/Library/emcarebregistratione/$evaluate?subject=/Patient/patient0
+GET {{host}}/Library/emcareb7ltidangersigns/$evaluate?subject=/Patient/patient0
 
 
 
@@ -103,9 +101,9 @@ content-type: application/json
         "resourceType": "Parameters",
         "parameter": [
           {
-            "name": "Patient",
-            "resource": {"resourceType":"Patient",5555
-              "id":"patient0"}
+            "name": "param1",
+            "resource": {"resourceType":"Integer",
+              "value":"5"}
           }
         ]
       }

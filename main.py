@@ -1,8 +1,11 @@
-import sys, getopt
+import getopt
+import sys
+
+from pyfhirsdc.services.generateBundle import write_bundle
 from pyfhirsdc.services.processInputFile import process_input_file
 from pyfhirsdc.services.processLibraries import process_libraries
 from pyfhirsdc.services.uploadFiles import upload_files
-from pyfhirsdc.services.generateBundle import write_bundle
+
 
 def print_help():
     print('-c / --conf config_file_path')
