@@ -126,6 +126,9 @@ this sheet defined how the questionnaires are sequences using multiple plan defi
     - Reference for the specific action
 #### output
     - The outcome of performing such an action
+### l. libraries
+
+will create a library, same way and fields as the questionnaire
 
 
 ### q.<questionnaireReference>

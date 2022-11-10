@@ -1,16 +1,18 @@
-from pyfhirsdc.serializers.inputFile import read_input_file, parse_sheets
-from pyfhirsdc.config import *
-from pyfhirsdc.services.generateActivities import generate_activities
-from pyfhirsdc.services.generateCodeSystem import generate_custom_code_system
-from pyfhirsdc.services.generateValueSet import generate_value_sets
-from .generateQuestionnaires import generate_questionnaires
-from .generatePlanDefinitions import generate_plandefinitions
-from .generateProfiles import generate_profiles
-
 import os
-import pandas as pd
 import re
 
+import pandas as pd
+
+from pyfhirsdc.config import *
+from pyfhirsdc.serializers.inputFile import parse_sheets, read_input_file
+from pyfhirsdc.services.generateActivities import generate_activities
+from pyfhirsdc.services.generateCodeSystem import generate_custom_code_system
+from pyfhirsdc.services.generateLibraries import generate_libraries
+from pyfhirsdc.services.generateValueSet import generate_value_sets
+
+from .generatePlanDefinitions import generate_plandefinitions
+from .generateProfiles import generate_profiles
+from .generateQuestionnaires import generate_questionnaires
 
 
 def process_input_file(conf):
@@ -21,15 +23,14 @@ def process_input_file(conf):
     else:
         input_file = read_input_file(get_processor_cfg().inputFile)
         if input_file is not None:
-            dfs_questionnaire, dfs_decision_table, df_value_set, df_profile,\
-                 df_extension, df_cql = parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
+            parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
             input_file.close()
-            print(len(dfs_questionnaire))
+            
             # generate the CodeSystem
             generate_custom_code_system()  
             # generate questionnaire
             generate_questionnaires()
-
+            generate_libraries()
 
  
 
@@ -46,7 +47,7 @@ def process_input_file(conf):
             # generate the Concept CQL 
 
             # generate planDefinition
-            generate_plandefinitions(dfs_decision_table)
+            generate_plandefinitions()
 
             # generate Activity
             generate_activities()

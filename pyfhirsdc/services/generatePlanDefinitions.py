@@ -6,16 +6,17 @@ import os
 from fhir.resources.identifier import Identifier
 from fhir.resources.plandefinition import PlanDefinition
 
-from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
+from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.planDefinitionConverter import process_decisiontable
 from pyfhirsdc.converters.utils import clean_group_name, get_resource_url
-from pyfhirsdc.serializers.librarySerializer import generate_plan_defnition_lib
+from pyfhirsdc.serializers.librarySerializer import generate_attached_library
 from pyfhirsdc.serializers.planDefinitionIndexSerializer import \
     write_plan_definition_index
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
 
-def generate_plandefinitions(decisionTable):
+def generate_plandefinitions():
+    decisionTable = get_dict_df()['decisions_tables']
     root_output_path = get_processor_cfg().outputPath
     plandefinitions = {}
 
@@ -62,7 +63,7 @@ def generate_plandefinition( name,df_actions):
     planDefinition = process_decisiontable(pd_df, df_actions)
      
     if planDefinition is not None:
-        library = generate_plan_defnition_lib(planDefinition,df_actions)
+        library = generate_attached_library(planDefinition,df_actions)
         # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
         #plan_definition = process_decisiontable(plandefinitions, dict_actions)
         # write file

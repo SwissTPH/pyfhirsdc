@@ -33,17 +33,29 @@ def getIdentifierFirstRep(planDef):
         planDef.identifier = [identifier]
     return planDef.identifier[0]  
 
-def generate_plan_defnition_lib(resource, df_actions, type = 'pd'):
-    id = clean_name(resource.id)
-    print("Generating library ", resource.name, ".......")
+def generate_attached_library(resource, df_actions, type = 'pd'):
+    library = generate_library(resource.name, df_actions, type)
+    if library is not None:
+        libraryCanonical = Canonical(library.url)
+        if hasattr(resource, 'library') and resource.library is None: 
+            resource.library = []    
+            resource.library.append(libraryCanonical)
+        else:
+            resource = add_library_extentions(resource, library.id)
+        
+        
+def generate_library(name, df_actions, type = 'pd', description = None):
+
+    id = clean_name(name)
+    print("Generating library ", name, ".......")
     lib_id =clean_group_name(id)
     library = Library(
         id = lib_id,
         status = 'active',
         name = lib_id,
         version = get_fhir_cfg().lib_version,
-        title = resource.title,
-        description = resource.description,
+        title = name,
+        description = description, # FIXME add sope library
         url = get_resource_url('Library', lib_id),
         content = [Attachment(
             id = "ig-loader-" + lib_id + ".cql"
@@ -68,17 +80,12 @@ def generate_plan_defnition_lib(resource, df_actions, type = 'pd'):
             )
         output_lib_file = os.path.join(
                 output_lib_path,
-                "library-"+ resource.id +  "." + get_processor_cfg().encoding
+                "library-"+ id +  "." + get_processor_cfg().encoding
             )
         write_resource(output_lib_file, library, get_processor_cfg().encoding)
         cql_path = get_defaut_path('CQL', 'cql')
         write_library_CQL(cql_path, library, cql)
-        libraryCanonical = Canonical(library.url)
-        if hasattr(resource, 'library') and resource.library is None: 
-            resource.library = []    
-            resource.library.append(libraryCanonical)
-        else:
-            resource = add_library_extentions(resource, library.id)
+
 
         return  library
 
@@ -93,11 +100,11 @@ def get_lib_parameters_list(df_in, type = "pd"):
         else:
             q_type = 'boolean'
         name = row['id'] if 'id' in row else index
-        if name is not None and pd.notna(name):
+        if name is not None and pd.notna(name)  :
             desc = row['label'].replace(u'\xa0', u' ').replace('  ',' ') if 'label' in row and pd.notna(row['label']) else\
                 row['description'].replace(u'\xa0', u' ').replace('  ',' ') if 'description' in row and pd.notna(row['description']) else None
             parameters.append({'name': name, 'type':q_type})
-            if row['description'] is not None:
+            if row['description'] is not None and pd.notna(row['description']):
                 parameters.append({'name':desc, 'type':q_type})
     #TODO add observation, condition and Zscore function parsing here   maybe using {{paramter}}  
 
@@ -123,7 +130,7 @@ def get_lib_parameters(df_in, type = "pd"):
     for param in  parameters_in:
         parameters.append(ParameterDefinition(
             use = 'out',
-            name = param["name"] ,
+            name = param["name"].lower() ,
             type = get_lib_type(param["type"])
         ))
 
@@ -419,14 +426,15 @@ def write_cql_df(library, df_actions,  type):
                 cql[i] = write_cql_action(ref, row,'applicabilityExpressions', df_actions)
                 i += 1
                 # add the wrapper name -> id
-                cql[i] = write_cql_action(ref, row, 'applicabilityExpressions', df_actions,row['description'])
-                i += 1
+                if pd.notna(row['description']):
+                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['applicabilityExpressions']['prefix'], row['description'].lower(),ref.lower())
+                    i += 1
             ## questionnaire initial expression in CQL, FIXMDe
             if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()) and row['type'] != '{{cql}}' :
                 cql[i] = write_cql_action(ref, row,'initialExpression',df_actions)
                 i += 1
                 if pd.notna(row['label']):
-                    cql[i] = write_cql_action(ref, row, 'initialExpression', df_actions,row['label'])
+                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['initialExpression']['prefix'], row['label'].lower(),ref.lower())
                     i += 1
             while  i > oi :
                 cql[oi] = inject_config(cql[oi])
@@ -459,29 +467,38 @@ define "{1}{0}":
         ret +=reindent("{}\n".format(cql_exp),4)
     return ret + "\n"
 
+def write_cql_alias(prefix, alias,reference):
+    return   """
+/* alias {1}{0} : {2}*/
+define "{1}{0}":
+    "{2}"
+""".format(prefix, alias,reference)
+
 def map_to_obs_valueset(cql_exp):
     # find "([^"]+)" *= *"([^"]+)" 
     valueset_list = [x.lower() for x in  get_used_valueset()]
     obs_list = [x.lower() for x in get_used_obs()]
     changed = []
-    matches = re.findall(r'(?<!\.)"([^"\.]+)"',cql_exp)
+    matches = re.findall(r'(^|.)"([^"\.]+)"',cql_exp)
     out = cql_exp
     out = out.replace('HasCond', 'Base.HasCond')
     out = out.replace('HasObs', 'Base.HasObs')
     out = out.replace('GetObsValue', 'Base.GetObsValue')
     for match in matches:
-        if match not in changed:
-            if match  in ("Yes", "No"):
-                out = out.replace('"{}"'.format(match), 'Base."{}"'.format(match) )
-                changed.append(match)
-            elif match.lower() in valueset_list:
-                changed.append(match)
-                out = out.replace('"{0}"'.format(match), 'val."{1}"'.format(match,match.lower()) )
-            elif match.lower() in obs_list:
-                changed.append(match)
-                out = out.replace('"{0}"'.format(match), 'obs."{1}"'.format(match,match.lower()) )
-            else:
-                out = out.replace('"{0}"'.format(match), '"{1}"'.format(match,match.lower()) )
+        if match[0] != '.':
+            match = match[1]
+            if match not in changed:
+                if match  in ("Yes", "No"):
+                    out = out.replace('"{}"'.format(match), 'Base."{}"'.format(match) )
+                    changed.append(match)
+                elif match.lower() in valueset_list:
+                    changed.append(match)
+                    out = out.replace('"{0}"'.format(match), 'val."{1}"'.format(match,match.lower()) )
+                elif match.lower() in obs_list:
+                    changed.append(match)
+                    out = out.replace('"{0}"'.format(match), 'obs."{1}"'.format(match,match.lower()) )
+                else:
+                    out = out.replace('"{0}"'.format(match), '"{1}"'.format(match,match.lower()) )
             
     
     return out

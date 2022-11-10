@@ -31,7 +31,7 @@ def parse_sheets(input_file, excudedWorksheets):
     df_value_set = None
     df_profile = None
     df_extension = None
-    df_cql = None
+    dfs_cql = {}
     for worksheet in sheets:
         print ("loading sheet {0}".format( worksheet))
         if excudedWorksheets is None or worksheet not in excudedWorksheets:
@@ -64,9 +64,9 @@ def parse_sheets(input_file, excudedWorksheets):
                     df_extension = df
                 else:
                     break
-            elif worksheet == "cql":
-                if validate_value_set_sheet(df):
-                    df_cql = df
+            elif worksheet.startswith('l.'):
+                if validate_cql_sheet(df):
+                    dfs_cql[worksheet[2:]] = df
                 else:
                     break
     set_dict_df({
@@ -75,9 +75,9 @@ def parse_sheets(input_file, excudedWorksheets):
         "valueset" : df_value_set,
         "profile" : df_profile,
         "extension" : df_extension,
-        "cql" : df_cql
+        "libraries" : dfs_cql
     })
-    return dfs_questionnaire, dfs_decision_table, df_value_set, df_profile, df_extension, df_cql
+
 
 def validate_questionnaire_sheet(df):
     return True
