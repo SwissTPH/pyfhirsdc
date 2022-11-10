@@ -105,7 +105,8 @@ def process_quesitonnaire_line(id, question, df_questions):
                     repeats= get_question_repeats(question),
                     #design_note = "status::draft",
                     definition = get_question_definition(question),
-                    initial = get_initial_value(question)
+                    initial = get_initial_value(question),
+                    readOnly = get_disabled_display(question)
                 )
         if pd.notna(question['label']) and question['type'] != "select_boolean":
             new_question.text = question['label']
@@ -118,7 +119,10 @@ def process_quesitonnaire_line(id, question, df_questions):
             convert_df_to_questionitems(new_question,df_questions, id )                     
         return new_question
     
-    
+def get_disabled_display(question):
+    display_array = get_display(question)  
+    if "readonly" in display_array or "protected" in display_array:
+        return True
 
 def get_initial_value(question): #TODO remove when uuid will be supported in cal/fhirpath
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
