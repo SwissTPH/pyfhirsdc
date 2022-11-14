@@ -232,7 +232,7 @@ include FHIRHelpers version '{0}' called FHIRHelpers
 {4}
 {5}
 context Patient
-      
+context Encounter      
 """.format(
     get_fhir_cfg().version, 
     library.name, 
@@ -355,12 +355,12 @@ def write_obsevation(concept):
     if concept.display is not None and pd.notna(concept.display):
         ## Output false, manual process to convert the pseudo-code to CQL
         cql += "/*\"{0}\"*/\n".format(concept.display)+\
-            "define \"{0}\":\n".format(str(concept.display).lower())+ \
-                "  B.HasObs(B.c('{}'), '{}')".format(concept.code,get_custom_codesystem_url()) + "\n"
+            "define \"{0}\":\n".format(str(concept.display).lower().replace("\n", ""))+ \
+                "  B.HasObs('{}')".format(concept.code,get_custom_codesystem_url()) + "\n"
     if concept.code is not None and concept.code:
         ## Output false, manual process to convert the pseudo-code to CQL    
-        cql += "define \"{0}\":\n".format(str(concept.code).lower())+ \
-                "  B.HasObs(B.c('{}'), '{}')".format(concept.code, get_custom_codesystem_url()) + "\n\n"
+        cql += "define \"{0}\":\n".format(str(concept.code).lower().replace("\n", ""))+ \
+                "  B.HasObs('{}')".format(concept.code, get_custom_codesystem_url()) + "\n\n"
     return cql    
 
 
@@ -372,7 +372,7 @@ def write_action_condition(action):
             
             ## Output false, manual process to convert the pseudo-code to CQL
             cql += "/*\n \"{0}\":\n ".format(condition.expression.description if condition.expression.description is not None else action.description)+"\n */\n "+\
-                "define \"{0}\":\n ".format(str(condition.expression.expression).lower())+ \
+                "define \"{0}\":\n ".format(str(condition.expression.expression).lower().replace("\n", ""))+ \
                     "  false" + "\n\n "
     return cql    
 
@@ -456,7 +456,7 @@ def write_cql_action(id, row, expression_column, df, display = None):
     ret =   """
 /* {1}{0} : {2}*/
 define "{1}{0}":
-""".format(str(display).lower(), str(prefix).lower(), name)
+""".format(str(display).lower().replace("\n", ""), str(prefix).lower().replace("\n", ""), name)
     sub =  get_additionnal_cql(id,df,expression_column)
     sub = map_to_obs_valueset(sub)
     if len(sub)>0 and cql_exp != '':
@@ -472,7 +472,7 @@ def write_cql_alias(prefix, alias,reference):
 /* alias {1}{0} : {2}*/
 define "{1}{0}":
     "{2}"
-""".format(prefix, alias,reference)
+""".format(prefix.replace("\n", ""), alias.replace("\n", ""),reference)
 
 def map_to_obs_valueset(cql_exp):
     # find "([^"]+)" *= *"([^"]+)" 
@@ -488,15 +488,18 @@ def map_to_obs_valueset(cql_exp):
         if match[0] != '.':
             match = match[1]
             if match not in changed:
-                if match  in ("Yes", "No"):
-                    out = out.replace('"{}"'.format(match), 'Base."{}"'.format(match) )
+                if match  in ("Yes"):
+                    out = out.replace('"{}"'.format(match), 'true'.format(match) )
+                    changed.append(match)
+                if match  in ("No"):
+                    out = out.replace('"{}"'.format(match), 'false'.format(match) )
                     changed.append(match)
                 elif match.lower() in valueset_list:
                     changed.append(match)
                     out = out.replace('"{0}"'.format(match), 'val."{1}"'.format(match,match.lower()) )
                 elif match.lower() in obs_list:
                     changed.append(match)
-                    out = out.replace('"{0}"'.format(match), 'obs."{1}"'.format(match,match.lower()) )
+                    out = out.replace('"{0}"'.format(match), 'obs."{1}" is not null and obs."{1}"'.format(match,match.lower()) )
                 else:
                     out = out.replace('"{0}"'.format(match), '"{1}"'.format(match,match.lower()) )
             

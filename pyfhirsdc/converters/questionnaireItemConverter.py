@@ -220,7 +220,7 @@ def get_question_extension(question, question_id, df_questions = None ):
     return extensions
 
 def get_display(question):
-    display_str = str(question["display"]).lower() if "display" in question and pd.notna(question["display"]) else None
+    display_str = str(question["display"]) if "display" in question and pd.notna(question["display"]) else None
     if display_str is not None:
         return display_str.split('||')
     else:
