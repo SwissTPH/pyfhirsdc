@@ -21,7 +21,7 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_checkbox_ext, get_choice_column_ext, get_constraint_exp_ext,
     get_dropdown_ext, get_enable_when_expression_ext, get_hidden_ext,
     get_initial_expression_identifier_ext, get_open_choice_ext, get_slider_ext,
-    get_unit_ext, get_variable_extension)
+    get_subquestionnaire_ext, get_unit_ext, get_variable_extension)
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_resource_url)
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
@@ -193,7 +193,9 @@ def get_question_extension(question, question_id, df_questions = None ):
     # TODO support other display than drop down
     if (type.lower() == 'select_boolean'):
         extensions.append(get_checkbox_ext())
-    if "select_" in type and "dropdown"  in display :
+    elif type == "questionnaire":
+        extensions.append(get_subquestionnaire_ext(question["id"]))
+    elif "select_" in type and "dropdown"  in display :
         extensions.append(get_dropdown_ext())
     elif type == "select_multiple":
         # only way to have select multiple repeat = true is not enough
