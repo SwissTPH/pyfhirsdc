@@ -86,7 +86,7 @@ def get_fpath(df_questions, linkid, fpath = [] ):
     if len(question) == 0:
         # look but with the
         question = df_questions[df_questions['id'] == linkid]
-        #FIXME look for valueset
+        #FIXME #32 look for valueset
         print("error: {} not found in id or label".format(linkid))
         exit()
     elif len(question) > 1:

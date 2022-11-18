@@ -221,7 +221,7 @@ def check_expression_keyword(row, keword):
     
 # libs [{name,version,alias}]
 # parameters [{name,type}]
-def writeLibraryHeader(library, libs = [],  parameters = []):
+def writeLibraryHeader(library, libs = [],  header = '', parameters = []):
     return """/*
 @author: Patrick Delcroix
 @description: This library is part of the project {3}
@@ -230,16 +230,14 @@ library {1} version '{2}'
 using FHIR version '{0}'
 include FHIRHelpers version '{0}' called FHIRHelpers 
 {4}
-{5}
-context Patient
-context Encounter      
+{5}    
 """.format(
     get_fhir_cfg().version, 
     library.name, 
     get_fhir_cfg().lib_version, 
     get_processor_cfg().scope,
     get_include_lib(libs, library),
-    '')#get_include_parameters(parameters))
+    header)#get_include_parameters(parameters))
 
 
 # libs is a list {name='', version='', alias = ''}
@@ -282,7 +280,7 @@ def write_library_CQL(output_path, lib, cql):
 def write_cql_pd(library, planDefinition):
     # write 3 cql : start, end, applicability
     cql = {}
-    cql['header'] = writeLibraryHeader(library)
+    cql['header'] = writeLibraryHeader(library, header = "context Encounter\n\ndefine Patient:\n    B.Patient")
     i = 0
     list_actions = planDefinition.action
     if list_actions:
@@ -300,7 +298,7 @@ def get_observation_cql_from_concepts(concepts, lib):
     list_of_display = []
     cql = {}
     libs = [{'name':'EmCareBase','alias':'B','version':get_fhir_cfg().lib_version}]
-    cql['header'] = writeLibraryHeader(lib, libs)
+    cql['header'] = writeLibraryHeader(lib, libs,  header = "context Encounter\n\ndefine Patient:\n    B.Patient")
     i = 0
     if concepts is not None:
         for concept in concepts:
@@ -441,7 +439,7 @@ def write_cql_df(library, df_actions,  type):
                 oi+=1
 
     
-    cql['header'] = writeLibraryHeader(library, libs, get_lib_parameters_list(df_actions, type ))
+    cql['header'] = writeLibraryHeader(library, libs,  header = "context Encounter\n\ndefine Patient:\n    Base.Patient", parameters= get_lib_parameters_list(df_actions, type ))
     return cql
 
 def write_cql_action(id, row, expression_column, df, display = None):
@@ -484,6 +482,10 @@ def map_to_obs_valueset(cql_exp):
     out = out.replace('HasCond', 'Base.HasCond')
     out = out.replace('HasObs', 'Base.HasObs')
     out = out.replace('GetObsValue', 'Base.GetObsValue')
+    out = out.replace('AgeInDays()', 'Base.AgeInDays')
+    out = out.replace('AgeInMonths()', 'Base.AgeInMonths')
+    out = out.replace('AgeInYears()', 'Base.AgeInYears')
+
     for match in matches:
         if match[0] != '.':
             match = match[1]

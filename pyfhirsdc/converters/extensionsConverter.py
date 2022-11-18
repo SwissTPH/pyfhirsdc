@@ -219,11 +219,11 @@ def get_hidden_ext():
     )
 
     # if yes recursive call until no parent or loop
-QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION = ['code']
+QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION = ['code', 'not','display']
 
 def convert_reference_to_firepath(expression, df_questions):
     # find all the reference
-    matches = re.findall(pattern = r'\$\{(?P<linkid>[^}]+)\}(?:\.(?P<sufix>\w+))?', string = expression.replace('"',"'") )
+    matches = re.findall(pattern = r'"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?', string = expression)
     
     for match in matches:
         fpath = []
@@ -244,12 +244,15 @@ def convert_reference_to_firepath(expression, df_questions):
         if sufix == '' or sufix in QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION:
             path = path + ".value"     
         if sufix != '':
-            term = "${{{0}}}.{1}".format(linkid, sufix)
+            term_q = '"{0}".{1}'.format(linkid, sufix)
+            #term = "${{{0}}}.{1}".format(linkid, sufix)
             replace = "%resource"+path+"."+sufix
         else:
-            term = "${{{0}}}".format(linkid)
+            term_q = '"{0}"'.format(linkid, sufix)
+            #term = "${{{0}}}".format(linkid)
             replace = "%resource"+path
-        expression = expression.replace(term,replace )
+        expression = expression.replace(term_q,replace ) 
+        #expression = expression.replace(term,replace )
 
 
     return inject_config(expression) 
