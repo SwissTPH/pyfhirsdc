@@ -50,19 +50,14 @@ def convert_df_to_questionitems(ressource,df_questions, parentId = None):
             print("${0} is not a valid type, see question ${1}".format(question['type'], question['id']))       
         elif type == "skipped":
             pass
+        # for multiline variables
         elif  type == 'variable':
             variable = get_variable_extension(question['id'],question['calculatedExpression'],df_questions)
             if variable is not None:
                 ressource.extension.append(variable)
-        
         else:
-            item = process_quesitonnaire_line(question['id'], question,df_questions )
-            if item is not None:
-                
-                # we save the question as a new ressouce
-                if ressource.item is None:
-                    ressource.item = []
-                ressource.item.append(item)
+            process_quesitonnaire_line(ressource, question['id'], question,df_questions )
+
 
     # close all open groups
 
@@ -87,7 +82,7 @@ def get_question_repeats(question):
     return True if question['type'] == 'select_boolean' or question['type'].startswith('select_multiple') else False
 
 
-def process_quesitonnaire_line(id, question, df_questions):
+def process_quesitonnaire_line(resource, id, question, df_questions):
     type =get_question_fhir_data_type(question['type'])
     if pd.notna(question['required']):
         if int(question['required']) == 1:
@@ -110,13 +105,13 @@ def process_quesitonnaire_line(id, question, df_questions):
                 )
         if pd.notna(question['label']) and question['type'] != "select_boolean":
             new_question.text = question['label']
-        #FIXME DEMO WORKARROUND REQUIRE NOT WORKING WITH SKIP LOGIC
-        #for ext in new_question.extension:
-        #    if ext.url == 'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression':
-        #        new_question.required = False
-        # we save the the questionnaire 
         if 'parentId' in  df_questions:
-            convert_df_to_questionitems(new_question,df_questions, id )                     
+            convert_df_to_questionitems(new_question,df_questions, id )
+                    
+        # we save the question as a new ressouce
+        if resource.item is None:
+            resource.item = []
+        resource.item.append(new_question)             
         return new_question
     
 def get_disabled_display(question):
@@ -163,7 +158,8 @@ QUESTION_TYPE_MAPPING = {
                 "number" :"integer",
                 "CodeableConcept": "CodeableConcept",
                 "Reference" : "Reference",
-                'group':'group'      
+                'group':'group',
+                'questionnaire':'group'      
 }
 
 

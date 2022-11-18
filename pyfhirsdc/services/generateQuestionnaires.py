@@ -14,6 +14,7 @@ from pyfhirsdc.converters.mappingConverter import (add_mapping_url,
                                                    get_questionnaire_mapping)
 from pyfhirsdc.converters.questionnaireItemConverter import (
     convert_df_to_questionitems, get_timestamp_item, init_questionnaire)
+from pyfhirsdc.converters.utils import inject_sub_questionnaires
 from pyfhirsdc.serializers.librarySerializer import generate_attached_library
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
@@ -34,9 +35,10 @@ def generate_questionnaire( name ,df_questions) :
     questionnaire = init_questionnaire(fullpath, name)
     # clean the data frame
     
+    
+    df_questions = inject_sub_questionnaires(df_questions)
     df_questions_item = df_questions[df_questions.type != 'mapping']
     df_questions_lib = df_questions
-
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
     questionnaire = convert_df_to_questionitems(questionnaire, df_questions_item)
         # add timestamp
@@ -44,7 +46,7 @@ def generate_questionnaire( name ,df_questions) :
     #### StructureMap ####
     #structure_maps = get_structure_map_bundle(name, df_questions)
     #structure_maps = get_structure_maps(name, df_questions)
-    mapping = get_questionnaire_mapping(name, df_questions_item)
+    mapping = get_questionnaire_mapping(name, df_questions_lib)
     questionnaire = add_mapping_url(questionnaire, mapping)
     library = generate_attached_library(questionnaire,df_questions_lib,'q')
 

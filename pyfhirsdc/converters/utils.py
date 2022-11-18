@@ -4,7 +4,7 @@ import pandas as pd
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
 
-from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg
+from pyfhirsdc.config import get_dict_df, get_fhir_cfg, get_processor_cfg
 
 
 def get_resource_name(resource_type, name):
@@ -25,6 +25,40 @@ def get_custom_codesystem_url():
             'CodeSystem', 
             get_processor_cfg().scope+"-custom-codes"
             )
+    
+    
+def inject_sub_questionnaires(df_questions):
+    for s_id, s_row in df_questions[df_questions.type == "questionnaire"].iterrows():
+        df_questions = inject_sub_questionnaire(df_questions, s_row['id'])
+    return df_questions
+
+
+
+def inject_sub_questionnaire(df_questions, questionnaire_name):
+
+    # find the questionnaire
+    dict_questionnaire_df = get_dict_df()['questionnaires']
+    if questionnaire_name in dict_questionnaire_df:
+        sub_questionnaire = dict_questionnaire_df[questionnaire_name].copy()
+        load_sub_questionnaire = sub_questionnaire[pd.notna(sub_questionnaire.initialExpression) | (sub_questionnaire.id=="{{library}}")]
+        sub_questionnaire=sub_questionnaire[pd.isna(sub_questionnaire.initialExpression) & (sub_questionnaire.id!="{{library}}")]
+        
+        
+        if 'parentId' in sub_questionnaire:
+            updated_parentid = []
+            for id, row in sub_questionnaire.iterrows():
+                updated_parentid.append( row['parentId'] if pd.notna(row['parentId']) else questionnaire_name)
+            sub_questionnaire.update(pd.DataFrame({'parentId':updated_parentid}))
+        else:
+            sub_questionnaire['parentId'] = [questionnaire_name  for x in range(len(sub_questionnaire))]
+        df_questions = pd.concat([df_questions,sub_questionnaire], ignore_index=True)
+        # inject the load 
+        for s_id, s_row in load_sub_questionnaire.iterrows(): 
+            if len(df_questions[df_questions.id == s_row['id']])==0:
+                df_questions.loc[len(df_questions.index)]=s_row
+                #df_questions.append(s_row)
+    # inject the questionnaire questions as child quesiton
+    return df_questions
     
 def init_resource_meta(resource):
     resource.date = datetime.now(timezone.utc).isoformat('T', 'seconds')
@@ -52,6 +86,7 @@ def get_fpath(df_questions, linkid, fpath = [] ):
     if len(question) == 0:
         # look but with the
         question = df_questions[df_questions['id'] == linkid]
+        #FIXME look for valueset
         print("error: {} not found in id or label".format(linkid))
         exit()
     elif len(question) > 1:
