@@ -97,44 +97,70 @@ def get_bundle_group(df_questions_item):
     
 def get_bundle_rules(df_questions_item):
     profiles = get_question_profiles(df_questions_item)
+
     # bassic bundle rules
     rules = [
         MappingRule(expression = "src -> bundle.id = uuid()", name = 'id'),
         MappingRule(expression = "src -> bundle.type = 'batch'", name = 'type'),
     ]
     for profile in profiles:
+        base_profile = get_base_profile(profile)
         rule = None
         if is_oneliner_profile(profile):
             questions =  get_question_profiles_detail(df_questions_item, profile)
             for  row in questions.values():
-                rule = get_post_bundle_profile_rule(profile,row['id'], row )
+                rule = get_post_oneliner_bundle_profile_rule(profile,row['id'], df_questions_item )
                 if rule is not None:
                     rules.append(rule)
-        else:
+        elif base_profile in ('Patient', 'Encounter'):
             rule = get_put_bundle_profile_rule(profile,df_questions_item)
             if rule is not None:
                 rules.append(rule)
+        else:
+            rule = get_post_bundle_profile_rule(profile, df_questions_item )
+            if rule is not None:
+                rules.append(rule)
+            
 
     return rules     
-        
-def get_post_bundle_profile_rule(profile, question_id, row):
+
+def get_post_oneliner_bundle_profile_rule(profile,question_id,df_questions_item):
+    rule_name = clean_group_name(profile)+clean_group_name(question_id)
     base_profile = get_base_profile(profile)
+            
+    rule =   wrapin_fpath(["{0}".format(question_id)],df_questions_item,[
+                MappingRule(expression = "src -> bundle.entry as entry ",
+                rules = [
+                    MappingRule(expression = "src -> entry.request as request, request.method = 'POST' , uuid() as uuid, request.url = append('/{}/', uuid)".format(base_profile)),
+                    MappingRule(
+                        expression = "src -> entry.resource = create('{0}') as tgt".format(base_profile),
+                        rules = [
+                            MappingRule(expression  ='src -> tgt then {0}(src, tgt)'.format(rule_name))
+                                # get_id_rule(base_profile,rule_name)
+                                ]
+            )])])
+    
+    return rule
+
+
+def get_post_bundle_profile_rule(profile,df_questions_item):
     rule_name = clean_group_name(profile)
-    if base_profile in ('Patient', 'Encounter') or base_profile in FHIR_ONELINER_PROFILES:
-        expression =  "src where src.item.where(linkId='{0}').exists()".format(question_id)
-    else:
-        expression =  "src where src.item.where(linkId='{0}').exists() and src.item.where(linkId='{1}id').first().answer.exists()".format(question_id, rule_name )
-    group_name = clean_group_name(profile+question_id)
-    #FIXME should use the helper for ontime
-    return MappingRule(
-        name = rule_name,
-        expression = expression,
-        rules = [MappingRule(
-            name = 'act-{0}'.format(question_id),
-            expression = "src -> bundle.entry as entry, entry.request as request, request.method = 'POST', entry.resource = create('{0}') as tgt then {1}(src,tgt)".format(
-                base_profile,
-                group_name))]
-    )
+    base_profile = get_base_profile(profile)
+            
+    rule =   wrapin_fpath(["{0}id".format(rule_name)],df_questions_item,[
+                MappingRule(
+                expression = "src -> bundle.entry as entry ,entry.request as request, request.method = 'POST' , entry.resource = create('{0}') as tgt".format(base_profile),
+                rules = [
+                    MappingRule(expression  ='item.answer first as a',
+                                rules = [ MappingRule(expression="a.value as val -> request.url = append('/{0}/', val)".format(base_profile))]),
+                    MappingRule(expression  ='src -> tgt then {0}(src, tgt)'.format(rule_name))
+                         # get_id_rule(base_profile,rule_name)
+                        ]
+            )])
+    
+    return rule
+        
+
  
 def get_test_fpaths(linkid,df_questions,rules):
     pass
@@ -173,11 +199,11 @@ def get_put_bundle_profile_rule(profile,df_questions_item):
     base_profile = get_base_profile(profile)
     
     rule =  MappingRule(
-        expression = get_rule_entry_expression(base_profile, rule_name) ,
+        expression = "src -> bundle.entry as entry" ,
         name = 'put-{0}'.format(rule_name),
         rules = [
             get_request_rule(base_profile, rule_name,df_questions_item),
-            MappingRule(expression = 'src -> entry.resource = create("{0}") as tgt'.format(base_profile),
+            MappingRule(expression = 'src ->  entry.resource = create("{0}") as tgt'.format(base_profile),
                 rules = [MappingRule(expression = 'src -> tgt then {0}(src, tgt)'.format(rule_name)),
                 ] ) # get_id_rule(base_profile,rule_name)
         ]
@@ -187,11 +213,6 @@ def get_put_bundle_profile_rule(profile,df_questions_item):
 
     return rule
 
-def get_rule_entry_expression(base_profile, cleanned_profile):
-    if base_profile in  ('Patient', 'Encounter'):
-        return "src -> bundle.entry as entry"
-    else:
-        return "src where src.item.where(linkId='{0}id').exists()-> bundle.entry as entry".format(cleanned_profile)
 
 
 def get_request_rule(base_profile, cleanned_profile, df_questions_item):
