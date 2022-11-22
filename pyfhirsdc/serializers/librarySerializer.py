@@ -90,6 +90,7 @@ def generate_library(name, df_actions, type = 'pd', description = None):
         return  library
 
 def get_lib_parameters_list(df_in, type = "pd"):
+    
     parameters = []
     df = filter_df(df_in,type)
 
@@ -103,9 +104,9 @@ def get_lib_parameters_list(df_in, type = "pd"):
         if name is not None and pd.notna(name)  :
             desc = row['label'].replace(u'\xa0', u' ').replace('  ',' ') if 'label' in row and pd.notna(row['label']) else\
                 row['description'].replace(u'\xa0', u' ').replace('  ',' ') if 'description' in row and pd.notna(row['description']) else None
-            parameters.append({'name': name, 'type':q_type})
+            parameters.append({'name': name, 'type':q_type, 'use': 'out'})
             if row['description'] is not None and pd.notna(row['description']):
-                parameters.append({'name':desc, 'type':q_type})
+                parameters.append({'name':desc, 'type':q_type, 'use': 'out'})
     #TODO add observation, condition and Zscore function parsing here   maybe using {{paramter}}  
 
     return parameters
@@ -125,7 +126,11 @@ def get_lib_type(type):
         return type
         
 def get_lib_parameters(df_in, type = "pd"):
-    parameters = []
+    parameters = [ParameterDefinition(
+            use = 'in',
+            name = 'encounter' ,
+            type = 'Encounter'
+        )]
     parameters_in = get_lib_parameters_list(df_in,type)
     for param in  parameters_in:
         parameters.append(ParameterDefinition(
@@ -221,7 +226,7 @@ def check_expression_keyword(row, keword):
     
 # libs [{name,version,alias}]
 # parameters [{name,type}]
-def writeLibraryHeader(library, libs = [],  header = '', parameters = []):
+def writeLibraryHeader(library, libs = []):
     return """/*
 @author: Patrick Delcroix
 @description: This library is part of the project {3}
@@ -230,14 +235,17 @@ library {1} version '{2}'
 using FHIR version '{0}'
 include FHIRHelpers version '{0}' called FHIRHelpers 
 {4}
-{5}    
+
+{5}
+
+context Patient    
 """.format(
     get_fhir_cfg().version, 
     library.name, 
     get_fhir_cfg().lib_version, 
     get_processor_cfg().scope,
     get_include_lib(libs, library),
-    header)#get_include_parameters(parameters))
+    get_include_parameters(library.parameter))
 
 
 # libs is a list {name='', version='', alias = ''}
@@ -258,8 +266,10 @@ def get_include_lib(libs, library = None):
 
 def get_include_parameters(parameters):
     ret = ''
-    for param in parameters:
-        ret += "parameter '{}' : {}\n".format(param['name'], param['type'])
+    if parameters is not None:
+        for param in parameters:
+            if param.use == 'in':
+                ret += 'parameter "{}"  {}\n'.format(param.name , param.type)
 
     return ret    
 
@@ -280,7 +290,7 @@ def write_library_CQL(output_path, lib, cql):
 def write_cql_pd(library, planDefinition):
     # write 3 cql : start, end, applicability
     cql = {}
-    cql['header'] = writeLibraryHeader(library, header = "context Encounter\n\ndefine Patient:\n    B.Patient")
+    cql['header'] = writeLibraryHeader(library)
     i = 0
     list_actions = planDefinition.action
     if list_actions:
@@ -298,7 +308,7 @@ def get_observation_cql_from_concepts(concepts, lib):
     list_of_display = []
     cql = {}
     libs = [{'name':'EmCareBase','alias':'B','version':get_fhir_cfg().lib_version}]
-    cql['header'] = writeLibraryHeader(lib, libs,  header = "context Encounter\n\ndefine Patient:\n    B.Patient")
+    cql['header'] = writeLibraryHeader(lib, libs)
     i = 0
     if concepts is not None:
         for concept in concepts:
@@ -439,7 +449,7 @@ def write_cql_df(library, df_actions,  type):
                 oi+=1
 
     
-    cql['header'] = writeLibraryHeader(library, libs,  header = "context Encounter\n\ndefine Patient:\n    Base.Patient", parameters= get_lib_parameters_list(df_actions, type ))
+    cql['header'] = writeLibraryHeader(library, libs)
     return cql
 
 def write_cql_action(id, row, expression_column, df, display = None):
@@ -482,9 +492,7 @@ def map_to_obs_valueset(cql_exp):
     out = out.replace('HasCond', 'Base.HasCond')
     out = out.replace('HasObs', 'Base.HasObs')
     out = out.replace('GetObsValue', 'Base.GetObsValue')
-    out = out.replace('AgeInDays()', 'Base.AgeInDays')
-    out = out.replace('AgeInMonths()', 'Base.AgeInMonths')
-    out = out.replace('AgeInYears()', 'Base.AgeInYears')
+
 
     for match in matches:
         if match[0] != '.':
@@ -501,7 +509,7 @@ def map_to_obs_valueset(cql_exp):
                     out = out.replace('"{0}"'.format(match), 'val."{1}"'.format(match,match.lower()) )
                 elif match.lower() in obs_list:
                     changed.append(match)
-                    out = out.replace('"{0}"'.format(match), 'obs."{1}" is not null and obs."{1}"'.format(match,match.lower()) )
+                    out = out.replace('"{0}"'.format(match), 'obs."{1}"'.format(match,match.lower()) )
                 else:
                     out = out.replace('"{0}"'.format(match), '"{1}"'.format(match,match.lower()) )
             
@@ -521,14 +529,16 @@ def get_additionnal_cql(id,df,expression_column ):
                 if expression_column in row and pd.notna(row[expression_column]):
                     cql_exp = row[expression_column] if row[expression_column].strip() != '{{cql}}' else ''
                     if count_i>0:
-                        ret += "\n or " 
+                        ret += ")\n or (" 
+                    else:
+                        ret += "("
                     sub =  get_additionnal_cql(row['id'],df,expression_column)
                     if len(sub)>0:
                         ret +=reindent("({})\n and ({})\n".format(cql_exp,sub),4)
                     else:
                         ret +=reindent("{}\n".format(cql_exp),4)
                     count_i += 1
-            return ret
+            return ret +")"
     return ''
 
 

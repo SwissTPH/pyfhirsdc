@@ -169,14 +169,14 @@ def get_checkbox_ext():
             text ="Check-box")
     )
 def get_unit_ext(unit):
-    #https://www.hl7.org/fhir/ucum.html
-    # value set https://build.fhir.org/valueset-ucum-units.html
+    #https://build.fhir.org/valueset-http://unitsofmeasure.org
+    # value set https://build.fhir.org/valueset-ucum-common.html
     unit_part = unit.split('::')
     if len(unit_part) == 2:
         return Extension(
             url ="http://hl7.org/fhir/StructureDefinition/questionnaire-unit",
             valueCoding = Coding(
-                system = "http://hl7.org/fhir/ValueSet/ucum-units",
+                system = "http://unitsofmeasure.org",
                 code = unit_part[1],
 
             )
