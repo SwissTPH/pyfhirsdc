@@ -151,9 +151,10 @@ def get_post_bundle_profile_rule(profile,df_questions_item):
                 MappingRule(
                 expression = "src -> bundle.entry as entry ,entry.request as request, request.method = 'POST' , entry.resource = create('{0}') as tgt".format(base_profile),
                 rules = [
+                    MappingRule(expression  ='src -> tgt then {0}(src, tgt)'.format(rule_name)),
                     MappingRule(expression  ='item.answer first as a',
-                                rules = [ MappingRule(expression="a.value as val -> request.url = append('/{0}/', val)".format(base_profile))]),
-                    MappingRule(expression  ='src -> tgt then {0}(src, tgt)'.format(rule_name))
+                                rules = [ MappingRule(expression="a.value as val -> request.url = append('/{0}/', val)".format(base_profile))])
+                    
                          # get_id_rule(base_profile,rule_name)
                         ]
             )])
@@ -256,7 +257,7 @@ def get_mapping_groups(questionnaire_name, df_questions_item):
             group_tmp = None
         else:
             group_tmp, sub_groups_tmp = get_mapping_group(profile, questionnaire_name, df_questions_item)
-            sub_groups_tmp += get_ref_groups(profile)
+            #sub_groups_tmp += get_ref_groups(profile)
             
         if group_tmp is not None :            
             out_groups.append(group_tmp)
@@ -474,30 +475,30 @@ def get_base_obs_muli_rules(profile, question_id,df):
     #src where src.item.where(linkId='EmCare.A.DE16').answer.exists(value.code = 'EmCare.A.DE17')=false -> tgt.gender = 'male' 'emcareade17';
     for index, row in df.iterrows():
         row_id = row['code'] 
-        rule_name = clean_group_name( question_id + row_id + 't')
+        rule_name = clean_group_name( profile + row_id + 't')
         rules.append(MappingRule(
             name = rule_name,
-            expression = "src where src.item.where(linkId='{0}').answer.exists(value.code = '{1}') then {2}(src,tgt)".format(question_id, row_id,rule_name)
+            expression = "src where src.item.where(linkId='{0}').answer.where(value.code = '{1}') then {2}(src,tgt)".format(question_id, row_id,rule_name)
         ))
         groups.append(
-            set_generic_observation_v2(profile, rule_name, row_id, [MappingRule(expression = "src -> tgt.status = 'final'",name = 'f-{}'.format(row_id))])
+            set_generic_observation_v2(profile, rule_name, row_id, [MappingRule(expression = "src -> tgt.status = 'final'")],'t')
         )
-        rule_name = clean_group_name( question_id + row_id + 'f')
+        rule_name = clean_group_name( profile + row_id + 'f')
         rules.append(MappingRule(
             name = rule_name,
-            expression = "src where src.item.where(linkId='{0}').answer.exists(value.code = '{1}')=false then {2}(src,tgt)".format(question_id, row_id, rule_name)
+            expression = "src where src.item.where(linkId='{0}').answer.where(value.code = '{1}')=false then {2}(src,tgt)".format(question_id, row_id, rule_name)
         
         ))
         groups.append(
-            set_generic_observation_v2(profile, rule_name, row_id, [MappingRule(expression = "src -> tgt.status = 'cancelled'",name = 'f-{}'.format(row_id))])
+            set_generic_observation_v2(profile, rule_name, row_id, [MappingRule(expression = "src -> tgt.status = 'cancelled'",)],'f')
         )
     return groups, rules
         
 
-def set_generic_observation_v2(profile, rule_name, code ,spe_rules):
+def set_generic_observation_v2(profile, rule_name, code ,spe_rules, sufix = ''):
     profile = clean_group_name(profile)
     return MappingGroup (
-        name = clean_group_name(profile+code),
+        name = clean_group_name(profile+code+sufix),
         sources = [
             MappingGroupIO(name = 'src'), # type questionnaireResponse
         ],
@@ -885,14 +886,11 @@ def SetCommunicationRequest(mode, profile, question_id,df_questions,*args):
 def SetClassification(mode, profile, question_id,df_questions,*args):
     #FIXME
     rule_name = clean_group_name(question_id)
-    if len(args)< 1:
-        print('Error SetCondition must have 1 parameters')
-        return None
-    elif mode == 'main':
+    if mode == 'main':
         return wrapin_fpath(
             [question_id],
             df_questions,
-            [MappingRule(expression="item then then {2}{1}(src,item, tgt)")])
+            [MappingRule(expression="item then then {1}{1}(src,item, tgt)".format(clean_group_name(profile),rule_name))])
     elif mode == 'group':
         
         # clinicalStatus active | recurrence | relapse | inactive | remission | resolved
