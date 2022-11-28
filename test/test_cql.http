@@ -10,8 +10,7 @@ content-type: application/json
 
 ### library eval POST with get data
 POST {{host}}/Library/emcaredt01/$evaluate?subject=/Patient/patient0
-
-### library eval POST with get data
+http://build.fhir.org/ig/HL7/sdc/
 PUT {{host}}/Library/emcareb6measurements
 content-type: application/json
 
@@ -31,11 +30,6 @@ content-type: text/cql
 < /home/delcpa/Development/smart-emcare/input/cql/emcareb6measurements.cql
 
 
-### library eval POST with get data
-POST {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0
-
-### library eval POST with get data
-GET {{host}}/Library/emcareb7ltidangersigns/$evaluate?subject=/Patient/patient0
 
 
 
@@ -55,7 +49,12 @@ GET {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/patient0&an
 
 POST {{host}}/Library/EmCareBase/$evaluate?subject=/Patient/patient0&annotations=true&result-types=true
 
+### seding ucum
 
+PUT {{host}}/ValueSet/ucum-common
+content-type: application/json
+
+< {{rootemcare}}/manual/vocabulary/valueset/valueset-ucum-common.json
 
 ### $Apply
 
@@ -73,6 +72,73 @@ content-type: application/json
 ###
 
 GET {{host}}/Library/?url=http://fhir.org/guides/who/anc-cds/Library/FHIRHelpers
+###
+PUT {{host}}/Library/emcareb1014symptoms2mp
+content-type: application/json
+
+< {{rootemcare}}/input/resources/library/library-emcare.b10-14.symptoms.2m.p.json
+
+###
+### library eval POST with get data
+POST {{host}}/Library/emcareb6measurements/$evaluate?subject=/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d&encounter=58868e86-3518-44b3-bf08-56d7aa8d9ed0
+### library eval POST with get data
+GET {{host}}/Library/emcareb7ltidangersigns/$evaluate?subject=/Patient/patient0
+
+### library eval Symptoms
+POST {{host}}/Library/emcareb1014symptoms2mp/$evaluate?subject=/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d&encounter=58868e86-3518-44b3-bf08-56d7aa8d9ed0
+
+### library eval Observation
+POST {{host}}/Library/emcareobservation/$evaluate?encounter=/Encounter/58868e86-3518-44b3-bf08-56d7aa8d9ed0
+
+### library eval POST with get data
+POST {{host}}/Library/EmCareBase/$evaluate?encounter=/Encounter/58868e86-3518-44b3-bf08-56d7aa8d9ed0
+### library eval POST with get data
+POST {{host}}/Library/emcarecombineddataelements/$evaluate?subject=/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d
+### library eval ZScoreBAse
+
+# emcareb1016signs2mp
+#emcareb1014symptoms2mp
+# EmCareZScore
+# emcarecombineddataelements
+# EmCareBase  
+#emcareobservation
+@file = emcarebase
+@lib = emcarevalueset
+PUT {{host}}/Library/{{lib}}
+content-type: application/json
+
+< {{rootemcare}}/input/resources/library/library-{{file}}.json
+####
+
+POST {{host}}/Library/{{lib}}/$evaluate?subject=/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d
+content-type: application/json
+
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "parameters",
+      "resource": {
+        "resourceType": "Parameters",
+        "parameter": [
+          {"name":"id", "valueCoding":{"code":"EmCare.B6.DE01", "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes"}},
+          {"name":"nbdays", "valueInteger":"100"},
+          {
+            "name": "encounterid",
+            "valueString":"58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+            
+          }
+        ]
+      }
+    }
+  ]
+}
+###32
+    {
+    "name":"expression",
+    "valueString":"EmCarePatient"
+
+    },
 ### Send emcarepd lib
 PUT {{host}}/Library/emcaredt01
 content-type: application/json
@@ -88,9 +154,17 @@ GET https://fhir.ruler.dk.swisstph-mis.ch/fhir/Library/SimpleR4Library
 GET https://fhir.ruler.dk.swisstph-mis.ch/fhir/Library/emcaredt01
 ###
 
-POST https://fhir.ruler.dk.swisstph-mis.ch/fhir/$cql?subject=patient0
-content-type: application/json
 
+GET {{host}}/Observation 
+
+###
+GET {{host}}/Encounter
+###
+DELETE {{host}}/Encounter/encounter0
+
+###
+POST https://fhir.ruler.dk.swisstph-mis.ch/fhir/$cql?subject=/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d
+content-type: application/json
 
 {
   "resourceType": "Parameters",
@@ -101,21 +175,58 @@ content-type: application/json
         "resourceType": "Parameters",
         "parameter": [
           {
-            "name": "param1",
-            "resource": {"resourceType":"Integer",
-              "value":"5"}
+            "name": "encounter",
+            "resource":{
+              "resourceType": "Encounter",
+              "id": "58868e86-3518-44b3-bf08-56d7aa8d9ed0",
+              "meta": {
+                "versionId": "1",
+                "lastUpdated": "2022-11-22T07:45:18.316+00:00",
+                "source": "#2Z5sMgKpcgJJZ9kk"
+              },
+              "extension": [
+                {
+                  "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/refered",
+                  "valueBoolean": false
+                }
+              ],
+              "type": [
+                {
+                  "coding": [
+                    {
+                      "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                      "code": "EmCare.B2.DE03",
+                      "display": "Unplanned"
+                    }
+                  ],
+                  "text": "type of visit"
+                }
+              ],
+              "subject": {
+                "reference": "Patient/7d25cd4d-9865-4c9a-afd6-ab547821b515",
+                "type": "Patient"
+              }
+            }
           }
         ]
       }
     },
     {
       "name": "expression",
-      "valueString": "difference in years between Today() and  Patient.birthDate < 5"
+      "valueString": "(false and null = true) "
     }
   ]
 }
 
-
+# true or null -> true
+# false or null -> null 
+# false and null -> false 
+# true and null -> null 
+###resourceType
+    {
+        "name": "subject",
+        "valueReference":{"reference":"/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d"}
+    },
 ### EMCareBAse
 
 POST https://fhir.cql-translator.dk.swisstph-mis.ch/cql/translator?annotations=true&result-types=true HTTP/1.1
@@ -136,3 +247,90 @@ Content-Type: application/cql
 
 < /home/delcpa/Development/smart-emcare/input/cql/FHIRHelpers.cql
 --MyBoundary--
+
+
+
+####31
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "parameters",
+      "resource": {          {
+            "name": "encounter",
+            "resource":{
+              "resourceType": "Encounter",
+              "id": "58868e86-3518-44b3-bf08-56d7aa8d9ed0",
+              "meta": {
+                "versionId": "1",
+                "lastUpdated": "2022-11-22T07:45:18.316+00:00",
+                "source": "#2Z5sMgKpcgJJZ9kk"
+              },
+              "extension": [
+                {
+                  "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/refered",
+                  "valueBoolean": false
+                }
+              ],
+              "type": [
+                {
+                  "coding": [
+                    {
+                      "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                      "code": "EmCare.B2.DE03",
+                      "display": "Unplanned"
+                    }
+                  ],
+                  "text": "type of visit"
+                }
+              ],
+              "subject": {
+                "reference": "Patient/7d25cd4d-9865-4c9a-afd6-ab547821b515",
+                "type": "Patient"
+              }
+            }
+        "resourceType": "Parameters",
+        "parameter": [
+          {
+            "name": "encounter",
+            "resource":{
+              "resourceType": "Encounter",
+              "id": "58868e86-3518-44b3-bf08-56d7aa8d9ed0",
+              "meta": {
+                "versionId": "1",
+                "lastUpdated": "2022-11-22T07:45:18.316+00:00",
+                "source": "#2Z5sMgKpcgJJZ9kk"
+              },
+              "extension": [
+                {
+                  "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/refered",
+                  "valueBoolean": false
+                }
+              ],
+              "type": [
+                {
+                  "coding": [
+                    {
+                      "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                      "code": "EmCare.B2.DE03",
+                      "display": "Unplanned"
+                    }
+                  ],
+                  "text": "type of visit"
+                }
+              ],
+              "subject": {
+                "reference": "Patient/7d25cd4d-9865-4c9a-afd6-ab547821b515",
+                "type": "Patient"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "expression",
+      "valueString": "Last([Observation])"
+    }
+  ]
+}

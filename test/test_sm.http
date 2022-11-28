@@ -1,5 +1,5 @@
-@host =https://fhir.dk.swisstph-mis.ch/matchbox/fhir/
-#@host=https://fhir.ruler.dk.swisstph-mis.ch/fhir/
+#@host =https://fhir.dk.swisstph-mis.ch/matchbox/fhir/
+@host=https://fhir.ruler.dk.swisstph-mis.ch/fhir/
 @rootemcare=/home/delcpa/Development/smart-emcare
 ##################3 REGISTRATIOn E #############################
 ###
@@ -19,8 +19,6 @@ Accept: application/fhir+json;fhirVersion=4.0
 Content-Type: application/fhir+json;fhirVersion=4.0
 
 < ./QR.E.json
-
-
 
 ### update the SM DS
 
@@ -59,9 +57,25 @@ Content-Type: application/fhir+json;fhirVersion=4.0
 
 < ./QR_P.json
 
-### send bundle
+###
+#Bundle
 
 POST {{host}} HTTP/1.1
 Content-Type: application/json
 
-{"resourceType":"Bundle","id":"cd697791-36a2-4e87-805b-a9c9b06f54c4","type":"batch","entry":[{"resource":{"resourceType":"Condition","clinicalStatus":{"coding":[{"system":"http://terminology.hl7.org/CodeSystem/condition-clinical","code":"active"}]},"verificationStatus":{"coding":[{"system":"http://terminology.hl7.org/CodeSystem/condition-ver-status","code":"differential"}]},"code":{"coding":[{"system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes","code":"EmCare.B23.DE06"}]},"subject":{"type":"Patient","identifier":{"value":"e39ee194-4205-4ba5-8bac-9806f544e4a0"}},"encounter":{"id":"4762c463-dbba-4ba9-976d-b05e74f10dfc","type":"Encounter","identifier":{"value":"4762c463-dbba-4ba9-976d-b05e74f10dfc"}}},"request":{"method":"POST"}},{"resource":{"resourceType":"Condition","clinicalStatus":{"coding":[{"system":"http://terminology.hl7.org/CodeSystem/condition-clinical","code":"inactive"}]},"verificationStatus":{"coding":[{"system":"http://terminology.hl7.org/CodeSystem/condition-ver-status","code":"refuted"}]},"code":{"coding":[{"system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes","code":"EmCare.B23.DE10"}]},"subject":{"type":"Patient","identifier":{"value":"e39ee194-4205-4ba5-8bac-9806f544e4a0"}},"encounter":{"id":"4762c463-dbba-4ba9-976d-b05e74f10dfc","type":"Encounter","identifier":{"value":"4762c463-dbba-4ba9-976d-b05e74f10dfc"}}},"request":{"method":"POST"}}]}
+< ./test/bundle_P.json
+
+### Test SM against QR
+POST {{host}}StructureMap/$transform?source={{host}}StructureMap/emcare.b6.measurements
+Accept: application/fhir+json;fhirVersion=4.0
+Content-Type: application/fhir+json;fhirVersion=4.0
+
+< ./QR_M.json
+
+### send bundle
+#Bundle
+
+POST {{host}} HTTP/1.1
+Content-Type: application/json
+
+< ./test/bundle_E.json

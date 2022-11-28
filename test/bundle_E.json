@@ -1,0 +1,79 @@
+{
+    "resourceType": "Bundle",
+    "id": "c3d3fb54-0756-4c78-93bf-ff3d9ee8097c",
+    "type": "batch",
+    "entry": [
+      {
+        "resource": {
+          "resourceType": "Encounter",
+          "extension": [
+            {
+              "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/refered",
+              "valueBoolean": false
+            }
+          ],
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                  "code": "EmCare.B2.DE03",
+                  "display": "Unplanned"
+                }
+              ],
+              "text": "type of visit"
+            }
+          ],
+          "subject": {
+            "reference": "/Patient/7d25cd4d-9865-4c9a-afd6-ab547821b515",
+            "type": "Patient"
+          }
+        },
+        "request": {
+          "url": "/Encounter/encounter0",
+          "method": "PUT"
+        }
+      },
+      {
+        "resource": {
+          "resourceType": "Observation",
+          "meta": {
+            "profile": [
+              "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+            ]
+          },
+          "identifier": [
+            {
+              "id": "597bcad8-c5dc-4acd-aaf0-5fed230fbbb6",
+              "use": "official",
+              "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+              "value": "uuid"
+            }
+          ],
+          "status": "final",
+          "code": {
+            "coding": [
+              {
+                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                "code": "EmCare.B3.DE05"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "/Patient/7d25cd4d-9865-4c9a-afd6-ab547821b515",
+            "type": "Patient"
+          },
+          "encounter": {
+            "id": "58868e86-3518-44b3-bf08-56d7aa8d9ed0",
+            "reference": "/Encounter/58868e86-3518-44b3-bf08-56d7aa8d9ed0",
+            "type": "Encounter"
+          },
+          "valueBoolean": true
+        },
+        "request": {
+          "url": "/Observation/6328f239-7493-44c8-9002-c5333af7e605",
+          "method": "POST"
+        }
+      }
+    ]
+  }

@@ -2,226 +2,229 @@
     "resourceType":"QuestionnaireResponse",
     "questionnaire":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/Questionnaire/emcarea.registration.p",
     "subject":{
-       "type":"Patient",
-       "identifier":{
-          "value":"29047d48-38c4-461e-80dc-65b0066d079d"
-       }
-    },
-    "encounter":{
-       "id":"3a2b5603-153c-475a-bb23-099837f6393d",
-       "type":"Encounter",
-       "identifier":{
-          "value":"3a2b5603-153c-475a-bb23-099837f6393d"
-       }
-    },
-    "item":[
-       {
-          "linkId":"EmCare.A.DE01",
-          "text":"Unique Identification",
-          "answer":[
-             {
-                "valueString":"month"
-             }
-          ]
-       },
-       {
-          "linkId":"EmCare.A.DE03"
-       },
-       {
-          "linkId":"EmCare.A.DE04",
-          "text":"First Name",
-          "answer":[
-             {
-                "valueString":"Juli"
-             }
-          ]
-       },
-       {
-          "linkId":"EmCare.A.DE05",
-          "text":"Middle Name",
-          "answer":[
-             {
-                "valueString":"August"
-             }
-          ]
-       },
-       {
-          "linkId":"EmCare.A.DE06",
-          "text":"Last Name",
-          "answer":[
-             {
-                "valueString":"September"
-             }
-          ]
-       },
-       {
-          "linkId":"EmCare.A.DE11",
-          "answer":[
-             {
-                "valueCoding":{
-                   "code":"EmCare.A.DE11",
-                   "display":"Date of Birth not known"
-                }
-             }
-          ]
-       },
-       {
-          "linkId":"EmCare.A.DE12",
-          "text":"Provide an estimated age or estimated date of birth",
-          "answer":[
-             {
-                "valueCoding":{
-                   "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
-                   "code":"EmCare.A.DE13",
-                   "display":"Estimated age in years/months for child (2 months or older)"
-                }
-             }
-          ]
-       },
-       {
-          "linkId":"EmCare.A.DE13.mo",
-          "text":"Age in months",
-          "answer":[
-             {
-                "valueQuantity":{
-                   "value":7,
-                   "system":"http://hl7.org/fhir/ValueSet/ucum-units",
-                   "code":"month"
-                }
-             }
-          ]
-       },
-       {
-          "linkId":"EmCare.A.DE13.a",
-          "text":"Age in years"
-       },
-       {
-          "linkId":"edob",
-          "text":"Calculated Date of Birth",
-          "answer":[
-             {
-                "valueDate":"2022-04-04"
-             }
-          ]
-       },
-       {
-          "linkId":"EmCare.A.DE16",
-          "text":"Sex",
-          "answer":[
-             {
-                "valueCoding":{
-                   "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
-                   "code":"EmCare.A.DE17",
-                   "display":"Female"
-                }
-             }
-          ]
-       },
-       {
-          "linkId":"EmCare.A.DE20",
-          "text":"Address",
-          "answer":[
-             {
-                "valueString":"Month adress"
-             }
-          ]
-       },
-       {
-          "linkId":"EmCare.A.DE48",
-          "text":"Primary Caregiver"
-       },
-       {
-          "linkId":"emcarerelatedpersoncaregiverid",
-          "answer":[
-             {
-                "valueCoding":{
-                   "code":"emcarerelatedpersoncaregiverid",
-                   "display":"Register a new Primary Caregiver"
-                }
-             }
-          ]
-       },
+      "type":"Patient",
+      "id":"a122b5ac-a9b5-4fad-93a8-b6a983e6821d",
+      "identifier":{
+         "value":"a122b5ac-a9b5-4fad-93a8-b6a983e6821d"
+      },
+      "reference":"/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d"
+   },
+   "encounter":{
+      "id":"58868e86-3518-44b3-bf08-56d7aa8d9ed0",
+      "type":"Encounter",
+      "identifier":{
+         "value":"58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+      },
+      "reference":"/Encounter/58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+   },
+   "item":[
+      {
+         "linkId":"EmCare.A.DE01",
+         "text":"Unique Identification",
+         "answer":[
+            {
+               "valueString":"month"
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE03"
+      },
+      {
+         "linkId":"EmCare.A.DE04",
+         "text":"First Name",
+         "answer":[
+            {
+               "valueString":"Juli"
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE05",
+         "text":"Middle Name",
+         "answer":[
+            {
+               "valueString":"August"
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE06",
+         "text":"Last Name",
+         "answer":[
+            {
+               "valueString":"September"
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE11",
+         "answer":[
+            {
+               "valueCoding":{
+                  "code":"EmCare.A.DE11",
+                  "display":"Date of Birth not known"
+               }
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE12",
+         "text":"Provide an estimated age or estimated date of birth",
+         "answer":[
+            {
+               "valueCoding":{
+                  "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                  "code":"EmCare.A.DE13",
+                  "display":"Estimated age in years/months for child (2 months or older)"
+               }
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE13.mo",
+         "text":"Age in months",
+         "answer":[
+            {
+               "valueQuantity":{
+                  "value":7,
+                  "system":"http://unitsofmeasure.org",
+                  "code":"month"
+               }
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE13.a",
+         "text":"Age in years"
+      },
+      {
+         "linkId":"EmCare.A.DE08",
+         "text":"Calculated Date of Birth",
+         "answer":[
+            {
+               "valueDate":"2022-04-04"
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE16",
+         "text":"Sex",
+         "answer":[
+            {
+               "valueCoding":{
+                  "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                  "code":"EmCare.A.DE17",
+                  "display":"Female"
+               }
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE20",
+         "text":"Address",
+         "answer":[
+            {
+               "valueString":"Month adress"
+            }
+         ]
+      },
+      {
+         "linkId":"EmCare.A.DE48",
+         "text":"Primary Caregiver"
+      },
+      {
+         "linkId":"emcarerelatedpersoncaregiverid",
+         "answer":[
+            {
+               "valueString":"a122b5ac-a9b5-4fad-93a8-b6a983e6821"
+            }
+         ]
+      },{
+         "linkId":"EmCare.A.DE21.1",
+         "item":[
 
-             {
-                "linkId":"EmCare.A.DE21",
-                "text":"Primary Caregiver First Name",
-                "answer":[
-                   {
-                      "valueString":"Month mum first"
-                   }
-                ]
-             },
-             {
-                "linkId":"EmCare.A.DE22",
-                "text":"Primary Caregiver Middle Name",
-                "answer":[
-                   {
-                      "valueString":"Month mu mid"
-                   }
-                ]
-             },
-             {
-                "linkId":"EmCare.A.DE23",
-                "text":"Primary Caregiver Last Name",
-                "answer":[
-                   {
-                      "valueString":"MM last"
-                   }
-                ]
-             },
-             {
-                "linkId":"EmCare.A.DE35",
-                "text":"Primary Caregiver's Mobile telephone number",
-                "answer":[
-                   {
-                      "valueInteger":7777
-                   }
-                ]
-             },
-             {
-                "linkId":"EmCare.A.DE36",
-                "text":"Primary Caregiver's Home telephone number",
-                "answer":[
-                   {
-                      "valueInteger":4444444
-                   }
-                ]
-             },
-             {
-                "linkId":"EmCare.A.DE37",
-                "text":"Primary Caregiver's Work telephone number",
-                "answer":[
-                   {
-                      "valueInteger":44444444
-                   }
-                ]
-             },
-             {
-                "linkId":"EmCare.A.DE24",
-                "text":"Primary Caregiver's Relationship to Client",
-                "answer":[
-                   {
-                      "valueCoding":{
-                         "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
-                         "code":"EmCare.A.DE25",
-                         "display":"Mother"
-                      }
-                   }
-                ]
-             },
-             {
-                "linkId":"EmCare.A.DE32",
-                "text":"Biological Father Vital Status",
-                "answer":[
-                   {
-                      "valueCoding":{
-                         "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
-                         "code":"EmCare.A.DE34",
-                         "display":"Alive"
-                      }
-                   }
-                ]
-             },
+            {
+               "linkId":"EmCare.A.DE21",
+               "text":"Primary Caregiver First Name",
+               "answer":[
+                  {
+                     "valueString":"Month mum first"
+                  }
+               ]
+            },
+            {
+               "linkId":"EmCare.A.DE22",
+               "text":"Primary Caregiver Middle Name",
+               "answer":[
+                  {
+                     "valueString":"Month mu mid"
+                  }
+               ]
+            },
+            {
+               "linkId":"EmCare.A.DE23",
+               "text":"Primary Caregiver Last Name",
+               "answer":[
+                  {
+                     "valueString":"MM last"
+                  }
+               ]
+            },
+            {
+               "linkId":"EmCare.A.DE35",
+               "text":"Primary Caregiver's Mobile telephone number",
+               "answer":[
+                  {
+                     "valueInteger":7777
+                  }
+               ]
+            },
+            {
+               "linkId":"EmCare.A.DE36",
+               "text":"Primary Caregiver's Home telephone number",
+               "answer":[
+                  {
+                     "valueInteger":4444444
+                  }
+               ]
+            },
+            {
+               "linkId":"EmCare.A.DE37",
+               "text":"Primary Caregiver's Work telephone number",
+               "answer":[
+                  {
+                     "valueInteger":44444444
+                  }
+               ]
+            },
+            {
+               "linkId":"EmCare.A.DE24",
+               "text":"Primary Caregiver's Relationship to Client",
+               "answer":[
+                  {
+                     "valueCoding":{
+                        "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                        "code":"EmCare.A.DE25",
+                        "display":"Mother"
+                     }
+                  }
+               ]
+            }]
+      },
+      {
+         "linkId":"EmCare.A.DE32",
+         "text":"Biological Father Vital Status",
+         "answer":[
+            {
+               "valueCoding":{
+                  "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                  "code":"EmCare.A.DE34",
+                  "display":"Alive"
+               }
+            }
+         ]
+      },
           
 
        {

@@ -1,0 +1,101 @@
+{
+    "resourceType": "Bundle",
+    "id": "869ddce4-2f3d-435e-a58e-250c7b4a43ad",
+    "type": "batch",
+    "entry": [
+      {
+        "resource": {
+          "resourceType": "Patient",
+          "extension": [
+            {
+              "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/birthDateEstimator",
+              "valueCoding": {
+                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                "code": "EmCare.A.DE13",
+                "display": "Estimated age in years/months for child (2 months or older)"
+              }
+            },
+            {
+              "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/primary-caregiver",
+              "valueReference": {
+                "reference": "/RelatedPerson/a122b5ac-a9b5-4fad-93a8-b6a983e6821"
+              }
+            }
+          ],
+          "identifier": [
+            {
+              "use": "official",
+              "value": "month"
+            }
+          ],
+          "name": [
+            {
+              "use": "official",
+              "family": "September",
+              "given": [
+                "Juli",
+                "August"
+              ]
+            }
+          ],
+          "gender": "female",
+          "birthDate": "2022-04-04",
+          "address": [
+            {
+              "text": "Month adress"
+            }
+          ]
+        },
+        "request": {
+          "url": "/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d",
+          "method": "PUT"
+        }
+      },
+      {
+        "resource": {
+          "resourceType": "RelatedPerson",
+          "relationship": [
+            {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                  "code": "MTH"
+                }
+              ]
+            }
+          ],
+          "name": [
+            {
+              "use": "official",
+              "family": "MM last",
+              "given": [
+                "Month mum first",
+                "Month mu mid"
+              ]
+            }
+          ],
+          "telecom": [
+            {
+              "system": "phone",
+              "value": "7777",
+              "use": "mobile"
+            },
+            {
+              "system": "phone",
+              "value": "4444444",
+              "use": "home"
+            },
+            {
+              "system": "phone",
+              "value": "44444444",
+              "use": "work"
+            }
+          ]
+        },
+        "request": {
+          "url": "/RelatedPerson/a122b5ac-a9b5-4fad-93a8-b6a983e6821",
+          "method": "POST"
+        }
+      }
+    ]
+  }

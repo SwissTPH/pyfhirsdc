@@ -2,18 +2,21 @@
     "resourceType":"QuestionnaireResponse",
     "questionnaire":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/Questionnaire/emcare.b6.measurements",
     "subject":{
-       "type":"Patient",
-       "identifier":{
-          "value":"9219b08d-0bf6-49f0-8cd0-fc3212c1cd3f"
-       }
-    },
-    "encounter":{
-       "id":"7aec4e10-b6f8-4093-844a-be6667949a12",
-       "type":"Encounter",
-       "identifier":{
-          "value":"7aec4e10-b6f8-4093-844a-be6667949a12"
-       }
-    },
+      "type":"Patient",
+      "id":"a122b5ac-a9b5-4fad-93a8-b6a983e6821d",
+      "identifier":{
+         "value":"a122b5ac-a9b5-4fad-93a8-b6a983e6821d"
+      },
+      "reference":"/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d"
+   },
+   "encounter":{
+      "id":"58868e86-3518-44b3-bf08-56d7aa8d9ed0",
+      "type":"Encounter",
+      "identifier":{
+         "value":"58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+      },
+      "reference":"/Encounter/58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+   },
     "item":[
        {
           "linkId":"EmCare.B6.DE01",
@@ -22,8 +25,8 @@
              {
                 "valueQuantity":{
                    "value":39,
-                   "system":"http://hl7.org/fhir/ValueSet/ucum-units",
-                   "code":"cel"
+                   "system":"http://unitsofmeasure.org",
+                   "code":"Cel"
                 }
              }
           ]
@@ -35,7 +38,7 @@
              {
                 "valueQuantity":{
                    "value":12,
-                   "system":"http://hl7.org/fhir/ValueSet/ucum-units",
+                   "system":"http://unitsofmeasure.org",
                    "code":"kg"
                 }
              }

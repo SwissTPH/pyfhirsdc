@@ -1,0 +1,111 @@
+{
+    "resourceType": "Bundle",
+    "id": "e84143cb-16a2-46f1-8d6c-662ae59e0fc6",
+    "type": "batch",
+    "entry": [
+        {
+            "resource": {
+                "resourceType": "Observation",
+                "meta": {
+                    "profile": [
+                        "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                    ]
+                },
+                "identifier": [
+                    {
+                        "id": "fba1d7da-4fa8-4bd1-a8b9-309b07dfe6c8",
+                        "use": "official",
+                        "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                        "value": "uuid"
+                    }
+                ],
+                "status": "final",
+                "code": {
+                    "coding": [
+                        {
+                            "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                            "code": "EmCare.B6.DE01"
+                        }
+                    ]
+                },
+                "subject": {
+                    "type":"Patient",
+                    "id":"a122b5ac-a9b5-4fad-93a8-b6a983e6821d",
+                    "identifier":{
+                       "value":"a122b5ac-a9b5-4fad-93a8-b6a983e6821d"
+                    },
+                    "reference":"/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d"
+                 },
+                "encounter": {
+                    "id":"58868e86-3518-44b3-bf08-56d7aa8d9ed0",
+                    "type":"Encounter",
+                    "identifier":{
+                       "value":"58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+                    },
+                    "reference":"/Encounter/58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+                 },
+                "valueQuantity": {
+                    "value": 39,
+                    "system": "http://unitsofmeasure.org",
+                    "code": "Cel"
+                }
+            },
+            "request": {
+                "method": "POST",
+                "url": "/Observation/25cec34a-93f6-40b2-b554-364e50d7df7b"
+            }
+        },
+        {
+            "resource": {
+                "resourceType": "Observation",
+                "meta": {
+                    "profile": [
+                        "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                    ]
+                },
+                "identifier": [
+                    {
+                        "id": "e79e0710-d17f-43ad-9de9-3b41007307e2",
+                        "use": "official",
+                        "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                        "value": "uuid"
+                    }
+                ],
+                "status": "final",
+                "code": {
+                    "coding": [
+                        {
+                            "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                            "code": "EmCare.B6.DE06"
+                        }
+                    ]
+                },
+                "subject": {
+                    "type":"Patient",
+                    "id":"a122b5ac-a9b5-4fad-93a8-b6a983e6821d",
+                    "identifier":{
+                       "value":"a122b5ac-a9b5-4fad-93a8-b6a983e6821d"
+                    },
+                    "reference":"/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d"
+                 },
+                "encounter": {
+                    "id":"58868e86-3518-44b3-bf08-56d7aa8d9ed0",
+                    "type":"Encounter",
+                    "identifier":{
+                       "value":"58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+                    },
+                    "reference":"/Encounter/58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+                },
+                "valueQuantity": {
+                    "value": 12,
+                    "system": "http://unitsofmeasure.org",
+                    "code": "kg"
+                }
+            },
+            "request": {
+                "method": "POST",
+                "url": "/Observation/9852dd17-0388-423b-a76e-dd48cce7bae2"
+            }
+        }
+    ]
+}
