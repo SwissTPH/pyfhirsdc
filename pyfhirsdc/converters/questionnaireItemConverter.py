@@ -19,7 +19,7 @@ from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import (
     get_calculated_expression_ext, get_candidate_expression_ext,
     get_checkbox_ext, get_choice_column_ext, get_constraint_exp_ext,
-    get_dropdown_ext, get_enable_when_expression_ext, get_hidden_ext,
+    get_dropdown_ext, get_enable_when_expression_ext, get_help_ext, get_hidden_ext,
     get_initial_expression_identifier_ext, get_open_choice_ext, get_slider_ext,
     get_subquestionnaire_ext, get_unit_ext, get_variable_extension)
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
@@ -47,7 +47,7 @@ def convert_df_to_questionitems(ressource,df_questions, parentId = None):
         # manage group
         type, detail_1, detail_2 = get_type_details(question)
         if type is None:
-            print("${0} is not a valid type, see question ${1}".format(question['type'], question['id']))       
+            if pd.notna(question['id']): print("${0} is not a valid type, see question ${1}".format(question['type'], question['id']))       
         elif type == "skipped":
             pass
         # for multiline variables
@@ -103,14 +103,26 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
                     initial = get_initial_value(question),
                     readOnly = get_disabled_display(question)
                 )
+
         if pd.notna(question['label']) and question['type'] != "select_boolean":
             new_question.text = question['label']
+        if 'help' in question and pd.notna(question['help']):
+            if new_question.item is None:
+                new_question.item = []
+            new_question.item.append( QuestionnaireItemSDC(
+                    linkId = question['id']+"-help",
+                    type= 'display',
+                    text = question['help'],
+                    extension = [get_help_ext()],
+                    readOnly = True
+                ))
         if 'parentId' in  df_questions:
             convert_df_to_questionitems(new_question,df_questions, id )
                     
         # we save the question as a new ressouce
         if resource.item is None:
             resource.item = []
+
         resource.item.append(new_question)             
         return new_question
     
@@ -125,14 +137,7 @@ def get_initial_value(question): #TODO remove when uuid will be supported in cal
             return [QuestionnaireItemInitial(
                 valueString = "uuid()"
             )]
-        elif question["initialExpression"].strip() == "AgeInMonths()>= 2 and AgeInMonths()<60": 
-            return [QuestionnaireItemInitial(
-                valueBoolean= True
-            )]       
-        elif question["initialExpression"].strip() == "AgeInMonths()":
-            return [QuestionnaireItemInitial(
-                valueInteger = "2"
-            )]
+
 
 QUESTION_TYPE_MAPPING = {
                 'select_one':'choice',
@@ -231,7 +236,7 @@ def get_question_valueset(question):
     display= get_display(question)
     type, detail_1, detail_2 = get_type_details(question)
     # split each deatil
-    if "select_" in type and 'candidateexpression' not in display or type == 'select_boolean':
+    if "select_" in type and 'candidateexpression' not in display and type != 'select_boolean':
         if detail_1 == "url":
             return  (detail_2)
         elif detail_2 is None  :

@@ -22,6 +22,18 @@ def get_dropdown_ext():
             text ="Drop down")
 )
  
+def get_help_ext():
+ return Extension(
+        url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+        valueCodeableConcept = CodeableConcept(
+                coding = [Coding( 
+                    system = "http://hl7.org/fhir/questionnaire-item-control",
+                    code = "help",
+                    display = "Help")],
+                text ="Help")
+)
+ 
+ 
  
 def get_subquestionnaire_ext(questionnaire_id):
  return Extension(
