@@ -34,28 +34,28 @@ def refresh_content(lib):
         # get CQL file "ig-loader"
         cql = read_file(os.path.join(get_defaut_path('CQL', 'cql'), lib.name + '.cql') ,'str')
         out_content.append(get_cql_content(cql, lib.name))
-        if check_internet():
-            multipart = build_multipart_cql(cql,lib.name, {})
+        deps = get_cql_dependencies(cql,[])
+        if get_processor_cfg().generateElm == True and check_internet(): # create the elm
+            multipart = build_multipart_cql(cql,lib.name, deps, {})
             emls = update_eml_content(multipart, lib.name, 'json')
-            if get_processor_cfg().generateElm == True: # create the elm
-                if emls is not None:
-                    for eml in emls:
-                        emlid = get_id_from_header(eml.headers[b'Content-Disposition'].decode())
-                        if emlid == lib.name:
-                            out_content.append(get_eml_content(eml.text,emlid,'json'))# eml.content
-                            #elms_xml = update_eml_content(multipart, lib.id, 'json')
-                            #for elm_xml in elms_xml:
-                            #    emlid = get_id_from_header(elm_xml.headers[b'Content-Disposition'].decode())
-                            #    if emlid == lib.id:
-                            #        out_content.append(get_eml_content(eml.text,emlid,'xml'))
-                        else:
-                            dependencies.append(RelatedArtifact(
-                                type = "depends-on",
-                                resource = get_lib_url(emlid)
-                            ))
-                            
-                return dependencies, out_content
-        return None, out_content    
+            if emls is not None:
+                for eml in emls:
+                    emlid = get_id_from_header(eml.headers[b'Content-Disposition'].decode())
+                    if emlid == lib.name:
+                        out_content.append(get_eml_content(eml.text,emlid,'json'))# eml.content
+                        #elms_xml = update_eml_content(multipart, lib.id, 'json')
+                        #for elm_xml in elms_xml:
+                        #    emlid = get_id_from_header(elm_xml.headers[b'Content-Disposition'].decode())
+                        #    if emlid == lib.id:
+                        #        out_content.append(get_eml_content(eml.text,emlid,'xml'))
+
+        for dep in deps:
+            dependencies.append(RelatedArtifact(
+                        type = "depends-on",
+                        resource = get_lib_url(dep['name'])
+                    ))
+
+        return dependencies if len(dependencies)>0 else None, out_content    
     return None, None
 
 def get_lib_url(id):
@@ -104,14 +104,13 @@ def update_eml_content(multipart, id, ext):
     
     
 
-def build_multipart_cql(cql,id,multipart = {}):
+def build_multipart_cql(cql,name, cql_deps,multipart = {}):
     if id not in multipart:
-        multipart[id] = (id,cql,'application/cql')
-        cql_deps = get_cql_dependencies(cql, [])
+        multipart[name] = (name,cql,'application/cql')
         for dep in cql_deps:
-            if dep['id'] not in multipart:
-                build_multipart_cql(dep['data'],dep['id'],multipart)
-
+            if dep['name'] not in multipart:
+                multipart[dep['name']] = (dep['name'],dep['data'],'application/cql')
+               
     return multipart
 
 def get_cql_dependencies(cql, cqls = []):
@@ -123,7 +122,7 @@ def get_cql_dependencies(cql, cqls = []):
             if os.path.exists(file_path):
                 sub_cql = read_file(file_path ,'str')
                 if sub_cql is not None:
-                    cqls.append({'id':match, 'data':sub_cql})
+                    cqls.append({'name':match, 'data':sub_cql})
                     cqls = get_cql_dependencies(sub_cql, cqls)
                 else:
                     print("Error, missing cql dependency "+match)
@@ -135,7 +134,7 @@ def get_cql_dependencies(cql, cqls = []):
     return cqls
 
 def get_cqls_ids(cqls):
-    return [x['id'] for x in cqls]
+    return [x['name'] for x in cqls]
 
 def get_cql_content(cql,name):
     return Attachment(
@@ -210,7 +209,8 @@ def update_lib_version(src,dst):
     # Replace the target string
     filedata = filedata.replace("{{LIB_VERSION}}",get_fhir_cfg().lib_version)\
         .replace("{{cs_url}}",get_custom_codesystem_url())\
-        .replace("{{FHIR_VERSION}}",get_fhir_cfg().version)
+        .replace("{{FHIR_VERSION}}",get_fhir_cfg().version)\
+        .replace("{{canonical_base}}",get_fhir_cfg().canonicalBase)
 
     # Write the file out 
     with open(dst, 'w') as file:
