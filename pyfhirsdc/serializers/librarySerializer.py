@@ -101,7 +101,7 @@ def get_lib_parameters_list(df_in, type = "pd"):
         else:
             q_type = 'boolean'
         name = row['id'] if 'id' in row else index
-        if name is not None and pd.notna(name)  :
+        if name is not None and pd.notna(name) and '{{' not in name :
             desc = row['label'].replace(u'\xa0', u' ').replace('  ',' ') if 'label' in row and pd.notna(row['label']) else\
                 row['description'].replace(u'\xa0', u' ').replace('  ',' ') if 'description' in row and pd.notna(row['description']) else None
             parameters.append({'name': name, 'type':q_type, 'use': 'out'})
@@ -114,7 +114,8 @@ def get_lib_parameters_list(df_in, type = "pd"):
 MAPPING_TYPE_LIB ={
     "choice":"code",
     "mapping":"boolean",
-    "quantity":"Quantity"
+    "quantity":"Quantity",
+    'String':'string'
 }
 
 def get_lib_type(type):
@@ -126,11 +127,11 @@ def get_lib_type(type):
         return type
         
 def get_lib_parameters(df_in, type = "pd"):
-    parameters = [ParameterDefinition(
-            use = 'in',
-            name = 'encounter' ,
-            type = 'Encounter'
-        )]
+    parameters = []#ParameterDefinition(
+    #        use = 'in',
+    #        name = 'encounterid' ,
+    #        type = 'string'
+    #   )]
     parameters_in = get_lib_parameters_list(df_in,type)
     for param in  parameters_in:
         parameters.append(ParameterDefinition(
@@ -238,7 +239,8 @@ include FHIRHelpers version '{0}' called FHIRHelpers
 
 {5}
 
-context Patient    
+context Patient 
+  
 """.format(
     get_fhir_cfg().version, 
     library.name, 
@@ -323,7 +325,7 @@ def get_observation_cql_from_concepts(concepts, lib):
                         cql[i] = concept_cql
                         i = i+1
             else:
-                print("Warning: {} is defined multiple times".format(concept.display))
+                print("Warning: obs {} is defined multiple times".format(concept.display))
     return cql    
 
 def get_valueset_cql_from_concepts(concepts, lib):
@@ -346,7 +348,7 @@ def get_valueset_cql_from_concepts(concepts, lib):
                         cql[i] = concept_cql
                         i = i+1
             else:
-                print("Warning: {} is defined multiple times".format(concept.display))
+                print("Warning: code {} is defined multiple times".format(concept.display))
     return cql    
 
 def write_valueset(concept):
@@ -364,7 +366,7 @@ def write_obsevation(concept):
         ## Output false, manual process to convert the pseudo-code to CQL
         cql += "/*\"{0}\"*/\n".format(concept.display)+\
             "define \"{0}\":\n".format(str(concept.display).lower().replace("\n", ""))+ \
-                "  B.HasObs('{}')".format(concept.code,get_custom_codesystem_url()) + "\n"
+                "  B.HasObs('{}')".format(concept.code,get_custom_codesystem_url()) + "\n\n"
     if concept.code is not None and concept.code:
         ## Output false, manual process to convert the pseudo-code to CQL    
         cql += "define \"{0}\":\n".format(str(concept.code).lower().replace("\n", ""))+ \

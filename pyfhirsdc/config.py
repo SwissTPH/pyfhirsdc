@@ -9,7 +9,7 @@ dict_cfg = None
 dict_df = None
 used_valueset = []
 used_obs = []
-
+#TODO #33 dict for used_valueset and used_valueset id + display
 def append_used_valueset(value):
     if value not in used_valueset:
         used_valueset.append(value)
