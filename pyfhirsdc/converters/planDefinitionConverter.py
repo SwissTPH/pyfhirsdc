@@ -16,23 +16,24 @@ from ..serializers.librarySerializer import ROW_EXPRESSIONS
 
 ## Goes through a row and maps it to FHIR action 
 def process_action(row):
-    # Check if any of the rows has empty cells in the relevant columns, stop if so
-    action = PlanDefinitionAction(
-        id = clean_name(row["id"]),
-        description = value_not_na(row["description"]),
-        definitionCanonical = Canonical(row["definitionCanonical"].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)) if pd.notna(row["definitionCanonical"]) else None,
-        title = value_not_na(row["title"]),
-        trigger = get_triggers(row),
-        condition = get_conditions(row),
-        textEquivalent = value_not_na(row["annotation"]),
-        documentation = get_documentation(row),
-        relatedAction = get_related_actions(row),
-        type = get_cpg_comon_process_type(row)
-    )
-    # input must be better managed
-    # https://build.fhir.org/metadatatypes.html#DataRequirement
-    # input= row["inputs"]
-    return action
+    if "{{" not in row["id"] and pd.notna(row["id"]) and row["id"] != '':
+        # Check if any of the rows has empty cells in the relevant columns, stop if so
+        action = PlanDefinitionAction(
+            id = clean_name(row["id"]),
+            description = value_not_na(row["description"]),
+            definitionCanonical = Canonical(row["definitionCanonical"].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)) if pd.notna(row["definitionCanonical"]) else None,
+            title = value_not_na(row["title"]),
+            trigger = get_triggers(row),
+            condition = get_conditions(row),
+            textEquivalent = value_not_na(row["annotation"]),
+            documentation = get_documentation(row),
+            relatedAction = get_related_actions(row),
+            type = get_cpg_comon_process_type(row)
+        )
+        # input must be better managed
+        # https://build.fhir.org/metadatatypes.html#DataRequirement
+        # input= row["inputs"]
+        return action
 
 CPG_COMMON_PROCESSES = [
     "registration", 
@@ -132,7 +133,7 @@ def get_actions(parent_action_id, df):
     actions = []
     if len(df_actions)>0:
         #planDefinition.action = get_actions(parent_action_id, df)
-        for index, row in df_actions.iterrows():
+        for index, row in df_actions.iterrows():           
             current_action = process_action(row)
             if current_action is not None:
                 sub_actions = get_actions(current_action.id, df)

@@ -17,7 +17,7 @@ def generate_questionnaire_concept(df_questions):
     questions = df_questions.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['scope']).to_dict('index')
     # remove the line without id
     for id, question in questions.items():
-        if question['scope'] == get_processor_cfg().scope:
+        if question['scope'] == get_processor_cfg().scope and 'initialExpression' in question and pd.isna(question['initialExpression']):
             concept.append(
                 CodeSystemConcept(
                     definition = question["description"],
@@ -48,9 +48,11 @@ def generate_observation_concept(df_questions):
 def generate_condition_concept(df_questions):
     concept = []
     # remove the line without id
-    questions = df_questions.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id').to_dict('index')
+    questions = df_questions[~df_questions['id'].isin(
+        get_value_set_additional_data_keyword()
+        )].dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id').to_dict('index')
     # remove the line without id
-    for id, question in questions.items():
+    for id, question in questions.items() and 'initialExpression' in question and pd.isna(question['initialExpression']):
         base_profile = get_base_profile(question['map_profile'])
         if base_profile == "Conditions":
             concept.append(
@@ -65,7 +67,9 @@ def generate_condition_concept(df_questions):
 def generate_diagnosis_concept(df_questions):
     concept = []
     # remove the line without id
-    questions = df_questions.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id').to_dict('index')
+    questions = df_questions[~df_questions['id'].isin(
+        get_value_set_additional_data_keyword()
+        )].dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id').to_dict('index')
     # remove the line without id
     for id, question in questions.items():
         base_profile = get_base_profile(question['map_profile'])

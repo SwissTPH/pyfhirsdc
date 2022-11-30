@@ -188,7 +188,7 @@ def get_question_extension(question, question_id, df_questions = None ):
     regex_slider = re.compile("^slider::.*")
     slider = list(filter(regex_slider.match, display))
     type, detail_1, detail_2 = get_type_details(question)
-    if "constraintExpression" in question and pd.notna(question["constraintExpression"])\
+    if "constraintExpression" in question and pd.notna(question["constraintExpression"]) and question["constraintExpression"] !=''\
         and "constraintDescription" in question and pd.notna(question["constraintDescription"]):
         extensions.append(get_constraint_exp_ext(question_id,question["constraintExpression"],question["constraintDescription"]))
     # TODO support other display than drop down
@@ -209,11 +209,11 @@ def get_question_extension(question, question_id, df_questions = None ):
         extensions = get_question_choice_column(extensions, detail_1)
     if "hidden"  in display:
         extensions.append(get_hidden_ext())
-    if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]):
+    if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]) and question["enableWhenExpression"] !='':
         extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"],df_questions))    
-    if "calculatedExpression" in question and pd.notna(question["calculatedExpression"]):
+    if "calculatedExpression" in question and pd.notna(question["calculatedExpression"]) and question["calculatedExpression"] !='':
         extensions.append(get_calculated_expression_ext(question["calculatedExpression"],df_questions))
-    if "initialExpression" in question and pd.notna(question["initialExpression"]):
+    if "initialExpression" in question and pd.notna(question["initialExpression"]) and question["initialExpression"] !='':
         if not question["initialExpression"].strip() == "uuid()": #TODO remove when uuid will be supported
             extensions.append(get_initial_expression_identifier_ext(question_id))
     if 'parentId' in  df_questions:

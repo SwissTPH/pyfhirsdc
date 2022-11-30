@@ -7,16 +7,16 @@ processor_cfg = None
 fhir_cfg = None
 dict_cfg = None
 dict_df = None
-used_valueset = []
-used_obs = []
+used_valueset = {}
+used_obs = {}
 #TODO #33 dict for used_valueset and used_valueset id + display
-def append_used_valueset(value):
-    if value not in used_valueset:
-        used_valueset.append(value)
+def append_used_valueset(idlink,label):
+    if idlink not in used_valueset:
+        used_valueset[idlink] = label
 
-def append_used_obs(value):
-    if value not in used_obs:
-        used_obs.append(value)
+def append_used_obs(idlink,label):
+    if idlink not in used_obs:
+        used_obs[idlink] = label
         
 def get_used_obs():
     return used_obs

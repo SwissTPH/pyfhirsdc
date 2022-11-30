@@ -1,7 +1,8 @@
-from pathlib import Path
-from types import SimpleNamespace
 import json
 import os
+from pathlib import Path
+from types import SimpleNamespace
+
 
 def read_file(filepath, type = "object"):
     json_str = None

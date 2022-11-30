@@ -75,7 +75,7 @@ def generate_custom_code_system():
 def  generate_valuset_valueset_libs(valueset_concepts):
     if len(valueset_concepts)>0:    
     # Generate library to resolve "display to code"
-        name_vs = get_processor_cfg().scope + "ValueSet"
+        name_vs = get_processor_cfg().scope.lower() + "valueset"
         lib_id = clean_group_name(name_vs)
         lib = Library(
             status= 'active',
@@ -97,7 +97,7 @@ def  generate_valuset_valueset_libs(valueset_concepts):
 
 def generate_observation_valueset_libs(question_concepts):
 
-    name_vs = get_processor_cfg().scope + "Observation"
+    name_vs = get_processor_cfg().scope.lower() + "observation"
     #for name, df_questions in dfs_questionnaire.items():
     #    question_concept = generate_observation_concept(df_questions)
     #    if len(question_concept)>0:
