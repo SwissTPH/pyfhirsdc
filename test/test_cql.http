@@ -101,16 +101,20 @@ POST {{host}}/Library/emcarecombineddataelements/$evaluate?subject=/Patient/a122
 # EmCareZScore
 # emcarecombineddataelements
 # EmCareBase  
+# emcaredt01
+# emcareb23classification
 #emcareobservation
 @file = emcarebase
-@lib = emcarevalueset
+@lib = emcarezscore
 PUT {{host}}/Library/{{lib}}
 content-type: application/json
 
 < {{rootemcare}}/input/resources/library/library-{{file}}.json
 ####
 
-POST {{host}}/Library/{{lib}}/$evaluate?subject=/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d
+@patientid = 2f82c2f5-b57e-4b48-a7ef-327459f6ec99
+@encounterid = 0ea41310-0a3e-4390-b621-e3ff45128c92
+POST {{host}}/Library/{{lib}}/$evaluate?subject=/Patient/{{patientid}}
 content-type: application/json
 
 {
@@ -121,11 +125,9 @@ content-type: application/json
       "resource": {
         "resourceType": "Parameters",
         "parameter": [
-          {"name":"id", "valueCoding":{"code":"EmCare.B6.DE01", "system":"https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes"}},
-          {"name":"nbdays", "valueInteger":"100"},
           {
             "name": "encounterid",
-            "valueString":"58868e86-3518-44b3-bf08-56d7aa8d9ed0"
+            "valueString":"{{encounterid}}"
             
           }
         ]
@@ -133,6 +135,8 @@ content-type: application/json
     }
   ]
 }
+###
+DELETE {{host}}/Encounter/e661c787-9726-443c-825e-08770e403881
 ###32
     {
     "name":"expression",
@@ -155,73 +159,42 @@ GET https://fhir.ruler.dk.swisstph-mis.ch/fhir/Library/emcaredt01
 ###
 
 
-GET {{host}}/Observation 
+GET {{host}}/Observation?subject={{patientid}}
+####
+
+GET {{host}}/Observation?encounter=Encounter/0ea41310-0a3e-4390-b621-e3ff45128c92
+####
+
+GET {{host}}/?_getpages=a923b847-97f6-4f41-9e97-c4dbd3dd81f5&_getpagesoffset=20&_count=20&_pretty=true&_bundletype=searchset"
 
 ###
-GET {{host}}/Encounter
+
+
+GET {{host}}/Patient/{{patientid}}
+###
+GET {{host}}/Encounter?subject={{patientid}}
 ###
 DELETE {{host}}/Encounter/encounter0
 
 ###
-POST https://fhir.ruler.dk.swisstph-mis.ch/fhir/$cql?subject=/Patient/a122b5ac-a9b5-4fad-93a8-b6a983e6821d
+POST https://fhir.ruler.dk.swisstph-mis.ch/fhir/$cql
 content-type: application/json
 
 {
   "resourceType": "Parameters",
   "parameter": [
     {
-      "name": "parameters",
-      "resource": {
-        "resourceType": "Parameters",
-        "parameter": [
-          {
-            "name": "encounter",
-            "resource":{
-              "resourceType": "Encounter",
-              "id": "58868e86-3518-44b3-bf08-56d7aa8d9ed0",
-              "meta": {
-                "versionId": "1",
-                "lastUpdated": "2022-11-22T07:45:18.316+00:00",
-                "source": "#2Z5sMgKpcgJJZ9kk"
-              },
-              "extension": [
-                {
-                  "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/refered",
-                  "valueBoolean": false
-                }
-              ],
-              "type": [
-                {
-                  "coding": [
-                    {
-                      "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
-                      "code": "EmCare.B2.DE03",
-                      "display": "Unplanned"
-                    }
-                  ],
-                  "text": "type of visit"
-                }
-              ],
-              "subject": {
-                "reference": "Patient/7d25cd4d-9865-4c9a-afd6-ab547821b515",
-                "type": "Patient"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "expression",
-      "valueString": "(false and null = true) "
+      "valueString": "(6.6729 * (4.72545133*-0.0235*0.12333-1)^(1/0.0248))"
     }
   ]
 }
-
-# true or null -> true
-# false or null -> null 
+####
+# true or null -> true  (6.6729 * (4.72545133*-0.0235*0.12333-1)^(1/0.0248))
+# false or null -> null  (((12 /6.6729 )^-0.0248  - 1)  / ( 0.12329 * -0.0248))
 # false and null -> false 
 # true and null -> null 
+
 ###resourceType
     {
         "name": "subject",

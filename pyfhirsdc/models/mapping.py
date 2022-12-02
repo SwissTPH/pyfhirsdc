@@ -40,7 +40,6 @@ class MappingGroup(BaseModel):
     sources :  List[MappingGroupIO]
     targets :  List[MappingGroupIO]
     rules : List[MappingRule] = []
-    groups: List[MappingGroup] = []
     note: Optional[str]
 
 

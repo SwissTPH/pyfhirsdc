@@ -38,7 +38,7 @@ def refresh_content(lib):
         if get_processor_cfg().generateElm == True and check_internet(): # create the elm
             multipart = build_multipart_cql(cql,lib.name, deps, {})
             emls = update_eml_content(multipart, lib.name, 'json')
-            if emls is not None:
+            if emls is not None and get_processor_cfg().saveElm == True:
                 for eml in emls:
                     emlid = get_id_from_header(eml.headers[b'Content-Disposition'].decode())
                     if emlid == lib.name:

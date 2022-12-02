@@ -18,7 +18,7 @@ def clean_name(name, lower = True):
     return ret.lower() if lower else ret
 
 def clean_group_name(name):
-    return clean_name(name).replace('-','').replace('.','').replace('/','').strip()
+    return clean_name(name).replace('-','').replace('.','').replace('/','').replace('&','').strip()
 
 def get_custom_codesystem_url():
     return get_resource_url (

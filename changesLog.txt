@@ -1,3 +1,40 @@
+Bundle 1.12
+
+- fix classification
+- fix "Select All that apply" SM
+- support new grammar for the "Select All that apply" observation : Question ID & Choice ID
+- rework of the LOGIC parsing translate the properly the "Select All that apply" checks
+- rework of the LOGIC parsing to use emcarebase function iso observation lib
+- rework of emcare base library to improve performance
+- align name and id of the lib to avoid "unable to translate on HAPI"
+- fix the Anthro libraries 
+
+Bundle 28.11
+- add help extention
+- fix some mappping 
+- y
+
+bundle 18.11
+
+Fix mapping triggert in bundle
+include the reference in all resources request (via the structuremap)
+change fhirpath parser to use the DAK grammar
+inject questionnaireSDC
+addapt sign 2m+ with new conditionnnal logic (only the one available)
+workarround implemented to have the CQL working 
+assessement questionnaire back with multiple quetionnaire inside
+fix error in EmCareBase
+
+
+Bundle 11.11
+
+Change all the Yes/no to True False in the libraries
+Change all the Yes/no to boolean type in the questionnaire
+Update of the EmCareBase library (try to fix the CQL wrong result)
+Add the treatment questionnaire
+split the assessement test in multiple quesitonnaire
+
+
 Bundle 7.11
 
 enableWhen and SM with group support

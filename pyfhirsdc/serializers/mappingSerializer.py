@@ -69,8 +69,8 @@ def write_mapping_file_group(group):
     buffer =  buffer[:-1] + "){\n"
     for rule in group.rules: 
         buffer += reindent(write_mapping_file_rule(rule),4) + "\n"
-    for sub_group in group.groups: 
-        buffer += reindent(write_mapping_file_group(sub_group),4)+ "\n"
+#    for sub_group in group.groups: 
+#        buffer += reindent(write_mapping_file_group(sub_group),4)+ "\n"
     buffer+="}\n\n"
     return buffer
     

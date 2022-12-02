@@ -309,7 +309,7 @@ def get_observation_cql_from_concepts(concepts, lib):
     # write 3 cql : start, end, applicability
     list_of_display = []
     cql = {}
-    libs = [{'name':'EmCareBase','alias':'B','version':get_fhir_cfg().lib_version}]
+    libs = [{'name':'emcarebase','alias':'B','version':get_fhir_cfg().lib_version}]
     cql['header'] = writeLibraryHeader(lib, libs)
     i = 0
     if concepts is not None:
@@ -320,8 +320,7 @@ def get_observation_cql_from_concepts(concepts, lib):
                 if (concept is not None and concept.code is not None):       
                     concept_cql = write_obsevation(concept)
                     if concept_cql is not None:
-                        append_used_obs(concept.code)
-                        append_used_obs(concept.display)
+                        append_used_obs(concept.code, concept.display)
                         cql[i] = concept_cql
                         i = i+1
             else:
@@ -332,7 +331,7 @@ def get_valueset_cql_from_concepts(concepts, lib):
     # write 3 cql : start, end, applicability
     cql = {}
     list_of_display = []
-    libs = [{'name':'EmCareBase','alias':'B','version':get_fhir_cfg().lib_version}]
+    libs = [{'name':'emcarebase','alias':'B','version':get_fhir_cfg().lib_version}]
     cql['header'] = writeLibraryHeader(lib, libs)
     i = 0
     if concepts:
@@ -343,8 +342,7 @@ def get_valueset_cql_from_concepts(concepts, lib):
                 if (concept and concept.code):    
                     concept_cql = write_valueset(concept)
                     if concept_cql is not None:
-                        append_used_valueset(concept.code)
-                        append_used_valueset(concept.display)
+                        append_used_valueset(concept.code,concept.display)
                         cql[i] = concept_cql
                         i = i+1
             else:
@@ -391,15 +389,15 @@ def write_action_condition(action):
 def write_cql_df(library, df_actions,  type):
     cql = {}
     libs = [            {
-                'name':get_processor_cfg().scope+"Base",
+                'name':get_processor_cfg().scope.lower()+"base",
                 'version':get_fhir_cfg().lib_version,
                 'alias':"Base"
             },{
-                'name':get_processor_cfg().scope+"Observation",
+                'name':get_processor_cfg().scope.lower()+"observation",
                 'version':get_fhir_cfg().lib_version,
                 'alias':"obs"
             },{
-                'name':get_processor_cfg().scope+"ValueSet",
+                'name':get_processor_cfg().scope.lower()+"valueset",
                 'version':get_fhir_cfg().lib_version,
                 'alias':"val"
             }]
@@ -455,27 +453,42 @@ def write_cql_df(library, df_actions,  type):
     return cql
 
 def write_cql_action(id, row, expression_column, df, display = None):
+    cql_exp = None
     if display is None:
         display = id   
-    cql_exp = row[expression_column] if row[expression_column].strip() != '{{cql}}' else ''
-    if cql_exp != '':
-        cql_exp = map_to_obs_valueset(cql_exp)
+    cql_exp_raw = row[expression_column] if row[expression_column].strip() != '{{cql}}' else ''
+
+        
+    
     prefix = ROW_EXPRESSIONS[expression_column]['prefix']
     # to create the reverse rule
     name = row['label'] if "label" in row else row['description'] if row['description']!= id  else row['id']
-    ret =   """
-/* {1}{0} : {2}*/
-define "{1}{0}":
-""".format(str(display).lower().replace("\n", ""), str(prefix).lower().replace("\n", ""), name)
     sub =  get_additionnal_cql(id,df,expression_column)
-    sub = map_to_obs_valueset(sub)
-    if len(sub)>0 and cql_exp != '':
-        ret +=reindent("({})\n and ({})\n".format(cql_exp,sub),4)
+    if len(sub)>0 and cql_exp_raw != '':
+        cql_exp_raw =reindent("({})\n and ({})\n".format(cql_exp_raw,sub),4)
     elif len(sub)>0:
-        ret +=reindent("{}\n".format(sub),4)
-    elif cql_exp != '':    
-        ret +=reindent("{}\n".format(cql_exp),4)
-    return ret + "\n"
+        cql_exp_raw =reindent("{}\n".format(sub),4)
+    elif cql_exp_raw != '':    
+        cql_exp_raw =reindent("{}\n".format(cql_exp_raw),4)   
+    # translation to CQL function
+    if cql_exp_raw != '':
+        cql_exp = map_to_obs_valueset(cql_exp_raw,df ) 
+    ret =   """
+/* 
+{1}{0} : {2}
+{3}
+*/
+define "{1}{0}":
+{4}
+""".format(
+    str(display).lower().replace("\n", ""), 
+    str(prefix).lower().replace("\n", ""), 
+    name,
+    cql_exp_raw,
+    cql_exp
+    )
+    return ret
+
 
 def write_cql_alias(prefix, alias,reference):
     return   """
@@ -484,10 +497,12 @@ define "{1}{0}":
     "{2}"
 """.format(prefix.replace("\n", ""), alias.replace("\n", ""),reference)
 
-def map_to_obs_valueset(cql_exp):
+def map_to_obs_valueset(cql_exp, df):
     # find "([^"]+)" *= *"([^"]+)" 
-    valueset_list = [x.lower() for x in  get_used_valueset()]
-    obs_list = [x.lower() for x in get_used_obs()]
+    valueset_linkid = [x.lower() for x in  get_used_valueset().keys()]
+    valueset_label = [x.lower() for x in  get_used_valueset().values()]
+    obs_linkid = [x.lower() for x in get_used_obs().keys()]
+    obs_label = [x.lower() for x in get_used_obs().values()]
     changed = []
     matches = re.findall(r'(^|.)"([^"\.]+)"',cql_exp)
     out = cql_exp
@@ -498,23 +513,47 @@ def map_to_obs_valueset(cql_exp):
 
     for match in matches:
         if match[0] != '.':
+            prefix = match[0]
             match = match[1]
             if match not in changed:
-                if match  in ("Yes"):
+                if df is not None and (re.search('[^a-zA-Z]', prefix) or prefix == '') and  len(df[(df.id == match) | (df.label == match)]):
+                    # Localy define variable should NOT be converted but put in lower case
+                    out = out.replace('"{}"'.format(match), '"{}"'.format(match.lower()) )
+                elif match  in ("Yes"):
                     out = out.replace('"{}"'.format(match), 'true'.format(match) )
                     changed.append(match)
-                if match  in ("No"):
+                elif match  in ("No"):
                     out = out.replace('"{}"'.format(match), 'false'.format(match) )
                     changed.append(match)
-                elif match.lower() in valueset_list:
+                elif match.lower() in valueset_linkid:
                     changed.append(match)
-                    out = out.replace('"{0}"'.format(match), 'val."{1}"'.format(match,match.lower()) )
-                elif match.lower() in obs_list:
+                    out = out.replace('"{0}"'.format(match), "Base.coding('{0}')".format(match) )
+                elif match.lower() in valueset_label:
+                    linkid = list(get_used_valueset().keys())[list(valueset_label).index(match.lower())]
                     changed.append(match)
-                    out = out.replace('"{0}"'.format(match), 'obs."{1}"'.format(match,match.lower()) )
+                    out = out.replace('"{0}"'.format(match), "Base.coding('{0}')".format(linkid) )
+                elif match.lower() in obs_linkid:
+                    changed.append(match)
+                    out = out.replace('"{0}"'.format(match), "Base.GetObsValue('{0}')".format(match.lower()) )
+                elif match.lower() in obs_label:
+                    linkid = list(get_used_obs().keys())[list(obs_label).index(match.lower())]
+                    changed.append(match)
+                    out = out.replace('"{0}"'.format(match), "Base.GetObsValue('{0}')".format(linkid) )
                 else:
-                    out = out.replace('"{0}"'.format(match), '"{1}"'.format(match,match.lower()) )
-            
+                    print("Warning: string not translated {} ".format(match))
+                    
+    # quick fix remove the select multiple
+    matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *= *Base\.GetObsValue\('([^']+)'\))",out)
+    for match in matches:
+        replacement = "Base.GetObsValue('{}&{}') = true".format(match[1],match[2])
+        print('rework {}-{} is an observation (present) '.format(match[2],get_used_obs()[match[2]] ))
+        out = out.replace( match[0], replacement)
+    # quick fix remove the select multiple
+    matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *!= *Base\.GetObsValue\('([^']+)'\))",out)
+    for match in matches:
+        replacement = "Base.GetObsValue('{}&{}') = false".format(match[1],match[2])
+        print('rework {}-{} is an observation (absent)'.format(match[2],get_used_obs()[match[2]] ))
+        out = out.replace( match[0], replacement)
     
     return out
     

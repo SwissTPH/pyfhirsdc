@@ -104,7 +104,7 @@ def generate_valueset_concept(df_value_set):
                 code = code,
                 display =  question["display"],
             )
-        if "observation" in  question and  pd.notna(question["observation"]):
+        if "map" in  question and  pd.notna(question["map"]) and question["map"].lower().startswith('obs'):
             obs_concepts.append(concept)
         else:
             concepts.append(concept)
