@@ -6,7 +6,7 @@ import re
 
 import pandas as pd
 
-from pyfhirsdc.config import get_defaut_path, get_processor_cfg
+from pyfhirsdc.config import get_defaut_path, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import \
     get_structure_map_extension
 from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
@@ -127,7 +127,7 @@ def get_bundle_group(df_questions_item):
 # this function create as many ressource as get_helper 'rules' function returns rules
 def get_post_oneliner_bundle_profile_rule(profile,question,df_questions_item):
     
-    rule_name = clean_group_name(profile)+clean_group_name(question['id'])
+    rule_name = clean_group_name(profile+question['id'])
 
     main_rules = None
     helper_func, helper_args= get_helper(question)
@@ -431,7 +431,7 @@ def generate_helper(helper_func, mode, profile, question_id,df_questions, *helpe
 
 
         
-def get_timestamp_rule(rule_name, target = 'tgt.issued' ):
+def get_timestamp_rule( target = 'tgt.issued' ):
     return MappingRule(    
                         expression = "src.item as item where linkId  =  'timestamp'",
                         rules = [
@@ -514,7 +514,7 @@ def get_base_obs_muli_rules(profile, question_id,df_questions,df_valueset):
             
             rule_name = clean_group_name( profile + code+ 'f')
             rules.append(MappingRule(
-                expression = "src where src where src.item.where(linkId='{0}').exists() and src.item.where(linkId='{0}').answer.where(value.code = '{1}').empty()  ".format(question_id, row_id),
+                expression = "src where src.item.where(linkId='{0}').exists() and src.item.where(linkId='{0}').answer.where(value.code = '{1}').empty()  ".format(question_id, row_id),
                 rules = [wrapin_entry_create(profile, question_id,df_questions, [MappingRule(expression = 'src then {}(src,tgt)'.format(rule_name) )])]
             ))
             
@@ -552,7 +552,7 @@ def set_generic_observation_v2(profile, rule_name, code ,spe_rules, sufix = ''):
         rules = [
             get_rand_identifier_rule(rule_name),
             *get_obs_meta_rule(profile, code, rule_name),
-            get_timestamp_rule(rule_name),
+            get_timestamp_rule(),
             MappingRule(name = 'patient', expression = "src.subject as subject -> tgt.subject = subject "),
             *spe_rules
         ]
@@ -568,26 +568,22 @@ def get_generic_obs_cancelled_group():
  #args[0]: question name
  #args[1]: none name
  # 
-def SetObservation(mode, profile, question_id,df_questions_item, *args):
-    if len(args)< 1:
-        print('Error SetObservation must have 1 parameters')
-        return None
-    
-    elif mode == 'groups':
+def SetObservationCode(mode, profile, question_id,df_questions_item, *args):
+    if mode == 'groups':
         none_name = args[1] if len(args)>1 else 'none'
-        code = args[0] if len(args) == 1 else question_id
+        code =  question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_value_rules(code,df_questions_item, none_name))]
 
 def get_obs_value_rules(question_id, df_questions_item,none_name):
     rule_name = clean_group_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
-        expression = "a.value as val  where val != '{}' -> tgt.value = val, tgt.status = 'final'".format(none_name),
-        name = 'final-{}'.format(rule_name)
-    ),MappingRule(
-        expression = " a  where a.value = '{}' -> tgt.status = 'cancelled',tgt.value = false ".format(none_name),
-        name = 'notfound-{}'.format(rule_name)
-    )])]
+        expression = "a.value as val",
+    rules = [MappingRule(
+        expression = "val where val.code = '{}' -> tgt.status = 'cancelled',tgt.value = false ".format(none_name),
+    ), MappingRule(
+        expression="val where val.code != '{}' -> tgt.value = create('CodeableConcept') as cc, cc.coding = val, tgt.status = 'final'"
+    )])])]
             
     
 def wrapin_first_answers_rules(rule_name, question_id,df_questions_item, rules):
@@ -599,36 +595,30 @@ def wrapin_first_answers_rules(rule_name, question_id,df_questions_item, rules):
 
 
 
-    
+def SetObservation(mode,  profile, question_id,df_questions_item, *args):
+     SetObservationQuantity(mode,  profile, question_id,df_questions_item, *args)   
 ####### SetObservationQuantity :  set the value of an observation, obs will never be cancelled; Same
 ####### SetObservation but now accounting that the answer won't be the value itself
 ####### but will hold the value in the field value of Quantity  ###### 
  #args[0]: question name
  # 
 def SetObservationQuantity(mode,  profile, question_id,df_questions_item, *args):
-    if len(args)!= 1:
-        print('Error SetObservationQuantity must have 1 parameter')
-        return None
-    elif mode == 'groups':
-        code = args[0] if len(args) == 1 else question_id
+    if mode == 'groups':
+        code = question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_qty_value_rules(code,df_questions_item))]
 
 def get_obs_qty_value_rules(question_id,df_questions_item):
     rule_name = clean_group_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item, [MappingRule(
-                expression = "a.value as val -> tgt.value = val, tgt.status = 'final'",
-                name = 'val-{}'.format(rule_name)
+                expression = "a.value as val -> tgt.value = val, tgt.status = 'final'"
             )])]
 
  ####### SetObservationNotFound :  if yes, set the related obs to cancelled  ###### 
  #args[0]: question name 
 def SetObservationNotFound(mode, profile, question_id,df_questions_item, *args):
-    if len(args)> 1:
-        print('Error SetObservation must have 1 or 0 parameters')
-        return None
-    elif mode == 'groups':
-        code = args[0] if len(args) == 1 else question_id
+    if mode == 'groups':
+        code = question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code,get_obs_value_rules(get_notfound_rules(code,question_id, df_questions_item)))]
 
@@ -641,11 +631,9 @@ def get_notfound_rules(rule_name,question_id, df_questions_item):
  ####### SetObservationYesNo :  set an  observation from yes/no, No result in obs beeing cancelled  ######
   #args[0]: question name
 def SetObservationYesNo(mode, profile, question_id,df_questions_item, *args):
-    if len(args)!= 1:
-        print('Error SetObservation must have 1 parameters')
-        return None
-    elif mode == 'groups':
-        code = args[0] if len(args) == 1 else question_id
+
+    if mode == 'groups':
+        code =  question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_yes_no_rules(code,df_questions_item))]
     
@@ -665,11 +653,8 @@ def get_obs_yes_no_rules(question_id,df_questions_item,):
  ####### SetObservationBoolean :  set an  observation from boolean, false result in obs beeing cancelled  ###### 
  #args[0]: question name
 def SetObservationBoolean(mode, profile, question_id,df_questions_item, *args):
-    if len(args)!= 1:
-        print('Error SetObservation must have 1 parameters')
-        return None
-    elif mode == 'groups':
-        code = args[0] if len(args) == 1 else question_id
+    if mode == 'groups':
+        code =  question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code,get_obs_bool_rules(code, df_questions_item))]
 
@@ -682,6 +667,23 @@ def get_obs_bool_rules(question_id, df_questions_item):
         expression = "a  where a.value = false -> tgt.status = 'cancelled', tgt.value = false",
         name = 'notfound-{}'.format(rule_name)
     )])]
+
+ ####### SetObservationBoolean :  set an  observation from boolean, false result in obs beeing cancelled  ###### 
+ #args[0]: question name
+def SetObservationCodeBoolean(mode, profile, question_id,df_questions_item, *args):
+    if mode == 'groups':
+        code =  question_id
+        rule_name = clean_group_name(question_id)
+        return [set_generic_observation_v2( profile, rule_name, code,get_obs_bool_code_rules(code, df_questions_item))]
+
+def get_obs_bool_code_rules(question_id, df_questions_item):
+    rule_name = clean_group_name(question_id)
+    return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
+        expression = "a.value as val",
+    rules = [MappingRule(
+        expression = "val where val.code = 'true' -> tgt.status = 'final',tgt.value = true ",
+    )])])]
+            
 
 ####### SetOfficalGivenNameSetOfficalGivenName :  to have all the name under a single "official" ###### 
 #args[0]: question name last
@@ -935,13 +937,13 @@ def SetCommunicationRequest(mode, profile, question_id,df_questions,*args):
 # args[x] post-coordination linkid under the item
 def SetClassification(mode, profile, question_id,df_questions,*args):
     #FIXME
-    rule_name = clean_group_name(question_id)
+    rule_name = clean_group_name(profile+question_id)
     if mode == 'rules':
         return [
             wrapin_fpath(
             [question_id],
             df_questions,
-            [MappingRule(expression="item  then {1}{1}(src,item, tgt)".format(clean_group_name(profile),rule_name))])
+            [MappingRule(expression="item  then {}(src,item, tgt)".format(rule_name))])
         ]
     elif mode == 'groups':
         
@@ -951,33 +953,30 @@ def SetClassification(mode, profile, question_id,df_questions,*args):
         # verificationStatus
         # recordedDate: dateTime
         return [MappingGroup(
-            name = clean_group_name(profile)+rule_name,
-            sources = [MappingGroupIO(name = 'src')],
+            name = rule_name,
+            sources = [MappingGroupIO(name = 'src'),MappingGroupIO(name = 'item')],
             targets = [MappingGroupIO(name = 'tgt')],
             rules = [
-                MappingRule(expression= "src.item first as item where linkId =  '{0}'".format(question_id),
-                    rules = [
                         MappingRule(expression= "item.answer first as a",
                             rules = [
                             MappingRule(expression= "src.subject as sub -> tgt.subject = sub"),
                             MappingRule(expression= "src.encounter as en -> tgt.encounter = en"),
-                            get_timestamp_rule(rule_name, target = 'tgt.recordedDate' ),
+                            get_timestamp_rule(target = 'tgt.recordedDate' ),
                             MappingRule(expression= "src -> tgt.code = create('CodeableConcept') as cs",
                                 rules = [MappingRule(expression= "src -> tgt.code = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= '{}', ccs.system = '{}'".format(question_id, get_custom_codesystem_url()))]),
-                            MappingRule(expression= "a where value.code = 'yes'",
+                            MappingRule(expression= "a where value = true",
                                 rules = [
                                     MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'active', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
                                     MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'differential', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
                                 ]
                             ),
-                            MappingRule(expression= "a where value.code = 'no'",
+                            MappingRule(expression= "a where value = false",
                                 rules = [
                                     MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'inactive', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
                                     MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'refuted', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
                                 ])
                         ]),*get_post_coordination_rules(question_id,df_questions,*args)]),         
-                ]
-        )]
+            ]
 
 def get_post_coordination_rules(stem_code,df_questions, *args):
     rules = []
@@ -985,12 +984,11 @@ def get_post_coordination_rules(stem_code,df_questions, *args):
     for arg in args:
         rules.append(wrapin_fpath([arg],
             df_questions,
-            [MappingRule(expression= "src -> tgt.contained = create('Coding') as ccs, ccs.code= '{}', ccs.system = '{}'".format(arg, get_custom_codesystem_url()))]
+            [MappingRule(expression= "src -> tgt.extension  = create('Extension') as ext ,  ext.url ='{}/StructureDefinition/postcoordination',  ext.value =  create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= '{}', ccs.system = '{}'".format(get_fhir_cfg().canonicalBase,arg, get_custom_codesystem_url()))]
             )
         
         )
     return rules
-
 ### create Classification
 # args[0] linkid for classificaitonchoice, valueSet
 
