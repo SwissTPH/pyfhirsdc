@@ -6,7 +6,7 @@ from fhir.resources.coding import Coding
 from fhir.resources.extension import Extension
 from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
 
-from pyfhirsdc.config import get_fhir_cfg
+from pyfhirsdc.config import get_dict_df, get_fhir_cfg, get_used_valueset
 from pyfhirsdc.converters.utils import (clean_name, get_fpath,
                                         get_resource_url, inject_config)
 
@@ -232,29 +232,40 @@ def get_hidden_ext():
 
     # if yes recursive call until no parent or loop
 QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION = ['code', 'not','display']
-
+FHIRPATH_FUNCTION = ['where', 'last', 'first']
 def convert_reference_to_firepath(expression, df_questions):
     # find all the reference
-    matches = re.findall(pattern = r'"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?', string = expression)
+    matches = re.findall(pattern = r'(?P<op> *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?', string = expression)
     
     for match in matches:
         fpath = []
-        linkid = match[0]
-        sufix = match[1]  
+        op = match[0]
+        linkid = match[1]
+        sufix = match[2]  
         # find all the parent
         if df_questions is None:
             print("warning: cannot resolve the expression {} because not questions df avaiable".format(expression))
             fpath = [linkid]       
-        else:
+   
+        df_valueset = get_dict_df()['valueset']
+        value = df_valueset[(df_valueset.code == linkid)|(df_valueset.display == linkid)]
+        if op != '' and len(value)>0:
+            value = value.iloc[0]
+            term_q = '{0}"{1}'.format(op, linkid)
+            replace = ".code{}'{}'".format(op,value['code'])
+        else:    
             fpath = get_fpath(df_questions, linkid, fpath)
         # do the replaces : if prefix and prefix != code replace with answers else repalce with value
         path = ''
         for elm in fpath:
             path= ".repeat(item).where(linkId='{}')".format(elm) +path
         # addin the answer
-        path = path + ".answer.first()"
+        
+        path += ".answer" 
+        if sufix not in FHIRPATH_FUNCTION:
+            path +=".first()"
         if sufix == '' or sufix in QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION:
-            path = path + ".value"     
+            path += ".value"     
         if sufix != '':
             term_q = '"{0}".{1}'.format(linkid, sufix)
             #term = "${{{0}}}.{1}".format(linkid, sufix)
