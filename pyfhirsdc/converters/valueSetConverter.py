@@ -173,10 +173,3 @@ def add_concept_in_valueset_df(list_name ,concepts):
         df_valueset = pd.concat([df_valueset, df_dictionary], ignore_index=True)
         dict_df['valueset'] =  df_valueset
         set_dict_df(dict_df)  
-
-
-    
-    
-
-        
-        
