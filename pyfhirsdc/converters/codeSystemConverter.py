@@ -5,7 +5,7 @@
 import pandas as pd
 from fhir.resources.codesystem import CodeSystemConcept
 
-from pyfhirsdc.config import get_processor_cfg
+from pyfhirsdc.config import append_used_valueset, get_processor_cfg
 from pyfhirsdc.converters.mappingConverter import get_base_profile
 from pyfhirsdc.converters.valueSetConverter import \
     get_value_set_additional_data_keyword
@@ -31,7 +31,9 @@ def generate_questionnaire_concept(df_questions):
 def generate_observation_concept(df_questions):
     concept = []
     # remove the line without id
-    questions = df_questions.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id').to_dict('index')
+    questions = df_questions[~df_questions['id'].isin(
+        get_value_set_additional_data_keyword()
+        )].dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id').to_dict('index')
     # remove the line without id
     for id, question in questions.items():
         base_profile = get_base_profile(question['map_profile'])
@@ -52,9 +54,9 @@ def generate_condition_concept(df_questions):
         get_value_set_additional_data_keyword()
         )].dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id').to_dict('index')
     # remove the line without id
-    for id, question in questions.items() and 'initialExpression' in question and pd.isna(question['initialExpression']):
+    for id, question in questions.items():
         base_profile = get_base_profile(question['map_profile'])
-        if base_profile == "Conditions":
+        if base_profile == "Condition":
             concept.append(
                 CodeSystemConcept(
                     definition = question["description"],
@@ -108,4 +110,5 @@ def generate_valueset_concept(df_value_set):
             obs_concepts.append(concept)
         else:
             concepts.append(concept)
+            append_used_valueset(concept.code,concept.display)
     return concepts, obs_concepts
