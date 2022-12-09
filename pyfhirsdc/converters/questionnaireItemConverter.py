@@ -19,9 +19,10 @@ from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import (
     get_calculated_expression_ext, get_candidate_expression_ext,
     get_checkbox_ext, get_choice_column_ext, get_constraint_exp_ext,
-    get_dropdown_ext, get_enable_when_expression_ext, get_help_ext, get_hidden_ext,
-    get_initial_expression_identifier_ext, get_open_choice_ext, get_slider_ext,
-    get_subquestionnaire_ext, get_unit_ext, get_variable_extension)
+    get_dropdown_ext, get_enable_when_expression_ext, get_help_ext,
+    get_hidden_ext, get_initial_expression_identifier_ext, get_open_choice_ext,
+    get_slider_ext, get_subquestionnaire_ext, get_unit_ext,
+    get_variable_extension)
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_resource_url)
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
@@ -152,19 +153,19 @@ QUESTION_TYPE_MAPPING = {
                 "string" : "string",
                 "boolean" : "boolean",
                 "date" : "date",
-                "dateTime" : "dateTime",
+                "datetime" : "dateTime",
                 "time" : "time",
-                "dateTime" : "dateTime",
                 "decimal" :"decimal",
                 "display": "display",
                 "note":"display",
                 "quantity" :"quantity",
                 "integer" :"integer",
                 "number" :"integer",
-                "CodeableConcept": "CodeableConcept",
-                "Reference" : "Reference",
+                "codeableconcept": "CodeableConcept",
+                "reference" : "Reference",
                 'group':'group',
-                'questionnaire':'group'      
+                'questionnaire':'group',
+                'choice':'choice'   
 }
 
 
@@ -175,7 +176,7 @@ def get_question_fhir_data_type(question_type):
         type_arr = question_type.split(" ")
         fhir_type = type_arr[0]
         
-        return QUESTION_TYPE_MAPPING.get(fhir_type)
+        return QUESTION_TYPE_MAPPING.get(fhir_type.lower())
 
 
 def get_question_extension(question, question_id, df_questions = None ):
