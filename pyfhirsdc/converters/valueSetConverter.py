@@ -1,10 +1,10 @@
-from fhir.resources.fhirtypes import  Code, Uri
-from fhir.resources.valueset import  ValueSetCompose,\
-     ValueSetComposeInclude, ValueSetComposeIncludeConcept,\
-     ValueSetComposeIncludeConceptDesignation
 import pandas as pd
-from pyfhirsdc.config import get_dict_df, get_processor_cfg, set_dict_df
+from fhir.resources.fhirtypes import Code, Uri
+from fhir.resources.valueset import (ValueSetCompose, ValueSetComposeInclude,
+                                     ValueSetComposeIncludeConcept,
+                                     ValueSetComposeIncludeConceptDesignation)
 
+from pyfhirsdc.config import get_dict_df, get_processor_cfg, set_dict_df
 from pyfhirsdc.converters.utils import get_custom_codesystem_url
 
 
@@ -85,7 +85,7 @@ def get_value_set_concept(concepts, id, line):
             code = Code(id),
             display = line['display'],
         )
-        if line['definition'] is not None:
+        if line['definition'] is not None and pd.notna(line['definition']):
             concept.designation = [ValueSetComposeIncludeConceptDesignation(
                 value = line['definition']
             )]
