@@ -97,17 +97,12 @@ def generate_other_valueset_libs(question_concepts,list_name,add_to_valueset = T
         
         cql = get_code_cql_from_concepts(question_concepts, lib)
         if add_to_valueset:
-            add_concept_in_valueset_df(list_name, question_concepts)
+            add_concept_in_valueset_df(name_vs, question_concepts)
         cql_path = get_defaut_path('CQL', 'cql')
         lib_path =get_resource_path('Library', name_vs )
         write_library_CQL(cql_path, lib, cql)
         write_resource(lib_path, lib)
             
-        #TODO use configuration
-        
-    #FIXME generate_valusetLib
-    #FIXME generate_diagnosis_concept
-    #FIXME generate_observation_concept
 
     
 

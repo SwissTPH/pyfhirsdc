@@ -85,7 +85,7 @@ def get_value_set_concept(concepts, id, line):
             code = Code(id),
             display = line['display'],
         )
-        if line['definition'] is not None and pd.notna(line['definition']):
+        if 'definition' in line and line['definition'] is not None and pd.notna(line['definition']):
             concept.designation = [ValueSetComposeIncludeConceptDesignation(
                 value = line['definition']
             )]
