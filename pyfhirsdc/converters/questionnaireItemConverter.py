@@ -118,6 +118,15 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
                     extension = [get_help_ext()],
                     readOnly = True
                 ))
+            # add instruction in case there is no text, sdc defect don't show the help if no text
+            if new_question.text == None:
+                new_question.item.append( QuestionnaireItemSDC(
+                    linkId = question['id']+"-instruction",
+                    type= 'display',
+                    text = 'help',
+                    extension = [get_instruction_ext()],
+                ))    
+                
         if 'parentId' in  df_questions:
             convert_df_to_questionitems(new_question,df_questions, id )
                     
