@@ -287,7 +287,7 @@ def get_type_details(question):
     # structure main_type detail_1::detail_2
     if 'type' not in question or not isinstance(question['type'], str):
         return None, None, None
-    type_arr = str(question['type']).split(" ")
+    type_arr = re.split(" +",question['type'])
     # split each details
     if len(type_arr)>1:
         detail_arr = type_arr[1].split('::')
