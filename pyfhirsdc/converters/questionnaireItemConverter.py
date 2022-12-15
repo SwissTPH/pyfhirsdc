@@ -11,6 +11,7 @@ import re
 
 import numpy
 import pandas as pd
+import textile
 from fhir.resources.coding import Coding
 from fhir.resources.questionnaire import (QuestionnaireItemAnswerOption,
                                           QuestionnaireItemInitial)
@@ -20,9 +21,9 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_calculated_expression_ext, get_candidate_expression_ext,
     get_checkbox_ext, get_choice_column_ext, get_constraint_exp_ext,
     get_dropdown_ext, get_enable_when_expression_ext, get_help_ext,
-    get_hidden_ext, get_initial_expression_identifier_ext, get_open_choice_ext,
-    get_slider_ext, get_subquestionnaire_ext, get_unit_ext,
-    get_variable_extension)
+    get_hidden_ext, get_initial_expression_identifier_ext, get_instruction_ext,
+    get_open_choice_ext, get_slider_ext, get_subquestionnaire_ext,
+    get_toggle_ext, get_unit_ext, get_variable_extension)
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_resource_url)
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
@@ -116,7 +117,6 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
                     type= 'display',
                     text = question['help'],
                     extension = [get_help_ext()],
-                    readOnly = True
                 ))
             # add instruction in case there is no text, sdc defect don't show the help if no text
             if new_question.text == None:
@@ -212,6 +212,13 @@ def get_question_extension(question, question_id, df_questions = None ):
     elif type == "select_multiple":
         # only way to have select multiple repeat = true is not enough
         extensions.append(get_open_choice_ext())
+    if "select_" in type and type.lower() != 'select_boolean' and 'readonly' not in display and 'hidden' not in display:
+        for value in display:
+            if value.strip().startswith('toggle'):
+                elms = value.split('::')
+                if len(elms)==3:
+                    extensions.append(get_toggle_ext(elms[1], elms[2], df_questions))
+
     if type.lower() in ('decimal','integer','number','quantity') and len(unit) == 1 :
         extensions.append(get_unit_ext(unit[0]))
     if type.lower() in ('decimal','integer','number') and len(slider) == 1 :
@@ -256,7 +263,7 @@ def get_question_valueset(question):
             if isinstance(valueset_dict, numpy.ndarray) and len(valueset_dict)>0:
                 return  get_resource_url("ValueSet", detail_1)
             else:
-                print("local ValueSet ${0} not defiend in the valueset tab".format(detail_1))
+                print("local ValueSet {0} not defiend in the valueset tab".format(detail_1))
                 return None
     else:
         return None

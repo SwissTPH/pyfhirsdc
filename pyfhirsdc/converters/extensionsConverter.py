@@ -6,9 +6,10 @@ from fhir.resources.coding import Coding
 from fhir.resources.extension import Extension
 from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
 
-from pyfhirsdc.config import get_dict_df, get_fhir_cfg, get_used_valueset
-from pyfhirsdc.converters.utils import (clean_name, get_fpath,
-                                        get_resource_url, inject_config)
+from pyfhirsdc.config import get_dict_df, get_fhir_cfg
+from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
+                                        get_fpath, get_resource_url,
+                                        inject_config)
 
 
 def get_dropdown_ext():
@@ -23,16 +24,53 @@ def get_dropdown_ext():
 )
  
 def get_help_ext():
- return Extension(
+    return Extension(
         url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
         valueCodeableConcept = CodeableConcept(
                 coding = [Coding( 
                     system = "http://hl7.org/fhir/questionnaire-item-control",
-                    code = "help",
-                    display = "Help")],
-                text ="Help")
+                    code = "help")
+                ]
+        )
 )
  
+def get_instruction_ext():
+    return Extension(
+        url ="http://hl7.org/fhir/StructureDefinition/questionnaire-displayCategory",
+        valueCodeableConcept = CodeableConcept(
+                coding = [Coding( 
+                    system = "http://hl7.org/fhir/questionnaire-display-category",
+                    code = "instructions")
+                ]
+        )
+    )    
+
+def get_toggle_ext(in_code, expression, df_question):
+    a_code = in_code.split('|')
+    if len(a_code) == 1:
+        code = in_code
+        system = get_custom_codesystem_url()
+    else:
+        code = a_code[1]
+        system = a_code[0]
+        
+    return Extension(
+            url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-answerOptionsToggleExpression",
+            extension = [
+                Extension( 
+                    url = "option" ,
+                    valueCoding = Coding(
+                        system = system,
+                        code = code
+                        )
+                ),
+                Extension(
+                    url = "expression",
+                    valueExpression = ExpressionType(
+                        language = "text/fhirpath",
+                        expression = convert_reference_to_fhirpath(expression, df_question)
+                    ))            
+            ])
  
  
 def get_subquestionnaire_ext(questionnaire_id):
@@ -60,7 +98,7 @@ def get_variable_extension(name,expression,df_questions):
         valueExpression = ExpressionType(
                 name = name,
                 language = "text/fhirpath",
-                expression = convert_reference_to_firepath(expression, df_questions)))
+                expression = convert_reference_to_fhirpath(expression, df_questions)))
 
 
 def get_candidate_expression_ext(desc, uri):
@@ -233,9 +271,10 @@ def get_hidden_ext():
     # if yes recursive call until no parent or loop
 QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION = ['code', 'not','display']
 FHIRPATH_FUNCTION = ['where', 'last', 'first']
-def convert_reference_to_firepath(expression, df_questions):
+def convert_reference_to_fhirpath(expression, df_questions):
     # find all the reference
-    matches = re.findall(pattern = r'(?P<op> *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?', string = expression)
+    changes = []
+    matches = re.findall(pattern = r'(?P<op> *!?<< *| *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?', string = expression)
     
     for match in matches:
         fpath = []
@@ -248,33 +287,45 @@ def convert_reference_to_firepath(expression, df_questions):
             fpath = [linkid]       
    
         df_valueset = get_dict_df()['valueset']
-        value = df_valueset[(df_valueset.code == linkid)|(df_valueset.display == linkid)]
-        if op != '' and len(value)>0:
+        value = df_valueset[(df_valueset.valueSet != "condition") & (df_valueset.valueSet != "observation") & ((df_valueset.code == linkid)|(df_valueset.display == linkid))]
+        #not in
+        if len(value)>0 and "!<<" in op:
             value = value.iloc[0]
-            term_q = '{0}"{1}'.format(op, linkid)
+            term_q = '.first().value{0}"{1}"'.format(op, linkid)
+            replace = ".where(value.code = '{}').empty()".format(value['code'])
+        # in
+        elif len(value)>0 and "<<" in op:
+            value = value.iloc[0]
+            term_q = '.first().value{0}"{1}"'.format(op, linkid)
+            replace = ".where(value.code = '{}').exists()".format(value['code'])
+        # equal or not equal
+        elif op != '' and len(value)>0:
+            value = value.iloc[0]
+            term_q = '{0}"{1}"'.format(op, linkid)
             replace = ".code{}'{}'".format(op,value['code'])
-        else:    
+        else:   
+            path = '' 
             fpath = get_fpath(df_questions, linkid, fpath)
         # do the replaces : if prefix and prefix != code replace with answers else repalce with value
-        path = ''
-        for elm in fpath:
-            path= ".repeat(item).where(linkId='{}')".format(elm) +path
-        # addin the answer
-        
-        path += ".answer" 
-        if sufix not in FHIRPATH_FUNCTION:
-            path +=".first()"
-        if sufix == '' or sufix in QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION:
-            path += ".value"     
-        if sufix != '':
-            term_q = '"{0}".{1}'.format(linkid, sufix)
-            #term = "${{{0}}}.{1}".format(linkid, sufix)
-            replace = "%resource"+path+"."+sufix
-        else:
-            term_q = '"{0}"'.format(linkid, sufix)
-            #term = "${{{0}}}".format(linkid)
-            replace = "%resource"+path
-        expression = expression.replace(term_q,replace ) 
+            for elm in fpath:
+                path= ".repeat(item).where(linkId='{}')".format(elm) +path
+            # addin the answer
+            path += ".answer" 
+            if sufix not in FHIRPATH_FUNCTION:
+                path +=".first()"
+            if sufix == '' or sufix in QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION:
+                path += ".value"     
+            if sufix != '':
+                term_q = '"{0}".{1}'.format(linkid, sufix)
+                #term = "${{{0}}}.{1}".format(linkid, sufix)
+                replace = "%resource"+path+"."+sufix
+            else:
+                term_q = '"{0}"'.format(linkid, sufix)
+                #term = "${{{0}}}".format(linkid)
+                replace = "%resource"+path
+        if term_q not in changes:
+            changes.append(term_q)
+            expression = expression.replace(term_q,replace ) 
         #expression = expression.replace(term,replace )
 
 
@@ -286,7 +337,7 @@ def get_enable_when_expression_ext(expression, df_questions, desc = None ):
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/fhirpath",
-                expression = convert_reference_to_firepath(expression, df_questions)))
+                expression = convert_reference_to_fhirpath(expression, df_questions)))
 
 def get_calculated_expression_ext(expression, df_questions, desc = None ):
     return Extension(
@@ -294,7 +345,7 @@ def get_calculated_expression_ext(expression, df_questions, desc = None ):
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/fhirpath",
-                expression = convert_reference_to_firepath(expression, df_questions)))
+                expression = convert_reference_to_fhirpath(expression, df_questions)))
 
 def get_initial_expression_ext(expression, df_questions, desc = None ):
     return Extension(
@@ -302,7 +353,7 @@ def get_initial_expression_ext(expression, df_questions, desc = None ):
         valueExpression = ExpressionType(
                 description = desc,
                 language = "text/cql-expression",
-                expression = convert_reference_to_firepath(expression, df_questions)))
+                expression = convert_reference_to_fhirpath(expression, df_questions)))
 
 def get_initial_expression_identifier_ext(quesiton_id, desc = None ):
     return Extension(
