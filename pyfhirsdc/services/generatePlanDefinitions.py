@@ -4,9 +4,11 @@ import json
 import os
 
 from fhir.resources.identifier import Identifier
+from fhir.resources.meta import Meta
 from fhir.resources.plandefinition import PlanDefinition
 
-from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
+from pyfhirsdc.config import (get_defaut_fhir, get_dict_df, get_fhir_cfg,
+                              get_processor_cfg)
 from pyfhirsdc.converters.planDefinitionConverter import process_decisiontable
 from pyfhirsdc.converters.utils import clean_group_name, get_resource_url
 from pyfhirsdc.serializers.librarySerializer import generate_attached_library
@@ -83,6 +85,7 @@ def init_pd(filepath):
         pd = PlanDefinition.parse_raw( json.dumps(default))
     else: pd = PlanDefinition.construct() 
 
+    pd.version = get_fhir_cfg().lib_version
     return pd
     
 
