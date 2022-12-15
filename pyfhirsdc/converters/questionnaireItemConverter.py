@@ -106,7 +106,8 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
                 )
 
         if pd.notna(question['label']) and question['type'] != "select_boolean":
-            new_question.text = question['label']
+            #textile create html text
+            new_question.text = textile.textile(question['label'])
         if 'help' in question and pd.notna(question['help']):
             if new_question.item is None:
                 new_question.item = []
