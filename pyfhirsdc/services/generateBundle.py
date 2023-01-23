@@ -25,7 +25,7 @@ def write_bundle(conf):
         ext = ('.json')
         # iterating over directory and subdirectory to get desired result
         for path, dirc, files in os.walk(folderdir):
-            if "ext_ig" not in path:
+            if "ext_ig" not in path and "tests" not in path:
                 for name in files:
                     if name.endswith(ext):
                         print(conf, path, dirc, name)  # printing file name
