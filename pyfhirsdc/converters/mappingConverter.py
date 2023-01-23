@@ -560,7 +560,19 @@ def set_generic_observation_v2(profile, rule_name, code ,spe_rules, sufix = ''):
 
 def get_generic_obs_cancelled_group():
     pass
+def SetObservationCodeStr(mode, profile, question_id,df_questions_item, *args):
+    if mode == 'groups':
+        code =  question_id
+        rule_name = clean_group_name(question_id)
+        return [set_generic_observation_v2( profile, rule_name, code, get_obs_code_str_rules(code,df_questions_item))]
 
+def get_obs_code_str_rules(question_id, df_questions_item):
+    rule_name = clean_group_name(question_id)
+    return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
+        expression = "a.value as val",
+    rules = [ MappingRule(
+        expression="val -> tgt.value = create('CodeableConcept') as cc, cc.coding = create('Coding') as c, c.code=val, c.system= '{}', tgt.status = 'final'".format( get_custom_codesystem_url())
+    )])])]
 
  ####### SetObservation :  set the value of an observation, obs will never be cancelled  ###### 
  #args[0]: question name
@@ -568,7 +580,7 @@ def get_generic_obs_cancelled_group():
  # 
 def SetObservationCode(mode, profile, question_id,df_questions_item, *args):
     if mode == 'groups':
-        none_name = args[1] if len(args)>1 else 'none'
+        none_name = args[0] if len(args)>1 else 'none'
         code =  question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_value_rules(code,df_questions_item, none_name))]
@@ -578,9 +590,9 @@ def get_obs_value_rules(question_id, df_questions_item,none_name):
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
         expression = "a.value as val",
     rules = [MappingRule(
-        expression = "val where val.code = '{}' -> tgt.status = 'cancelled',tgt.value = false ".format(none_name),
+        expression = "val where val.code = '{}' -> tgt.status = 'cancelled'".format(none_name),
     ), MappingRule(
-        expression="val where val.code != '{}' -> tgt.value = create('CodeableConcept') as cc, cc.coding = val, tgt.status = 'final'"
+        expression="val where val.code != '{}' -> tgt.value = create('CodeableConcept') as cc, cc.coding = val, tgt.status = 'final'".format(none_name)
     )])])]
             
     
@@ -594,7 +606,7 @@ def wrapin_first_answers_rules(rule_name, question_id,df_questions_item, rules):
 
 
 def SetObservation(mode,  profile, question_id,df_questions_item, *args):
-     SetObservationQuantity(mode,  profile, question_id,df_questions_item, *args)   
+    return SetObservationQuantity(mode,  profile, question_id,df_questions_item, *args)   
 ####### SetObservationQuantity :  set the value of an observation, obs will never be cancelled; Same
 ####### SetObservation but now accounting that the answer won't be the value itself
 ####### but will hold the value in the field value of Quantity  ###### 

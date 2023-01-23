@@ -5,6 +5,7 @@ from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
 from fhir.resources.extension import Extension
 from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
+from fhirpathpy import compile, evaluate
 
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
@@ -155,7 +156,7 @@ def get_structure_map_extension(extentions, uri):
     return extentions
 # exp  expression::severity
 # message human::requirements
-def get_constraint_exp_ext(id,expr, human):
+def get_constraint_exp_ext(id,expr, human,df_questions = None):
     expr_parts = expr.split('::')
     human_parts = human.split('::')
     if len(human_parts)==2:
@@ -174,6 +175,7 @@ def get_constraint_exp_ext(id,expr, human):
         print("Error, missing constraint message")        
 
     
+    
     ext =  Extension(
             url ="http://hl7.org/fhir/StructureDefinition/questionnaire-constraint",
             extension = [
@@ -184,7 +186,7 @@ def get_constraint_exp_ext(id,expr, human):
                     url = "expression",
                     valueExpression= ExpressionType(
                 language = "text/fhirpath",
-                expression = expr)),
+                expression = convert_reference_to_fhirpath(expr, df_questions))),
                 Extension( 
                     url = "severity",
                     valueCode= severity),
@@ -270,17 +272,23 @@ def get_hidden_ext():
 
     # if yes recursive call until no parent or loop
 QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION = ['code', 'not','display']
+
 FHIRPATH_FUNCTION = ['where', 'last', 'first']
+
 def convert_reference_to_fhirpath(expression, df_questions):
     # find all the reference
     changes = []
-    matches = re.findall(pattern = r'(?P<op> *!?<< *| *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?', string = expression)
+    matches = re.findall(pattern = r'(?P<op> *!?<< *| *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))? *(?P<op2>!= (?:true|false))?', string = expression)
     
     for match in matches:
         fpath = []
+        path = ''
+        Iscode = False
+        elm = None
         op = match[0]
         linkid = match[1]
-        sufix = match[2]  
+        sufix = match[2]
+        null_or =   match[3]
         # find all the parent
         if df_questions is None:
             print("warning: cannot resolve the expression {} because not questions df avaiable".format(expression))
@@ -303,33 +311,54 @@ def convert_reference_to_fhirpath(expression, df_questions):
             value = value.iloc[0]
             term_q = '{0}"{1}"'.format(op, linkid)
             replace = ".code{}'{}'".format(op,value['code'])
-        else:   
-            path = '' 
-            fpath = get_fpath(df_questions, linkid, fpath)
-        # do the replaces : if prefix and prefix != code replace with answers else repalce with value
-            for elm in fpath:
-                path= ".repeat(item).where(linkId='{}')".format(elm) +path
-            # addin the answer
-            path += ".answer" 
-            if sufix not in FHIRPATH_FUNCTION:
-                path +=".first()"
-            if sufix == '' or sufix in QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION:
-                path += ".value"     
-            if sufix != '':
-                term_q = '"{0}".{1}'.format(linkid, sufix)
-                #term = "${{{0}}}.{1}".format(linkid, sufix)
-                replace = "%resource"+path+"."+sufix
+        # reference to a questions
+        else:
+            question = df_questions[(df_questions['id'] == linkid) | (df_questions['label'] == linkid) ]
+            if   len(question)>0:
+                fpath = get_fpath(df_questions, linkid, fpath)
+                for elm in fpath:
+                    path= ".repeat(item).where(linkId='{}')".format(elm) +path
+                path += ".answer"
+                null_or_path= None
+                if  len(null_or)>0:
+                    null_or_path = path + ".empty() and"
+                if sufix not in FHIRPATH_FUNCTION:
+                    path +=".first()"
+                if sufix == '' or sufix in QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION:
+                    path += ".value"     
+                if sufix != '':
+                    term_q = '"{0}".{1}'.format(linkid, sufix)
+                    #term = "${{{0}}}.{1}".format(linkid, sufix)
+                    replace = "%resource"+path+"."+sufix
+                else:
+                    term_q = '"{0}"'.format(linkid, sufix)
+                    #term = "${{{0}}}".format(linkid)
+                    replace = "%resource"+path
+            elif  len(value)>0:
+                Iscode = True
+                value = value.iloc[0]
+                term_q = '{0}"{1}"'.format(op, linkid)
+                replace = "{0}'{1}'".format(op,value['code'])
+                
             else:
-                term_q = '"{0}"'.format(linkid, sufix)
-                #term = "${{{0}}}".format(linkid)
-                replace = "%resource"+path
-        if term_q not in changes:
+                print("error: {} not found in question nor valueset".format(linkid))
+                exit()
+        # do the replaces : if prefix and prefix != code replace with answers else repalce with value
+        if term_q+null_or not in changes:
             changes.append(term_q)
-            expression = expression.replace(term_q,replace ) 
-        #expression = expression.replace(term,replace )
+            if null_or_path is not None:
+                expression = expression.replace(term_q+null_or,"(" + null_or_path + replace + ")")
+            else: 
+                expression = expression.replace(term_q,replace ) 
+    # remove the new lines
+    expression = expression.replace('\n','')
+    # replace the {{}}
+    final = inject_config(expression)
+    # validate fhirparse grammar
+    node = compile([], final)
+    if node is not None:
+            return final
 
-
-    return inject_config(expression) 
 
 def get_enable_when_expression_ext(expression, df_questions, desc = None ):
     return Extension(
@@ -352,17 +381,22 @@ def get_initial_expression_ext(expression, df_questions, desc = None ):
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
         valueExpression = ExpressionType(
                 description = desc,
-                language = "text/cql-expression",
+                language = "text/fhirpath",
                 expression = convert_reference_to_fhirpath(expression, df_questions)))
+
+
+
+def get_cql_epression(id, desc = None):
+    return ExpressionType(
+                description = desc,
+                language = "text/cql-identifier",
+                expression = str(id).lower())
 
 def get_initial_expression_identifier_ext(quesiton_id, desc = None ):
     return Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
-        valueExpression = ExpressionType(
-                description = desc,
-                language = "text/cql-identifier",
-                expression = str(quesiton_id).lower()))
-   
+        valueExpression = get_cql_epression(quesiton_id, desc)
+    )
 def get_questionnaire_library(library):
     if not re.search("$https?\:\/\/", library):
         library = get_fhir_cfg().canonicalBase + "Library/{}".format(clean_name(library))

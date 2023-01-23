@@ -29,14 +29,17 @@ def init_activity(filepath, id):
     return activity
 
 def create_activity(activity_definition ,questionnaire):
+   #FIXME we should have {{context}} in questionnationnaire to define PATDOC or on the PD
+    activity_definition.kind = 'Task'
+   
     activity_definition.useContext = [
       UsageContext( 
         code = get_code(
           "http://terminology.hl7.org/CodeSystem/usage-context-type", 
           "task"),
         valueCodeableConcept = get_codableconcept_code(
-          get_custom_codesystem_url(), 
-          questionnaire["id"],
+          'http://terminology.hl7.org/CodeSystem/v3-ActCode', 
+          'PATDOC',
           "Collect infornation with questionnaire {}".format(questionnaire['title'])))
     ]
     activity_definition.code = get_codableconcept_code(
@@ -45,12 +48,19 @@ def create_activity(activity_definition ,questionnaire):
       "Collect information")
     # could nbe splitted into input.code / input.value
     activity_definition.dynamicValue = [ ActivityDefinitionDynamicValue(
-        path = "input",
+        path = "input.type",
         expression = Expression(
-            language = "text/cql-expression",
-            expression = "{ type: code, value: extension('http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-collectWith').value }"
-      )
-    )]
+            language = "text/cql",
+            expression = "code"
+        )
+      ),ActivityDefinitionDynamicValue(
+          path = "input.value",
+          expression = Expression(
+              language = "text/cql",
+              expression = "extension('http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-collectWith').value"
+          )
+        )
+    ]
     new_ext = Extension(
         url = "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-collectWith",
         valueCanonical = questionnaire['url'])

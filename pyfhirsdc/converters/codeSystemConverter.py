@@ -5,7 +5,7 @@
 import pandas as pd
 from fhir.resources.codesystem import CodeSystemConcept
 
-from pyfhirsdc.config import append_used_valueset, get_processor_cfg
+from pyfhirsdc.config import append_used_obs_valueset, append_used_valueset, get_processor_cfg
 from pyfhirsdc.converters.mappingConverter import get_base_profile
 from pyfhirsdc.converters.valueSetConverter import \
     get_value_set_additional_data_keyword
@@ -106,8 +106,9 @@ def generate_valueset_concept(df_value_set):
                 code = code,
                 display =  question["display"] if pd.notna(question["display"]) else None,
             )
-        if "map" in  question and  pd.notna(question["map"]) and question["display"].lower().startswith('obs'):
+        if "map" in  question and  pd.notna(question["map"]) and    question["map"].lower().startswith('obs'):
             obs_concepts.append(concept)
+            append_used_obs_valueset(concept.code,concept.display)
         else:
             concepts.append(concept)
             append_used_valueset(concept.code,concept.display)

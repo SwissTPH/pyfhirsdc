@@ -8,6 +8,8 @@ from fhir.resources.relatedartifact import RelatedArtifact
 from fhir.resources.triggerdefinition import TriggerDefinition
 
 from pyfhirsdc.config import get_fhir_cfg
+from pyfhirsdc.converters.extensionsConverter import (
+    get_cql_epression, get_initial_expression_identifier_ext)
 from pyfhirsdc.converters.utils import (clean_name, get_codableconcept_code,
                                         init_list, init_resource_meta)
 
@@ -104,11 +106,7 @@ def get_conditions(row):
         if name is not 'id' and name in row and pd.notna(row[name]):
             condition.append( PlanDefinitionActionCondition(
                 kind = Code(exp['kind']),
-                expression = Expression(
-                    language = "text/cql-identifier",
-                    expression = exp['prefix']+row['id'],
-                    description =    row[name].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)     
-                )
+                expression = get_cql_epression(exp['prefix']+row['id'], desc = row[name].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase) )
             ))
     if len(condition)>0:
         return condition

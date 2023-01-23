@@ -36,6 +36,7 @@ def generate_custom_code_system():
     cond_concepts = []
     question_concepts = []
     valueset_concepts = []
+    obs_val_concepts = []
     for name, df_questions in dfs_questionnaire.items():
         question_concept = generate_questionnaire_concept(df_questions)
         obs_concept= generate_observation_concept(df_questions)
@@ -52,10 +53,10 @@ def generate_custom_code_system():
     if len(valueset_concepts)>0:
         concept = concept +  valueset_concepts
     if len(obs_val_concepts)>0:
-        obs_concepts +=  obs_val_concepts
-        concept = concept +  obs_concepts        
+        concept = concept +  obs_val_concepts        
     generate_other_valueset_libs(valueset_concepts, 'valueset', False)
     generate_other_valueset_libs(obs_concepts,'observation')
+    generate_other_valueset_libs(obs_val_concepts,'observation_valueset')
     generate_other_valueset_libs(cond_concepts, 'condition')
     # path must end with /
     

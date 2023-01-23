@@ -13,7 +13,7 @@ from fhir.resources.parameterdefinition import ParameterDefinition
 
 from pyfhirsdc.config import (append_used_obs, append_used_valueset,
                               get_defaut_path, get_fhir_cfg, get_processor_cfg,
-                              get_used_obs, get_used_valueset)
+                              get_used_obs, get_used_obs_valueset, get_used_valueset)
 from pyfhirsdc.converters.extensionsConverter import add_library_extentions
 from pyfhirsdc.converters.questionnaireItemConverter import \
     get_question_fhir_data_type
@@ -462,7 +462,7 @@ def write_cql_action(id, row, expression_column, df, display = None):
         cql_exp_raw =reindent("{}\n".format(cql_exp_raw),4)   
     # translation to CQL function
     if cql_exp_raw != '':
-        cql_exp = map_to_obs_valueset(cql_exp_raw,df ) 
+        cql_exp = convert_reference_to_cql(cql_exp_raw,df ) 
     ret =   """
 /* 
 {1}{0} : {2}
@@ -487,26 +487,30 @@ define "{1}{0}":
     "{2}"
 """.format(prefix.replace("\n", ""), alias.replace("\n", ""),reference)
 
-def map_to_obs_valueset(cql_exp, df):
+def convert_reference_to_cql(cql_exp, df):
     # find "([^"]+)" *= *"([^"]+)" 
     valueset_linkid = [x.lower() for x in  get_used_valueset().keys()]
     valueset_label = [x.lower() for x in  get_used_valueset().values()]
+    obs_valueset_linkid = [x.lower() for x in get_used_obs_valueset().keys()]
+    obs_valueset_label = [x.lower() for x in get_used_obs_valueset().values()]
     obs_linkid = [x.lower() for x in get_used_obs().keys()]
     obs_label = [x.lower() for x in get_used_obs().values()]
     changed = []
-    matches = re.findall(r'([a-z\.])?"([^"\.]+)"',cql_exp)
+    matches = re.findall(r'([ !=<>voc\.]+)?"([^"\.]+)"',cql_exp)
     out = cql_exp
     out = out.replace('HasCond', 'Base.HasCond')
     out = out.replace('HasObs', 'Base.HasObs')
     out = out.replace('GetObsValue', 'Base.GetObsValue')
 
 
-    for match in matches:
-        if match[0] != '.':
-            prefix = match[0]
-            match = match[1]
+    for matching in matches:
+        prefix = matching[0][-1] if len(matching[0])>0  else ''
+        if prefix != '.':
+            operator = bool(re.search('[!=<>]', matching[0]))
+            match = matching[1]
+
             if match not in changed:
-                if df is not None and (re.search('[^a-zA-Z]', prefix) or prefix == '') and  len(df[(df.id == match) | (df.label == match)]):
+                if df is not None and (bool(re.search('[^a-zA-Z]', prefix)) or prefix == '') and  len(df[(df.id == match) | (df.label == match)]):
                     # Localy define variable should NOT be converted but put in lower case
                     out = out.replace('"{}"'.format(match), '"{}"'.format(match.lower()) )
                 elif match  in ("Yes"):
@@ -515,22 +519,31 @@ def map_to_obs_valueset(cql_exp, df):
                 elif match  in ("No"):
                     out = out.replace('"{}"'.format(match), 'false'.format(match) )
                     changed.append(match)
-                elif match.lower() in valueset_linkid and prefix in ('',' ','v'):
+                # for valueset attached converted in obs
+                elif match.lower() in obs_valueset_linkid and (prefix == 'v' or (prefix != 'o'  and operator == True)):
                     changed.append(match)
-                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), 'val."{0}"'.format(get_used_valueset()[match.lower()].lower()) )
-                elif match.lower() in valueset_label and prefix in ('',' ','v'):
-                    
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), "Base.GetObsValue('{0}')".format(match) )
+                elif match.lower() in obs_valueset_label and (prefix == 'v' or (prefix != 'o'  and operator == True)):
+                    linkid = list(get_used_obs_valueset().keys())[list(obs_valueset_label).index(match.lower())]
+                    changed.append(match)
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), "Base.GetObsValue('{0}')".format(linkid) )
+                # for valueset
+                elif match.lower() in valueset_linkid and (prefix == 'v' or (prefix != 'o'  and operator == True)):
+                    changed.append(match)
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), 'val."{0}"'.format(get_used_valueset()[match].lower()) )
+                elif match.lower() in valueset_label and (prefix == 'v'   or (prefix != 'o'  and operator == True)):
                     changed.append(match)
                     out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), 'val."{0}"'.format(match.lower()) )
+                # for obs
                 elif match.lower() in obs_linkid and prefix in ('',' ','o'):
                     changed.append(match)
-                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'o' else '',match), "Base.GetObsValue('{0}')".format(  match) )
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'o' else '',match), "Base.GetObsValue('{0}')".format(match) )
                 elif match.lower() in obs_label and prefix in ('',' ','o'):
                     linkid = list(get_used_obs().keys())[list(obs_label).index(match.lower())]
                     changed.append(match)
-                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'o' else '',match), "Base.GetObsValue('{0}')".format( linkid) )
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'o' else '',match), "Base.GetObsValue('{0}')".format(linkid) )
                 else:
-                    print("Warning: string not translated {} {} ".format(prefix,match))
+                     print("Warning: string not translated {} {} ".format(prefix,match))
                     
     # quick fix remove the select multiple
     matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *= *Base\.GetObsValue\('([^']+)'\))",out)
@@ -544,7 +557,25 @@ def map_to_obs_valueset(cql_exp, df):
         replacement = "Base.GetObsValue('{}&{}') = false".format(match[1],match[2])
         print('rework {}-{} is an observation (absent)'.format(match[2],get_used_obs()[match[2]] ))
         out = out.replace( match[0], replacement)
-    
+    # Base.GetObsValue('EmCare.B15S2.DE09') = val."some mucous membrane pallor"
+    matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *= *val\.\"([^\"]+)\")",out)
+    for match in matches:
+        linkid = list(get_used_valueset().keys())[list(valueset_label).index(match[2].lower())]
+        replacement = "Base.HasObsValueCode('{}', '{}')".format(match[1],linkid)
+        print('rework {0} = val."{1}" to  GetObsValueCode("{0}, "{2}")'.format(match[1],match[2],linkid ))
+        out = out.replace( match[0], replacement)
+    # support "dsfsdfs" !=true or Base.ASDFwsed('code')!=true
+    matches = re.findall(r"(([a-zA-Z'\(\)_\.]+|\"[^\"]+\") *!= *true)",out)
+    for match in matches:
+        replacement = "Coalesce({},false)!=true".format(match[1])
+        print('rework {0} != true to  Coalesce({0},false)!=true'.format(match[1]))
+        out = out.replace( match[0], replacement)
+        # support "dsfsdfs" !=true or Base.ASDFwsed('code')!=true
+    matches = re.findall(r"(ToInteger\( *((?:[a-zA-Z'_\.]+(\([^\)]+\))?|\"[^\"]+\")[^\)]*)\))",out)
+    for match in matches:
+        replacement = "ToInteger(Coalesce({},false))".format(match[1])
+        print('rework {0}  to  {1}'.format(match[0],replacement))
+        out = out.replace( match[0], replacement)
     return out
     
 
