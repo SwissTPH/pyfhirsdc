@@ -15,6 +15,7 @@ import textile
 from fhir.resources.coding import Coding
 from fhir.resources.questionnaire import (QuestionnaireItemAnswerOption,
                                           QuestionnaireItemInitial)
+from fhirpathpy import evaluate
 
 from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import (
@@ -22,7 +23,7 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_checkbox_ext, get_choice_column_ext, get_constraint_exp_ext,
     get_dropdown_ext, get_enable_when_expression_ext, get_help_ext,
     get_hidden_ext, get_initial_expression_identifier_ext, get_instruction_ext,
-    get_open_choice_ext, get_slider_ext, get_subquestionnaire_ext,
+    get_open_choice_ext, get_radio_ext, get_slider_ext, get_subquestionnaire_ext,
     get_toggle_ext, get_unit_ext, get_variable_extension)
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_resource_url)
@@ -109,6 +110,8 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
         if pd.notna(question['label']) and question['type'] != "select_boolean":
             #textile create html text
             new_question.text = textile.textile(question['label'])
+            # remove the leanding \t<p> and following </p>
+            new_question.text = new_question.text[4:-4]
         if 'help' in question and pd.notna(question['help']):
             if new_question.item is None:
                 new_question.item = []
@@ -201,7 +204,7 @@ def get_question_extension(question, question_id, df_questions = None ):
     type, detail_1, detail_2 = get_type_details(question)
     if "constraintExpression" in question and pd.notna(question["constraintExpression"]) and question["constraintExpression"] !=''\
         and "constraintDescription" in question and pd.notna(question["constraintDescription"]):
-        extensions.append(get_constraint_exp_ext(question_id,question["constraintExpression"],question["constraintDescription"]))
+        extensions.append(get_constraint_exp_ext(question_id,question["constraintExpression"],question["constraintDescription"], df_questions))
     # TODO support other display than drop down
     if (type.lower() == 'select_boolean'):
         extensions.append(get_checkbox_ext())
@@ -211,7 +214,13 @@ def get_question_extension(question, question_id, df_questions = None ):
         extensions.append(get_dropdown_ext())
     elif type == "select_multiple":
         # only way to have select multiple repeat = true is not enough
-        extensions.append(get_open_choice_ext())
+        if "open"  in display :
+            extensions.append(get_open_choice_ext())
+        if "checkbox" in display or "radio" in display:
+            extensions.append(get_checkbox_ext())
+    elif type == "select_one":
+        if "checkbox" in display or "radio" in display:
+            extensions.append(get_radio_ext())
     if "select_" in type and type.lower() != 'select_boolean' and 'readonly' not in display and 'hidden' not in display:
         for value in display:
             if value.strip().startswith('toggle'):
@@ -227,6 +236,8 @@ def get_question_extension(question, question_id, df_questions = None ):
         extensions = get_question_choice_column(extensions, detail_1)
     if "hidden"  in display:
         extensions.append(get_hidden_ext())
+    elif "instruction" in display  and type in ["display","note"] :
+        extensions.append(get_instruction_ext())
     if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]) and question["enableWhenExpression"] !='':
         extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"],df_questions))    
     if "calculatedExpression" in question and pd.notna(question["calculatedExpression"]) and question["calculatedExpression"] !='':
@@ -329,3 +340,20 @@ def init_questionnaire(filepath, id):
         questionnaire.url=get_resource_url('Questionnaire',id) 
 
     return questionnaire
+
+def validate_fhirpath(resource, elm = None, elm_root = "%resource"):
+    if elm == None:
+        elm = resource
+    # go through extension
+    if hasattr(elm, "extension") and elm.extension is not None:
+        for ext in elm.extension:
+            if hasattr(ext, "valueExpression") and ext.valueExpression is not None and ext.valueExpression.language =="text/fhirpath":
+                expr = ext.valueExpression.expression
+                expr= expr.replace('%this', elm_root)
+                js_res = json.loads(resource.json())
+                evaluate( expr)
+            validate_fhirpath(resource, ext, elm_root)
+        if hasattr(elm, "item") and elm.item is not None:
+            for item in  elm.item:
+                elm_root_child = elm_root + ".item.where(linkid='{}')".format(item.linkId)
+                validate_fhirpath(resource, item, elm_root_child)

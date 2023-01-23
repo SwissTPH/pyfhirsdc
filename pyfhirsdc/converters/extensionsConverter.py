@@ -24,6 +24,17 @@ def get_dropdown_ext():
             text ="Drop down")
 )
  
+def get_radio_ext():
+    return Extension(
+        url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+        valueCodeableConcept = CodeableConcept(
+                coding = [Coding( 
+                    system = "http://hl7.org/fhir/questionnaire-item-control",
+                    code = "radio-button",
+                    display = "Radio Button")],
+                text ="Radio Button")
+        )
+ 
 def get_help_ext():
     return Extension(
         url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -149,7 +160,7 @@ def get_structure_map_extension(extentions, uri):
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-targetStructureMap",
         valueCanonical=  Canonical(uri)
         )
-        if extentions is None or len(extentions) == 0:
+        if extentions is None or len(extentiorans) == 0:
             return [sm_ext]
         else:
             append_unique(extentions, sm_ext, True)
