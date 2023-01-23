@@ -1,0 +1,9 @@
+{
+    "version": "2.0.0",
+    "tasks": [{
+        "label": "update-build",
+        "command": "./update-build.sh", 
+        "args": ["test"],
+        "type": "shell"
+    }]
+}
