@@ -2,13 +2,18 @@
  convert dataframe to to fhir coding system concept
 
 """
+import logging
+
 import pandas as pd
 from fhir.resources.codesystem import CodeSystemConcept
 
-from pyfhirsdc.config import append_used_obs_valueset, append_used_valueset, get_processor_cfg
+from pyfhirsdc.config import (append_used_obs_valueset, append_used_valueset,
+                              get_processor_cfg)
 from pyfhirsdc.converters.mappingConverter import get_base_profile
 from pyfhirsdc.converters.valueSetConverter import \
     get_value_set_additional_data_keyword
+
+logger = logging.getLogger("default")
 
 
 def generate_questionnaire_concept(df_questions):
@@ -97,7 +102,7 @@ def generate_valueset_concept(df_value_set):
     value_set = value_set.drop_duplicates(subset='code', keep="last")
     len_cleanned = len(value_set)
     if len_origin !=len_cleanned:
-        print("{} value were removed from the value set because other line have the same code".format(len_origin-len_cleanned))
+        logger.warning("{} value were removed from the value set because other line have the same code".format(len_origin-len_cleanned))
     value_set = value_set.dropna(axis=0, subset=['code']).set_index('code').to_dict('index')
     # remove the line without id
     for code, question in value_set.items():

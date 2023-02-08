@@ -4,8 +4,8 @@
         - q.X
         - valueSet
 """
-
 import json
+import logging
 import os
 
 from fhir.resources.attachment import Attachment
@@ -27,6 +27,7 @@ from pyfhirsdc.serializers.librarySerializer import (
     get_code_cql_from_concepts, write_library_CQL)
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
+logger = logging.getLogger("default")
 
 def generate_custom_code_system():
     dfs_questionnaire = get_dict_df()['questionnaires']
@@ -64,7 +65,7 @@ def generate_custom_code_system():
     name_cs = get_processor_cfg().scope.lower()
     filepath = get_resource_path("CodeSystem",name_cs )
 
-    print('processing codeSystem {0}'.format( name_cs))
+    logger.info('processing codeSystem {0}'.format( name_cs))
     # read file content if it exists
     code_system = init_code_system(filepath)
     code_system.concept = concept

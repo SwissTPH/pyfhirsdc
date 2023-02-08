@@ -1,6 +1,7 @@
 
 
 
+import logging
 import os
 import re
 
@@ -17,6 +18,8 @@ from pyfhirsdc.models.mapping import (Mapping, MappingGroup, MappingGroupIO,
                                       MappingIO, MappingRule)
 from pyfhirsdc.serializers.mappingSerializer import write_mapping_file
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
+
+logger = logging.getLogger("default")
 
 FHIR_BASE_PROFILES = [
     "Patient",
@@ -78,7 +81,7 @@ def get_questionnaire_mapping(questionnaire_name, df_questions_item):
         if structure_map is not None:
             write_resource(filepath, structure_map, get_processor_cfg().encoding)
     else:
-        print("No mapping found for the questionnaire {0}".format(questionnaire_name))
+        logger.warning("No mapping found for the questionnaire {0}".format(questionnaire_name))
 
     return mapping
 
@@ -337,7 +340,10 @@ def get_helper(question):
         helper_array = str(question['map_resource']).split('::')
         helper_func = helper_array[0].strip()
         # quite if not helper is found
-        if " " in helper_func.strip() or  helper_func not in globals():
+        if " " in helper_func.strip():
+            return None, None
+        elif helper_func not in globals():
+            logger.error("Mapping function {} not found".format(helper_func))
             return None, None
         if len(helper_array)>1:
             helper_args = [x.strip() for x in helper_array[1].split('||')] if len(helper_array)>1 else []
@@ -353,7 +359,7 @@ def get_mapping_detail(question_name, question, df_questions_item):
     #profileType, element, valiable = explode_map_resource(question['map_resource'])
     rules = None
     groups = None
-    #print("Mapping ``{0}`` added".format(fhirmapping))wrapin_entry_create(profile,question,df_questions_item, rules)
+    #logger.info("Mapping ``{0}`` added".format(fhirmapping))wrapin_entry_create(profile,question,df_questions_item, rules)
     if  'map_resource' in question\
         and pd.notna(question['map_resource'])\
         and question['map_resource'] is not None:
@@ -366,7 +372,7 @@ def get_mapping_detail(question_name, question, df_questions_item):
         else:
             rule_name = clean_group_name(question_name)
             if question['map_resource'].strip()[-1:] == ";":
-                print("Warning, the map ressource must not end with ;")
+                logger.warning("the map ressource must not end with ;")
 
             # if variable on root, element is the resource itself
             match =  re.search(VAL_REGEX,question['map_resource'])
@@ -488,7 +494,7 @@ def get_rand_identifier_rule(rule_name):
 # args[0] : valueSet name
 def SetObservationMultiple(mode, profile, question_id, df_questions, *args):
     if len(args)!= 1:
-        print('Error SetObservation must have 1 parameters')
+        logger.error('SetObservation must have 1 parameters')
         return None
     df_valueset = get_valueset_df(args[0], True)   
     if mode == 'rules':
@@ -702,7 +708,7 @@ def get_obs_bool_code_rules(question_id, df_questions_item):
 def SetOfficalGivenName(mode, profile, question_id,df_questions_item, *args):
     rule_name = clean_group_name(profile)
     if len(args)< 2:
-        print('Error SetOfficalGivenName must have 3 parameters')
+        logger.error('SetOfficalGivenName must have 3 parameters')
         return None
     if mode == 'rules':
         return [
@@ -750,7 +756,7 @@ def MapValueSetExtCode(mode, profile,question_id,df_questions, *args):
         ]
     elif mode == 'groups':
         if len(args)< 2:
-            print('Error SetOfficalGivenName must have 2 parameters, valueset name and mappath')
+            logger.error('SetOfficalGivenName must have 2 parameters, valueset name and mappath')
         # get Value set df
         maprules = get_valueset_map_source(args[0], args[1],tgttype)
         if maprules is not None:
@@ -826,7 +832,7 @@ def MapWalk(mode, profile, question_id,df_questions,*args):
         ]
     elif mode == 'groups':
         if len(args)!= 1:
-            print('Error MapWalk must have 1 parameters, valueset name and mappath')
+            logger.error('MapWalk must have 1 parameters, valueset name and mappath')
         # get Value set df
         map_path_list =  get_map_path_list(args[0])
         
@@ -1019,7 +1025,7 @@ def get_add_classification_status_rules():
 
 def SetClassificationMultiple(mode, profile, question_id, df_questions, *args):
     if len(args)!= 1:
-        print('Error SetObservation must have 1 parameters')
+        logger.error('SetObservation must have 1 parameters')
         return None
     df_valueset = get_valueset_df(args[0], True)   
     if mode == 'rules':

@@ -2,6 +2,7 @@
 
 
 import json
+import logging
 
 from fhir.resources.valueset import ValueSet
 
@@ -12,6 +13,7 @@ from pyfhirsdc.converters.valueSetConverter import (
     get_value_set_additional_data, get_value_set_compose)
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
+logger = logging.getLogger("default")
 
 def generate_value_sets():
     df_value_sets = get_dict_df()
@@ -27,7 +29,7 @@ def generate_value_sets():
 
 def  generate_value_set(name, df_value_set):
     filepath = get_resource_path("ValueSet", name)
-    print('processing ValueSet {0}'.format(name))
+    logger.info('processing ValueSet {0}'.format(name))
     # read file content if it exists
     vs = init_vs(filepath)
     vs.name =  get_resource_name('ValueSet',name)

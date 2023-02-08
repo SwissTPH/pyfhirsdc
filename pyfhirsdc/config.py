@@ -1,7 +1,10 @@
 import json
+import logging
 import os
 
 from pyfhirsdc.serializers.json import read_file
+
+logger = logging.getLogger("default")
 
 processor_cfg = None
 fhir_cfg = None
@@ -59,7 +62,7 @@ def read_config_file(filepath):
     if not os.path.exists(obj_conf.processor.outputPath):
         os.makedirs(obj_conf.processor.outputPath)
     if not os.path.exists(obj_conf.processor.inputFile):
-        print("inputFile {0} not found".format(obj_conf.processor.inputFile))
+        logger.error("inputFile {0} not found".format(obj_conf.processor.inputFile))
         return None
     processor_cfg = obj_conf.processor
 

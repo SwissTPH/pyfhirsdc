@@ -4,6 +4,7 @@
         - q.X
     Will be used in the plandefinition to call the respective questionnaires
 """
+import logging
 
 from pyfhirsdc.config import get_processor_cfg
 from pyfhirsdc.converters.activityConverter import (create_activity,
@@ -11,6 +12,7 @@ from pyfhirsdc.converters.activityConverter import (create_activity,
 from pyfhirsdc.serializers.utils import (get_resource_path,
                                          get_resources_files, write_resource)
 
+logger = logging.getLogger("default")
 
 def generate_activities():
     questionnaires = get_resources_files('questionnaire')
@@ -21,7 +23,7 @@ def generate_activities():
 def generate_activity( questionnaire ) :
     # try to load the existing questionnaire
     fullpath = get_resource_path("ActivityDefinition", questionnaire["id"].lower())
-    print('processing activity {0}'.format(questionnaire["id"].lower()))
+    logger.info('processing activity {0}'.format(questionnaire["id"].lower()))
     # read file content if it exists
     activity_definition = init_activity(fullpath, questionnaire["id"].lower())
         # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)

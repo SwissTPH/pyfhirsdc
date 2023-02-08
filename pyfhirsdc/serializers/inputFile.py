@@ -1,10 +1,12 @@
 
+import logging
 import re
 
 import pandas as pd
 
 from pyfhirsdc.config import set_dict_df
 
+logger = logging.getLogger("default")
 
 def clean_str(str):
     tmp = re.sub(r'(\[\w+\])|(\([^\)]+\))','',str.lower())
@@ -17,7 +19,7 @@ def read_input_file(input_file_path):
     try:
         file = pd.ExcelFile(input_file_path)
     except Exception as e:
-        print("Error while opening the from the file {0} with error {1}".format(input_file_path, e) )
+        logger.error("while opening the from the file {0} with error {1}".format(input_file_path, e) )
         return None
     return file
 
@@ -33,7 +35,7 @@ def parse_sheets(input_file, excudedWorksheets):
     df_extension = None
     dfs_cql = {}
     for worksheet in sheets:
-        print ("loading sheet {0}".format( worksheet))
+        logger.info("loading sheet {0}".format( worksheet))
         if excudedWorksheets is None or worksheet not in excudedWorksheets:
             df = input_file.parse(worksheet)
             worksheet= worksheet.replace("_", ".")

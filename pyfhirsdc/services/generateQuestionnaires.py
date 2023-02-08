@@ -6,6 +6,7 @@
         - valueSet
 """
 
+import logging
 
 import numpy as np
 
@@ -13,11 +14,13 @@ from pyfhirsdc.config import get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.mappingConverter import (add_mapping_url,
                                                    get_questionnaire_mapping)
 from pyfhirsdc.converters.questionnaireItemConverter import (
-    convert_df_to_questionitems, get_timestamp_item, init_questionnaire)
+    convert_df_to_questionitems, get_timestamp_item, init_questionnaire,
+    validate_fhirpath)
 from pyfhirsdc.converters.utils import inject_sub_questionnaires
 from pyfhirsdc.serializers.librarySerializer import generate_attached_library
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
+logger = logging.getLogger("default")
 
 def generate_questionnaires():
     dfs_questionnaire = get_dict_df()['questionnaires']
@@ -30,7 +33,7 @@ def generate_questionnaire( name ,df_questions) :
     
     # try to load the existing questionnaire
     fullpath = get_resource_path("Questionnaire", name)
-    print('processing questionnaire {0}'.format(name))
+    logger.info('processing questionnaire {0}'.format(name))
     # read file content if it exists
     questionnaire = init_questionnaire(fullpath, name)
     # clean the data frame

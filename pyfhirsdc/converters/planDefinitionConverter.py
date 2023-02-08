@@ -1,3 +1,6 @@
+
+import logging
+
 import pandas as pd
 from fhir.resources.expression import Expression
 from fhir.resources.fhirtypes import Canonical, Code
@@ -15,6 +18,7 @@ from pyfhirsdc.converters.utils import (clean_name, get_codableconcept_code,
 
 from ..serializers.librarySerializer import ROW_EXPRESSIONS
 
+logger = logging.getLogger("default")
 
 ## Goes through a row and maps it to FHIR action 
 def process_action(row):
@@ -75,7 +79,7 @@ def get_related_actions(row):
                     actionId = details[1].strip()
                 ))
             else:
-                print("Warning, {} related action is not correct, it should follow that format type::id(||type::id)*".format(row['id']))
+                logger.warning(", {} related action is not correct, it should follow that format type::id(||type::id)*".format(row['id']))
     return     related_actions
     
 def get_documentation(row):

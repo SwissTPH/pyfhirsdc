@@ -1,3 +1,5 @@
+### Function that creates the constant part of cql files 
+import logging
 import os
 import re
 from xmlrpc.client import boolean
@@ -13,8 +15,9 @@ from fhir.resources.parameterdefinition import ParameterDefinition
 
 from pyfhirsdc.config import (append_used_obs, append_used_valueset,
                               get_defaut_path, get_fhir_cfg, get_processor_cfg,
-                              get_used_obs, get_used_obs_valueset, get_used_valueset)
-from pyfhirsdc.converters.extensionsConverter import add_library_extentions
+                              get_used_obs, get_used_obs_valueset,
+                              get_used_valueset)
+from pyfhirsdc.converters.extensionsConverter import add_library_extensions
 from pyfhirsdc.converters.questionnaireItemConverter import \
     get_question_fhir_data_type
 from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
@@ -24,8 +27,7 @@ from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
 
 from .utils import reindent, write_resource
 
-### Function that creates the constant part of cql files 
-
+logger = logging.getLogger("default")
 
 def getIdentifierFirstRep(planDef):
     if (not planDef.identifier):
@@ -41,12 +43,12 @@ def generate_attached_library(resource, df_actions, type = 'pd'):
             resource.library = []    
             resource.library.append(libraryCanonical)
         else:
-            resource = add_library_extentions(resource, library.id)
+            resource = add_library_extensions(resource, library.id)
         
 def generate_library(name, df_actions, type = 'pd', description = None):
 
     id = clean_name(name)
-    print("Generating library ", name, ".......")
+    logger.info("Generating library " + name + ".......")
     lib_id =clean_group_name(id)
     library = Library(
         id = lib_id,
@@ -259,7 +261,7 @@ def get_include_lib(libs, library = None):
             if 'version' in lib and lib['version'] is not None and len(lib['version'])>0:
                ret+=" version '{}'".format(lib['version'].replace("{{LIB_VERSION}}",get_fhir_cfg().lib_version).replace("{{FHIR_VERSION}}",get_fhir_cfg().version))
             else:
-                print("error version missing for {} but mandatory as dependency for library {}".format(lib['name'], library.name))
+                logger.error(" version missing for {} but mandatory as dependency for library {}".format(lib['name'], library.name))
                 exit()
             if 'alias' in lib and lib['alias'] is not None and len(lib['alias'])>0:
                ret+=" called {}".format(lib['alias'])   
@@ -326,7 +328,7 @@ def get_code_cql_from_concepts(concepts, lib):
                         cql[i] = concept_cql
                         i = i+1
             else:
-                print("Warning: {} :{} is defined multiple times".format(lib.name,concept.display))
+                logger.warning("{} :{} is defined multiple times".format(lib.name,concept.display))
     return cql    
 
   
@@ -543,38 +545,38 @@ def convert_reference_to_cql(cql_exp, df):
                     changed.append(match)
                     out = out.replace('{0}"{1}"'.format(prefix if prefix == 'o' else '',match), "Base.GetObsValue('{0}')".format(linkid) )
                 else:
-                     print("Warning: string not translated {} {} ".format(prefix,match))
+                     logger.warning("string not translated {} {} ".format(prefix,match))
                     
     # quick fix remove the select multiple
     matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *= *Base\.GetObsValue\('([^']+)'\))",out)
     for match in matches:
         replacement = "Base.GetObsValue('{}&{}') = true".format(match[1],match[2])
-        print('rework {}-{} is an observation (present) '.format(match[2],get_used_obs()[match[2]] ))
+        logger.debug('rework {}-{} is an observation (present) '.format(match[2],get_used_obs()[match[2]] ))
         out = out.replace( match[0], replacement)
     # quick fix remove the select multiple
     matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *!= *Base\.GetObsValue\('([^']+)'\))",out)
     for match in matches:
         replacement = "Base.GetObsValue('{}&{}') = false".format(match[1],match[2])
-        print('rework {}-{} is an observation (absent)'.format(match[2],get_used_obs()[match[2]] ))
+        logger.debug('rework {}-{} is an observation (absent)'.format(match[2],get_used_obs()[match[2]] ))
         out = out.replace( match[0], replacement)
     # Base.GetObsValue('EmCare.B15S2.DE09') = val."some mucous membrane pallor"
     matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *= *val\.\"([^\"]+)\")",out)
     for match in matches:
         linkid = list(get_used_valueset().keys())[list(valueset_label).index(match[2].lower())]
         replacement = "Base.HasObsValueCode('{}', '{}')".format(match[1],linkid)
-        print('rework {0} = val."{1}" to  GetObsValueCode("{0}, "{2}")'.format(match[1],match[2],linkid ))
+        logger.debug('rework {0} = val."{1}" to  GetObsValueCode("{0}, "{2}")'.format(match[1],match[2],linkid ))
         out = out.replace( match[0], replacement)
     # support "dsfsdfs" !=true or Base.ASDFwsed('code')!=true
-    matches = re.findall(r"(([a-zA-Z'\(\)_\.]+|\"[^\"]+\") *!= *true)",out)
+    matches = re.findall(r"(((?:[a-zA-Z][a-zA-Z'\(\)_\.]+)?(?:\"[^\"]+\")?) *!= *true)",out)
     for match in matches:
         replacement = "Coalesce({},false)!=true".format(match[1])
-        print('rework {0} != true to  Coalesce({0},false)!=true'.format(match[1]))
+        logger.debug('rework {0} != true to  Coalesce({0},false)!=true'.format(match[1]))
         out = out.replace( match[0], replacement)
         # support "dsfsdfs" !=true or Base.ASDFwsed('code')!=true
     matches = re.findall(r"(ToInteger\( *((?:[a-zA-Z'_\.]+(\([^\)]+\))?|\"[^\"]+\")[^\)]*)\))",out)
     for match in matches:
         replacement = "ToInteger(Coalesce({},false))".format(match[1])
-        print('rework {0}  to  {1}'.format(match[0],replacement))
+        logger.debug('rework {0}  to  {1}'.format(match[0],replacement))
         out = out.replace( match[0], replacement)
     return out
     

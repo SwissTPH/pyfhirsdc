@@ -1,16 +1,15 @@
+import logging
 import os
-from fhir.resources.bundle import Bundle, BundleEntry,BundleEntryRequest
+
+from fhir.resources.bundle import Bundle, BundleEntry, BundleEntryRequest
 from fhir.resources.identifier import Identifier
 
 from pyfhirsdc.config import get_processor_cfg, read_config_file
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireSDC
 from pyfhirsdc.serializers.json import read_file, read_resource
-
-
-
 from pyfhirsdc.serializers.utils import write_resource
 
-    
+logger = logging.getLogger("default")    
     
 def write_bundle(conf):
     bundle = Bundle( identifier = Identifier(value = 'EmCareBundle'),
@@ -28,7 +27,7 @@ def write_bundle(conf):
             if "ext_ig" not in path and "tests" not in path:
                 for name in files:
                     if name.endswith(ext):
-                        print(conf, path, dirc, name)  # printing file name
+                        logger.info('{}{}{}{}'.format(conf, path, dirc , name)) # printing file name
                         add_resource(path,name,bundle)
     write_resource('./bundle.json', bundle)
                     

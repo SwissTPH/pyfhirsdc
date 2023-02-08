@@ -1,6 +1,7 @@
 
 
 import json
+import logging
 import os
 
 from fhir.resources.identifier import Identifier
@@ -16,6 +17,7 @@ from pyfhirsdc.serializers.planDefinitionIndexSerializer import \
     write_plan_definition_index
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
+logger = logging.getLogger("default")
 
 def generate_plandefinitions():
     decisionTable = get_dict_df()['decisions_tables']
@@ -38,7 +40,7 @@ def generate_plandefinition( name,df_actions):
         # path must end with /
     filepath = get_resource_path("PlanDefinition", get_processor_cfg().scope.lower())
     df_actions=df_actions.dropna(axis=0, subset=['id'])
-    print('processing plandefinition {0}'.format(name))
+    logger.info('processing plandefinition {0}'.format(name))
     # read file content if it exists
     pd_df = init_pd(filepath)
     skipcols=get_processor_cfg().skipcols

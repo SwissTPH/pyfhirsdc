@@ -50,13 +50,13 @@ def create_activity(activity_definition ,questionnaire):
     activity_definition.dynamicValue = [ ActivityDefinitionDynamicValue(
         path = "input.type",
         expression = Expression(
-            language = "text/cql",
+            language = "text/cql-expression",
             expression = "code"
         )
       ),ActivityDefinitionDynamicValue(
           path = "input.value",
           expression = Expression(
-              language = "text/cql",
+              language = "text/cql-expression",
               expression = "extension('http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-collectWith').value"
           )
         )

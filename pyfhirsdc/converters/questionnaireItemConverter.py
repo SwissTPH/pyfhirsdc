@@ -7,6 +7,7 @@
 
 
 import json
+import logging
 import re
 
 import numpy
@@ -22,14 +23,17 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_calculated_expression_ext, get_candidate_expression_ext,
     get_checkbox_ext, get_choice_column_ext, get_constraint_exp_ext,
     get_dropdown_ext, get_enable_when_expression_ext, get_help_ext,
-    get_hidden_ext, get_initial_expression_identifier_ext, get_instruction_ext,
-    get_open_choice_ext, get_radio_ext, get_slider_ext, get_subquestionnaire_ext,
-    get_toggle_ext, get_unit_ext, get_variable_extension)
+    get_hidden_ext, get_horizontal_ext, get_initial_expression_identifier_ext,
+    get_instruction_ext, get_item_media_ext, get_open_choice_ext,
+    get_radio_ext, get_slider_ext, get_subquestionnaire_ext, get_toggle_ext,
+    get_unit_ext, get_variable_extension)
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_resource_url)
+from pyfhirsdc.converters.valueSetConverter import get_value_set_answer_options
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
                                                QuestionnaireSDC)
 
+logger = logging.getLogger("default")
 
 def convert_df_to_questionitems(ressource,df_questions, parentId = None):
     # create a dict to iterate
@@ -274,7 +278,7 @@ def get_question_valueset(question):
             if isinstance(valueset_dict, numpy.ndarray) and len(valueset_dict)>0:
                 return  get_resource_url("ValueSet", detail_1)
             else:
-                print("local ValueSet {0} not defiend in the valueset tab".format(detail_1))
+                logger.error("local ValueSet {0} not defiend in the valueset tab".format(detail_1))
                 return None
     else:
         return None

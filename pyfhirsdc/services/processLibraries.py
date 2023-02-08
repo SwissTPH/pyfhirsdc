@@ -7,6 +7,7 @@
 
 import base64
 import json
+import logging
 import os
 import re
 
@@ -21,7 +22,7 @@ from pyfhirsdc.serializers.json import read_file, read_resource
 
 from ..converters.utils import get_custom_codesystem_url, get_resource_url
 
-
+logger = logging.getLogger("default")
 def is_content_to_update(content, lib):
     return content.id.startswith("ig-loader-" + lib.name)
 
@@ -80,7 +81,7 @@ def update_eml_content(multipart, id, ext):
     # get the depandencies
     # create the multipart payload
     # add dependencies recursivly
-    print("sending cql {}".format(id))
+    logger.info("sending cql {}".format(id))
     data = post_multipart(multipart, get_processor_cfg().cql_translator+"?format="+ext)
     if data is not None:
         
@@ -89,12 +90,12 @@ def update_eml_content(multipart, id, ext):
             json_w_error = None
             match = None
             if error_str in elm.text:
-                print("error found in "+id)
+                logger.error(" found in "+id)
                 json_w_error = json.loads(elm.text)
                 jsonpath_expression = parse('$.library.annotation[*]')
                 match = jsonpath_expression.find(json_w_error)
                 for val in match:
-                    print(val.value)
+                    logger.info(val.value)
                     
                 match.clear()
                 data.parts = ()
@@ -125,10 +126,10 @@ def get_cql_dependencies(cql, cqls = []):
                     cqls.append({'name':match, 'data':sub_cql})
                     cqls = get_cql_dependencies(sub_cql, cqls)
                 else:
-                    print("Error, missing cql dependency "+match)
+                    logger.error(" missing cql dependency "+match)
                     exit()
             else:
-                print("Error, missing cql dependency "+match)
+                logger.error(" missing cql dependency "+match)
                 exit()
                 
     return cqls

@@ -1,4 +1,5 @@
 import json
+import logging
 
 import requests
 from fhir.resources.structuremap import StructureMap
@@ -8,6 +9,7 @@ from pyfhirsdc.serializers.utils import reindent, write_resource
 
 from ..config import add_tail_slash, get_processor_cfg
 
+logger = logging.getLogger("default")
 
 def write_mapping_file(filepath, mapping, update_map = True):
 
@@ -22,7 +24,7 @@ def write_mapping_file(filepath, mapping, update_map = True):
     if update_map and check_internet():
         
         url_map=   add_tail_slash(get_processor_cfg().mapping_translator) + mapping.name
-        print("Sending the mapping file {0}".format(url_map))
+        logger.debug("Sending the mapping file {0}".format(url_map))
         headers_map = {'Content-type': 'text/fhir-mapping', 'Accept': 'application/fhir+json;fhirVersion=4.0'}
         response = requests.put(url_map, data = buffer, headers = headers_map) 
         if response.status_code == 200 or response.status_code == 201:
@@ -33,8 +35,8 @@ def write_mapping_file(filepath, mapping, update_map = True):
             del obj['meta']
             structure_map = StructureMap.parse_raw( json.dumps(obj))
         else:
-            print(str(response.status_code) +":"+ mapping.name)
-            print(response.text)
+            logger.debug(str(response.status_code) +":"+ mapping.name)
+            logger.warning(response.text)
 
     return structure_map
 

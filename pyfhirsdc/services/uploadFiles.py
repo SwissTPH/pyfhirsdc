@@ -1,11 +1,12 @@
 # importing the module
+import logging
 import os
 
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg, read_config_file
 from pyfhirsdc.serializers.http import put_files
 from pyfhirsdc.serializers.json import read_resource
 
-
+logger = logging.getLogger("default")
 def upload_files (conf, bundle):
     # Read the config file
     config_obj = read_config_file(conf)
@@ -19,7 +20,7 @@ def upload_files (conf, bundle):
         for path, dirc, files in os.walk(folderdir):
             for name in files:
                 if name.endswith(ext):
-                    print(conf, path, dirc, name)  # printing file name
+                    logger.info(conf, path, dirc, name)  # printing file name
                     upload_file(conf, path, name)
 
 
@@ -33,4 +34,4 @@ def upload_file(conf, path, name):
             if url.startswith(get_fhir_cfg().canonicalBase):
                 put_files(file_path, url)
         else:
-            print("ressource {0} doesn't have a URL".format(file_path) )
+            logger.info("ressource {0} doesn't have a URL".format(file_path) )

@@ -6,13 +6,16 @@
 """
 
 #from tkinter.font import names
+import logging
 
-from pyfhirsdc.config import  get_dict_df, get_processor_cfg
-from pyfhirsdc.serializers.utils import  get_resource_path, write_resource
-from pyfhirsdc.converters.profileConverter import  init_extension_def
-from pyfhirsdc.converters.profileConverter import convert_df_to_profiles
 import pandas as pd 
 
+from pyfhirsdc.config import get_dict_df, get_processor_cfg
+from pyfhirsdc.converters.profileConverter import (convert_df_to_profiles,
+                                                   init_extension_def)
+from pyfhirsdc.serializers.utils import get_resource_path, write_resource
+
+logger = logging.getLogger("default")
 
 def generate_profiles():
 
@@ -25,7 +28,7 @@ def generate_profiles():
 
 
 def generate_extension():
-    print('processing extenstions ')
+    logger.info('processing extenstions ')
 
     dfs_questionnaire = get_dict_df()['questionnaires']
     all_questionnaires = pd.concat(dfs_questionnaire, ignore_index=True)
@@ -42,13 +45,13 @@ def generate_extension():
 
 
 def generate_profile():
-    print('processing profiles.................')
+    logger.info('processing profiles.................')
     # clean the data frame
 
     #### Profiles for the rest of the resources ####
     profiles, names_profiles = convert_df_to_profiles()
     # write profiles to file
-    print(len(names_profiles))
+    logger.info(len(names_profiles))
     if len(profiles)>0:
         for i in range(len(names_profiles)):
             fullpath_profiles = get_resource_path("Profiles",names_profiles[i])

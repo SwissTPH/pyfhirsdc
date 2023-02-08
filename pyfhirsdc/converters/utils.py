@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -6,6 +7,7 @@ from fhir.resources.coding import Coding
 
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg, get_processor_cfg
 
+logger = logging.getLogger("default")
 
 def get_resource_name(resource_type, name):
     return resource_type.lower()+ "-"+ clean_name(name)
@@ -86,12 +88,12 @@ def get_fpath(df_questions, linkid, fpath = [] ):
     if len(question) == 0:
         # look but with the
         question = df_questions[df_questions['id'] == linkid]
-        print("error: {} not found in id or label".format(linkid))
+        logger.error(" {} not found in id or label".format(linkid))
         exit()
     elif len(question) > 1:
         # look but with the
         question = df_questions[df_questions['id'] == linkid]
-        print("error: {}  found several times in id or label ".format(linkid))
+        logger.error(" {}  found several times in id or label ".format(linkid))
         exit()
     #find if there is parent
     question = question.iloc[0]
@@ -101,7 +103,7 @@ def get_fpath(df_questions, linkid, fpath = [] ):
         if question.parentId not in fpath:
             return get_fpath(df_questions, question.parentId, fpath)
         else:
-            print("error: loop detected involving {} and {} ".format(linkid, question.parentId))
+            logger.error("loop detected involving {} and {} ".format(linkid, question.parentId))
             exit()
     else:
         return fpath
