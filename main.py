@@ -1,4 +1,5 @@
 import getopt
+import logging
 import sys
 
 from pyfhirsdc.services.generateBundle import write_bundle
@@ -15,6 +16,30 @@ def print_help():
     print('-l to build the library with cql in base64')
     print('--anthro to generate the antro code system from tsv files (files can be found here https://github.com/WorldHealthOrganization/anthro/tree/master/data-raw/growthstandards)')
     
+def setup_logger(logger_name,
+                 log_file, 
+                 level=logging.INFO, 
+                 formatting  ='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s'):
+     
+    l = logging.getLogger(logger_name)
+    formatter = logging.Formatter(formatting)
+    file_handler = logging.FileHandler(log_file, mode='w')
+    file_handler.setFormatter(formatter)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+
+    l.setLevel(level)
+    l.addHandler(file_handler)
+setup_logger('default', "debug.log", logging.DEBUG)
+logger = logging.getLogger('default')
+# set up logging to console
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+# set a format which is simpler for console use
+formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+console.setFormatter(formatter)
+# add the handler to the root logger
+logging.getLogger('').addHandler(console)
 
 if __name__ == "__main__":
     bundle = False
@@ -46,13 +71,16 @@ if __name__ == "__main__":
     #if anthro:
     #    generate_anthro_codesystems(conf)
     if output:
+        logger.info("Process input file")
         process_input_file(conf) # output is the default output directory
     if library:
         # compress CQL
+        logger.info("Process libraries")
         process_libraries(conf)
         # update Libraries
         pass
     if bundle:
+        logger.info("Write bundle")
         # bundle everything
         write_bundle(conf)
     if upload:
