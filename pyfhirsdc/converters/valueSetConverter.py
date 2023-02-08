@@ -1,10 +1,13 @@
 import pandas as pd
+from fhir.resources.coding import Coding
 from fhir.resources.fhirtypes import Code, Uri
+from fhir.resources.questionnaire import QuestionnaireItemAnswerOption
 from fhir.resources.valueset import (ValueSetCompose, ValueSetComposeInclude,
                                      ValueSetComposeIncludeConcept,
                                      ValueSetComposeIncludeConceptDesignation)
 
 from pyfhirsdc.config import get_dict_df, get_processor_cfg, set_dict_df
+from pyfhirsdc.converters.extensionsConverter import get_item_media_ext
 from pyfhirsdc.converters.utils import get_custom_codesystem_url
 
 
@@ -19,6 +22,33 @@ def get_value_set_compose(compose, name, df_value_set_in):
         compose.include = []
     compose.include = get_value_set_includes(compose.include, name, df_value_set_in )
     return compose
+
+
+def get_value_set_answer_options(list_name):
+    df_value_set = get_valueset_df(list_name, True)
+    options = []
+    for index, line in df_value_set.iterrows():
+        options.append(
+            QuestionnaireItemAnswerOption(
+                valueCoding = Coding(
+                    code = line['code'], 
+                    display = line['display'],
+                    system=get_custom_codesystem_url()
+                ),
+                extension = get_value_set_extensions(line)
+            )
+        )
+    if len(options)>0:
+        return options
+    
+
+def  get_value_set_extensions(line):
+    extensions = []
+    if 'media' in line and pd.notna(line['media']) and line['media'] != '' and line['media'] is not None:
+        extensions.append(get_item_media_ext(line['media'], True))
+    if len(extensions)>0:
+        return extensions
+
 
 def get_value_set_includes(includes, name, df_value_set_in):
     # add the include of  concept from other codesystems

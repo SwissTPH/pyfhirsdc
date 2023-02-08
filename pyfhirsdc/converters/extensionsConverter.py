@@ -1,6 +1,8 @@
+import logging
 import re
 from distutils.util import strtobool
 
+from fhir.resources.attachment import Attachment
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
 from fhir.resources.extension import Extension
@@ -12,6 +14,46 @@ from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_fpath, get_resource_url,
                                         inject_config)
 
+logger = logging.getLogger("default")
+
+
+# default is   vertical
+def get_horizontal_ext():
+    return Extension( 
+        url = "http://hl7.org/fhir/StructureDefinition/questionnaire-choiceOrientation",
+        valueCode= "horizontal"
+        )
+
+
+def get_item_media_ext(media_data, option = False):
+    media_parts = media_data.split('::')
+    if len(media_parts)<2:
+        return None
+    media_type = media_parts[0]
+    media_url = media_parts[1]
+    
+    
+    
+    # https://terminology.hl7.org/1.0.0/CodeSystem-v3-mediatypes.html
+    if media_type == 'png':
+        media_type == 'image/png'
+    elif media_type == 'jpg' or media_type == 'jpeg':
+        media_type == 'image/jpeg'
+        
+    #TODO: #36 support, URL, FHIRBinaries, includedB64
+    
+    urlExt = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-itemAnswerMedia" if option == True else "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-itemMedia"
+    
+    return Extension(
+        url = urlExt,
+        valueAttachment = Attachment(
+            contentType = media_type,
+            url = media_url
+        )
+    )
+    
+    
+    
 
 def get_dropdown_ext():
  return Extension(
@@ -152,19 +194,19 @@ def get_choice_column_ext(path, label, width, for_display):
     else:
         return None
 
-def get_structure_map_extension(extentions, uri):
-    if extentions is None:
-        extentions = []
+def get_structure_map_extension(extensions, uri):
+    if extensions is None:
+        extensions = []
     if  uri is not None:
         sm_ext = Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-targetStructureMap",
         valueCanonical=  Canonical(uri)
         )
-        if extentions is None or len(extentiorans) == 0:
+        if extensions is None or len(extensions) == 0:
             return [sm_ext]
         else:
-            append_unique(extentions, sm_ext, True)
-    return extentions
+            append_unique(extensions, sm_ext, True)
+    return extensions
 # exp  expression::severity
 # message human::requirements
 def get_constraint_exp_ext(id,expr, human,df_questions = None):
@@ -176,16 +218,31 @@ def get_constraint_exp_ext(id,expr, human,df_questions = None):
     elif len(human_parts)==1:
         severity = 'error'
     else:
-        print("Error, missing constraint message")
-    if len(expr_parts)==2:
+        logger.error("missing constraint message")
+    if expr_parts[0] == "MinMax":
+        expr = "getValue() >= {} and getValue() <= {}".format(expr_parts[1],expr_parts[2])
+        requirements = None
+        #isDecimal = "." in expr_parts[1]
+        #min_max_exts = [Extension(
+        #    url = "http://hl7.org/fhir/StructureDefinition/minValue",
+        #    valueDecimal = expr_parts[1] if isDecimal else None,
+        #    valueInteger = expr_parts[1] if not isDecimal else None
+        #)]
+        #if len(expr_parts)>1:
+        #  min_max_exts.append(Extension(
+        #    url = "http://hl7.org/fhir/StructureDefinition/maxValue",
+        #    valueDecimal = expr_parts[2] if isDecimal else None,
+        #    valueInteger = expr_parts[2] if not isDecimal else None
+        #    ))
+        #return min_max_exts
+    
+    elif len(expr_parts)==2:
         expr = expr_parts[0]
         requirements = expr_parts[1]
     elif len(expr_parts)==1:
         requirements = None
     else:
-        print("Error, missing constraint message")        
-
-    
+        logger.error("missing constraint message")        
     
     ext =  Extension(
             url ="http://hl7.org/fhir/StructureDefinition/questionnaire-constraint",
@@ -203,23 +260,23 @@ def get_constraint_exp_ext(id,expr, human,df_questions = None):
                     valueCode= severity),
                 Extension( 
                     url = "human",
-                    valueString= severity) 
+                    valueString= human) 
             ])
     if requirements is not None:
         ext.extension.append(Extension( 
                     url = "requirements",
                     valueString= requirements))
-    return ext
+    return [ext]
 
-def append_unique(extentions, new_ext, replace = False):
+def append_unique(extensions, new_ext, replace = False):
     nofound = True
-    for ext in extentions:
+    for ext in extensions:
         if replace and ext.url == new_ext.url:
-            extentions.remove(ext)
+            extensions.remove(ext)
         elif ext == new_ext:
             nofound = False
     if nofound:
-        extentions.append(new_ext) 
+        extensions.append(new_ext) 
 
 def get_checkbox_ext():
     return Extension(
@@ -289,7 +346,7 @@ FHIRPATH_FUNCTION = ['where', 'last', 'first']
 def convert_reference_to_fhirpath(expression, df_questions):
     # find all the reference
     changes = []
-    matches = re.findall(pattern = r'(?P<op> *!?<< *| *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))? *(?P<op2>!= (?:true|false))?', string = expression)
+    matches = re.findall(pattern = r'(?P<op> *!?<< *| *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?(?P<op2> *!= *(?:true|false))?', string = expression)
     
     for match in matches:
         fpath = []
@@ -302,7 +359,7 @@ def convert_reference_to_fhirpath(expression, df_questions):
         null_or =   match[3]
         # find all the parent
         if df_questions is None:
-            print("warning: cannot resolve the expression {} because not questions df avaiable".format(expression))
+            logger.warning("cannot resolve the expression {} because not questions df avaiable".format(expression))
             fpath = [linkid]       
    
         df_valueset = get_dict_df()['valueset']
@@ -332,7 +389,7 @@ def convert_reference_to_fhirpath(expression, df_questions):
                 path += ".answer"
                 null_or_path= None
                 if  len(null_or)>0:
-                    null_or_path = path + ".empty() and"
+                    null_or_path = path + ".empty() "
                 if sufix not in FHIRPATH_FUNCTION:
                     path +=".first()"
                 if sufix == '' or sufix in QUESTIONNAIE_ITEM_ANSWER_VALUE_SECTION:
@@ -352,13 +409,16 @@ def convert_reference_to_fhirpath(expression, df_questions):
                 replace = "{0}'{1}'".format(op,value['code'])
                 
             else:
-                print("error: {} not found in question nor valueset".format(linkid))
+                logger.error("{} not found in question nor valueset".format(linkid))
                 exit()
         # do the replaces : if prefix and prefix != code replace with answers else repalce with value
         if term_q+null_or not in changes:
             changes.append(term_q)
             if null_or_path is not None:
-                expression = expression.replace(term_q+null_or,"(" + null_or_path + replace + ")")
+                if "true" in null_or:
+                    expression = expression.replace(term_q+null_or,"( %resource" + null_or_path +" or " + replace + "=false )")
+                else:
+                    expression = expression.replace(term_q+null_or,"( %resource" + null_or_path +" or " + replace + "=true )")
             else: 
                 expression = expression.replace(term_q,replace ) 
     # remove the new lines
@@ -415,7 +475,7 @@ def get_questionnaire_library(library):
         url ="http://hl7.org/fhir/StructureDefinition/cqf-library",
         valueCanonical  = library)
         
-def add_library_extentions(resource, library):
+def add_library_extensions(resource, library):
     if resource.extension == None:
         resource.extension = []
     resource.extension.append(get_questionnaire_library(library))

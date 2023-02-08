@@ -199,14 +199,14 @@ def wrapin_fpath(fpaths,df_questions,rules):
     fpaths_len = len(fpaths)
     if fpaths_len==1:
         return MappingRule(
-            expression = "src.item first as item  where linkId = '{}'".format("' or linkId= '".join(a_ids)),
+            expression = "src.item first as item  where linkId = '{}' and answer.exists()".format("' or linkId= '".join(a_ids)),
             rules = rules
         )
     else:
         # we trust the content of a_ids and remove the result from get_fpath
         fpaths.pop(0)
         leaf_rule = MappingRule(
-            expression = "itm{}.item first as item  where linkId =  '{}'".format(len(fpaths),"' or linkId= '".join(a_ids)),
+            expression = "itm{}.item first as item  where linkId =  '{}' and answer.exists()".format(len(fpaths),"' or linkId= '".join(a_ids)),
             rules = rules
         )
         while len(fpaths)>0:
@@ -978,9 +978,15 @@ def get_post_coordination_rules(stem_code,df_questions, *args):
     for arg in args:
         rules.append(wrapin_fpath([arg],
             df_questions,
-            [MappingRule(expression= "src -> tgt.extension  = create('Extension') as ext ,  ext.url ='{}/StructureDefinition/postcoordination',  ext.value =  create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= '{}', ccs.system = '{}'".format(get_fhir_cfg().canonicalBase,arg, get_custom_codesystem_url()))]
-            )
-        
+            [
+                MappingRule(expression= "item.answer first as a where a.value=true",
+                    rules = [
+                        MappingRule(
+                            expression= "src -> tgt.extension  = create('Extension') as ext ,  ext.url ='{}/StructureDefinition/postcoordination',  ext.value =  create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= '{}', ccs.system = '{}'".format(get_fhir_cfg().canonicalBase,arg, get_custom_codesystem_url()))
+                        ]
+                )
+            ]
+            )            
         )
     return rules
 ### create Classification
@@ -1056,4 +1062,31 @@ def get_base_cond_muli_groups(profile, question_id,df):
     for index, row in df.iterrows():
         rule_name = clean_group_name(profile + question_id + row['code']) 
         groups.append(set_generic_classification(rule_name,row['code'],get_add_classification_status_rules()))
-    return groups   
+    return groups
+
+
+def SetObservationValueSetStr(mode, profile, question_id, df_questions, *args):
+    #row = df_questions[df_questions.id == question_id].head(1)
+    rule_name = clean_group_name(profile + question_id ) 
+    if len(args)!= 1:
+        logger.error('SetObservation must have 1 parameters')
+        return None
+    
+    if mode == 'groups':
+        df_valueset = get_valueset_df(args[0], True) 
+        return [set_generic_observation_v2( profile, rule_name, question_id, [wrapin_first_answers_rules(rule_name, question_id, df_questions, get_obs_valueset_str_rules(df_valueset))])]
+    
+    
+    
+def get_obs_valueset_str_rules(df_valueset):
+    rules_main = []
+    for index, concept in df_valueset.iterrows():
+        rules_main.append(
+            MappingRule(
+            expression = "a where value = '{}', a.value as val".format(concept['display']),
+            rules = [ MappingRule(
+                expression="val -> tgt.value = create('CodeableConcept') as cc, cc.coding = create('Coding') as c, c.code={}, c.system= '{}', tgt.status = 'final'".format(concept['code'], get_custom_codesystem_url())
+            )])
+        )
+        
+    return rules_main

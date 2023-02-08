@@ -54,7 +54,7 @@ def convert_df_to_questionitems(ressource,df_questions, parentId = None):
         # manage group
         type, detail_1, detail_2 = get_type_details(question)
         if type is None:
-            if pd.notna(question['id']): print("${0} is not a valid type, see question ${1}".format(question['type'], question['id']))       
+            if pd.notna(question['id']): logger.warning("${0} is not a valid type, see question ${1}".format(question['type'], question['id']))       
         elif type == "skipped":
             pass
         # for multiline variables
@@ -82,8 +82,18 @@ def get_timestamp_item():
 
 
 def get_question_answeroption(question, id):
-    if question["type"] == 'select_boolean':
+    type, detail_1, detail_2 = get_type_details(question)
+    display= get_display(question)
+    if type == 'select_boolean':
         return [QuestionnaireItemAnswerOption(valueCoding = Coding(code = id, display = question['label']))]
+    elif detail_2 is None  and  get_processor_cfg().answerValueSet != True and   "select_" in type and 'candidateexpression' not in display:
+        # we assume it use a local valueset, TODO check if there is actual value in df_value_set
+        options = get_value_set_answer_options(detail_1)
+        if options is not None:
+            return options
+        else:
+            logger.error("local ValueSet {0} not defiend in the valueset tab".format(detail_1))
+            return None
 
 def get_question_repeats(question):
     return True if question['type'] == 'select_boolean' or question['type'].startswith('select_multiple') else False
@@ -206,9 +216,13 @@ def get_question_extension(question, question_id, df_questions = None ):
     regex_slider = re.compile("^slider::.*")
     slider = list(filter(regex_slider.match, display))
     type, detail_1, detail_2 = get_type_details(question)
-    if "constraintExpression" in question and pd.notna(question["constraintExpression"]) and question["constraintExpression"] !=''\
-        and "constraintDescription" in question and pd.notna(question["constraintDescription"]):
-        extensions.append(get_constraint_exp_ext(question_id,question["constraintExpression"],question["constraintDescription"], df_questions))
+    if type == 'boolean':
+        extensions.append(get_horizontal_ext())
+    if "constraintExpression" in question and pd.notna(question["constraintExpression"]) and question["constraintExpression"] !='':
+        message =  question["constraintDescription"] if "constraintDescription" in question and pd.notna(question["constraintDescription"]) else "Validation error"
+        exts = get_constraint_exp_ext(question_id,question["constraintExpression"],message, df_questions)
+        if exts is not None and len(exts)>0:
+            extensions += exts
     # TODO support other display than drop down
     if (type.lower() == 'select_boolean'):
         extensions.append(get_checkbox_ext())
@@ -242,6 +256,12 @@ def get_question_extension(question, question_id, df_questions = None ):
         extensions.append(get_hidden_ext())
     elif "instruction" in display  and type in ["display","note"] :
         extensions.append(get_instruction_ext())
+
+    if "media" in question and pd.notna(question["media"]) and question["media"] !='':
+        type_media, url_media = get_media(question)
+        if type_media is not None:
+            extensions.append(get_item_media_ext(question["media"]))
+
     if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]) and question["enableWhenExpression"] !='':
         extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"],df_questions))    
     if "calculatedExpression" in question and pd.notna(question["calculatedExpression"]) and question["calculatedExpression"] !='':
@@ -263,8 +283,17 @@ def get_display(question):
         return []
 
 
+def get_media(question):
+    display_str = str(question["media"]) if "media" in question and pd.notna(question["media"]) else None
+    if display_str is not None:
+        arr =  display_str.split('::')
+        if len(arr)==2:
+            return arr[0], arr[1]
+        else:
+            logger.error("Media must have 2 parameters type, url")
+    return None, None
+
 def get_question_valueset(question):
-    df_value_set = get_dict_df()['valueset']
     # split question type and details
     display= get_display(question)
     type, detail_1, detail_2 = get_type_details(question)
@@ -272,7 +301,8 @@ def get_question_valueset(question):
     if "select_" in type and 'candidateexpression' not in display and type != 'select_boolean':
         if detail_1 == "url":
             return  (detail_2)
-        elif detail_2 is None  :
+        elif detail_2 is None  and  get_processor_cfg().answerValueSet == True:
+            df_value_set = get_dict_df()['valueset']
             # we assume it use a local valueset, TODO check if there is actual value in df_value_set
             valueset_dict = df_value_set[df_value_set['valueSet'] == detail_1]['valueSet'].unique()
             if isinstance(valueset_dict, numpy.ndarray) and len(valueset_dict)>0:
