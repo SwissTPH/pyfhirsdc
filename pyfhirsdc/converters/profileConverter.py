@@ -295,7 +295,7 @@ def extend_profile(profile, all_questionnaires):
     ## TODO Support other path, right now defaulting to resolve()
     i = 0 
     while (i < len(element_list)):
-        logger.info('indexing through the list, right now at ', i)
+        logger.info('indexing through the list, right now at %s', str(i))
         current_element = element_list[i]
         
         if 'sliceName' in current_element.keys():
