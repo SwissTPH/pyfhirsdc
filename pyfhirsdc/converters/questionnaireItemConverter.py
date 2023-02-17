@@ -25,16 +25,17 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_dropdown_ext, get_enable_when_expression_ext, get_help_ext,
     get_hidden_ext, get_horizontal_ext, get_initial_expression_identifier_ext,
     get_instruction_ext, get_item_media_ext, get_open_choice_ext,
-    get_radio_ext, get_slider_ext, get_subquestionnaire_ext, get_toggle_ext,
-    get_unit_ext, get_variable_extension)
+    get_radio_ext, get_security_ext, get_slider_ext, get_subquestionnaire_ext,
+    get_toggle_ext, get_unit_ext, get_variable_extension)
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_resource_url)
-from pyfhirsdc.converters.valueSetConverter import get_value_set_answer_options
+from pyfhirsdc.converters.valueSetConverter import (
+    get_condition_valueset_df, get_value_set_answer_options, get_valueset_df)
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
                                                QuestionnaireSDC)
 
 logger = logging.getLogger("default")
-
+ 
 def convert_df_to_questionitems(ressource,df_questions, parentId = None):
     # create a dict to iterate
     if parentId is None:
@@ -81,14 +82,18 @@ def get_timestamp_item():
                 )
 
 
-def get_question_answeroption(question, id):
+def get_question_answeroption(question, id, df_questions):
     type, detail_1, detail_2 = get_type_details(question)
     display= get_display(question)
     if type == 'select_boolean':
         return [QuestionnaireItemAnswerOption(valueCoding = Coding(code = id, display = question['label']))]
-    elif detail_2 is None  and  get_processor_cfg().answerValueSet != True and   "select_" in type and 'candidateexpression' not in display:
-        # we assume it use a local valueset, TODO check if there is actual value in df_value_set
-        options = get_value_set_answer_options(detail_1)
+    elif type.startswith('select_') :
+        options = None
+        if type == 'select_condition':
+            options = get_value_set_answer_options(get_condition_valueset_df(df_questions))
+        elif detail_2 is None  and  get_processor_cfg().answerValueSet != True and   "select_" in type and 'candidateexpression' not in display:
+            # we assume it use a local valueset, TODO check if there is actual value in df_value_set
+            options = get_value_set_answer_options(get_valueset_df(detail_1, True))
         if options is not None:
             return options
         else:
@@ -96,8 +101,16 @@ def get_question_answeroption(question, id):
             return None
 
 def get_question_repeats(question):
-    return True if question['type'] == 'select_boolean' or question['type'].startswith('select_multiple') else False
+    return True if question['type'] == 'select_boolean' or question['type'].startswith('select_multiple') or question['type'].startswith('select_condition') else False
 
+def get_clean_html(txt):
+    html = textile.textile(txt)
+    if html.startswith('\t'):
+        html = html[1:]
+    if html.startswith('<p>'):
+        html = html[3:-4]
+    return html
+    
 
 def process_quesitonnaire_line(resource, id, question, df_questions):
     type =get_question_fhir_data_type(question['type'])
@@ -113,7 +126,7 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
                     required= question['required'],
                     extension = get_question_extension(question, id, df_questions),
                     answerValueSet = get_question_valueset(question),
-                    answerOption=get_question_answeroption(question, id),
+                    answerOption=get_question_answeroption(question, id, df_questions ),
                     repeats= get_question_repeats(question),
                     #design_note = "status::draft",
                     definition = get_question_definition(question),
@@ -123,16 +136,16 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
 
         if pd.notna(question['label']) and question['type'] != "select_boolean":
             #textile create html text
-            new_question.text = textile.textile(question['label'])
             # remove the leanding \t<p> and following </p>
-            new_question.text = new_question.text[4:-4]
-        if 'help' in question and pd.notna(question['help']):
+            new_question.text = get_clean_html(question['label'])
+        if 'help' in question and pd.notna(question['help']) and len(question['help'])>0 :
             if new_question.item is None:
                 new_question.item = []
+            html = get_clean_html(question['help'])            
             new_question.item.append( QuestionnaireItemSDC(
                     linkId = question['id']+"-help",
                     type= 'display',
-                    text = question['help'],
+                    text = html,
                     extension = [get_help_ext()],
                 ))
             # add instruction in case there is no text, sdc defect don't show the help if no text
@@ -142,8 +155,19 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
                     type= 'display',
                     text = 'help',
                     extension = [get_instruction_ext()],
-                ))    
-                
+                ))   
+        #TODO  workarround for https://github.com/google/android-fhir/issues/1550
+        unit = get_unit(get_display(question))
+        if unit is not None:   
+            if new_question.item is None:
+                new_question.item = []
+            new_question.item.append( QuestionnaireItemSDC(
+                    linkId = question['id']+"-unit",
+                    type= 'display',
+                    text = unit,
+                    extension = [get_security_ext()],
+                )) 
+        #ENDTODO
         if 'parentId' in  df_questions:
             convert_df_to_questionitems(new_question,df_questions, id )
                     
@@ -171,6 +195,7 @@ QUESTION_TYPE_MAPPING = {
                 'select_one':'choice',
                 'select_multiple':'choice',
                 'select_boolean': 'choice',
+                'select_condition': 'choice',
                 'mapping': None,
                 '{{cql}}':None,
                 'variable':None,
@@ -205,14 +230,20 @@ def get_question_fhir_data_type(question_type):
         
         return QUESTION_TYPE_MAPPING.get(fhir_type.lower())
 
+def get_unit(display):
+    regex_unit = re.compile("^unit::.*")
+    unit = list(filter(regex_unit.match, display)) 
+    if unit is not None and len(unit) == 1:
+        unit_part = unit[0].split('::')
+        if len(unit_part) == 2:
+            return unit_part[1]
+    
 
 def get_question_extension(question, question_id, df_questions = None ):
     
     extensions = []
     display= get_display(question)
-    
-    regex_unit = re.compile("^unit::.*")
-    unit = list(filter(regex_unit.match, display)) 
+    unit = get_unit(display)
     regex_slider = re.compile("^slider::.*")
     slider = list(filter(regex_slider.match, display))
     type, detail_1, detail_2 = get_type_details(question)
@@ -246,8 +277,8 @@ def get_question_extension(question, question_id, df_questions = None ):
                 if len(elms)==3:
                     extensions.append(get_toggle_ext(elms[1], elms[2], df_questions))
 
-    if type.lower() in ('decimal','integer','number','quantity') and len(unit) == 1 :
-        extensions.append(get_unit_ext(unit[0]))
+    if type.lower() in ('decimal','integer','number','quantity') and unit is not None:
+        extensions.append(get_unit_ext(unit))
     if type.lower() in ('decimal','integer','number') and len(slider) == 1 :
         extensions = extensions+(get_slider_ext(slider[0], question["label"]))
     if "select_" in type and   "candidateexpression"  in display:
