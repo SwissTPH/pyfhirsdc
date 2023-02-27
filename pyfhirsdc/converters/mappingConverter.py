@@ -13,7 +13,7 @@ from pyfhirsdc.converters.extensionsConverter import \
 from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
                                         get_custom_codesystem_url, get_fpath,
                                         get_resource_url, inject_config)
-from pyfhirsdc.converters.valueSetConverter import get_valueset_df
+from pyfhirsdc.converters.valueSetConverter import get_condition_valueset_df, get_valueset_df
 from pyfhirsdc.models.mapping import (Mapping, MappingGroup, MappingGroupIO,
                                       MappingIO, MappingRule)
 from pyfhirsdc.serializers.mappingSerializer import write_mapping_file
@@ -1030,10 +1030,16 @@ def get_add_classification_status_rules():
     ]
 
 def SetClassificationMultiple(mode, profile, question_id, df_questions, *args):
-    if len(args)!= 1:
-        logger.error('SetObservation must have 1 parameters')
-        return None
-    df_valueset = get_valueset_df(args[0], True)   
+
+    question = df_questions[df_questions.id == question_id].iloc[0]
+    if 'select_condition' in question.type :
+        df_valueset = get_condition_valueset_df(df_questions)
+    else:
+        if len(args)!= 1:
+            logger.error('SetObservation must have 1 parameters')
+            return None
+        df_valueset = get_valueset_df(args[0], True) 
+     
     if mode == 'rules':
         return get_base_cond_muli_rules(profile, question_id,df_questions,df_valueset)
     elif mode == 'groups':

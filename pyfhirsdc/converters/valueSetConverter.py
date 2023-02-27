@@ -24,8 +24,16 @@ def get_value_set_compose(compose, name, df_value_set_in):
     return compose
 
 
-def get_value_set_answer_options(list_name):
-    df_value_set = get_valueset_df(list_name, True)
+
+def get_condition_valueset_df(df_questions):
+    df_classification = df_questions.dropna(axis=0,subset = ['map_profile'])
+    df_classification = df_classification[df_classification.map_profile.str.contains("Condition")]
+    if len(df_classification)>0:
+        df_classification.rename(columns = {'id':'code', 'display':'display_conf', 'label':'display', 'description':'definition'}, inplace = True)
+        return df_classification      
+
+def get_value_set_answer_options(df_value_set):
+    
     options = []
     for index, line in df_value_set.iterrows():
         options.append(
@@ -173,6 +181,7 @@ METADATA_CODES =  [
 def get_value_set_additional_data_keyword():
     return METADATA_CODES
 
+   
 def get_valueset_df(valueset_name, filtered = False):
     dict_df = get_dict_df()
     if "valueset" in dict_df:

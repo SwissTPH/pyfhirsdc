@@ -97,7 +97,18 @@ def get_instruction_ext():
                     code = "instructions")
                 ]
         )
-    )    
+    )
+    
+def get_security_ext():
+    return Extension(
+        url ="http://hl7.org/fhir/StructureDefinition/questionnaire-displayCategory",
+        valueCodeableConcept = CodeableConcept(
+                coding = [Coding( 
+                    system = "http://hl7.org/fhir/questionnaire-display-category",
+                    code = "security")
+                ]
+        )
+    )     
 
 def get_toggle_ext(in_code, expression, df_question):
     a_code = in_code.split('|')
@@ -291,13 +302,23 @@ def get_checkbox_ext():
 def get_unit_ext(unit):
     #https://build.fhir.org/valueset-http://unitsofmeasure.org
     # value set https://build.fhir.org/valueset-ucum-common.html
-    unit_part = unit.split('::')
-    if len(unit_part) == 2:
+    if unit in ['month','months','year','years']:
         return Extension(
+            #        url ="http://hl7.org/fhir/StructureDefinition/questionnaire-unitOption",
+            url ="http://hl7.org/fhirpath/CodeSystem/calendar-units",
+            valueCoding = Coding(
+                system = "http://unitsofmeasure.org",
+                code = unit,
+
+            )
+        )
+    else:
+        return Extension(
+            #        url ="http://hl7.org/fhir/StructureDefinition/questionnaire-unitOption",
             url ="http://hl7.org/fhir/StructureDefinition/questionnaire-unit",
             valueCoding = Coding(
                 system = "http://unitsofmeasure.org",
-                code = unit_part[1],
+                code = unit,
 
             )
         )
