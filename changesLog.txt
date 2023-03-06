@@ -1,3 +1,22 @@
+bundle
+
+Bundle 01.02
+
+- Use answerOption instead of answerValueSet
+- Change logic for classification  "!= true" instead of "= fasle"
+- rework in assessement
+- fix reference to fhirpath and CQL
+- various fixes in excel/Github
+
+
+Bundle 24.01
+- CQL change
+- Conditionnal logic update
+- Hemoglobin test / not avaialbe skip logic Fixed
+- Pre demo fixes
+- Measurement conditionnal logic finetuning
+- 
+
 Bundle 1.12
 
 - fix classification
@@ -10,9 +29,8 @@ Bundle 1.12
 - fix the Anthro libraries 
 
 Bundle 28.11
-- add help extention
+- add help extension
 - fix some mappping 
-- y
 
 bundle 18.11
 
