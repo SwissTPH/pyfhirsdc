@@ -2,6 +2,14 @@
 #@host=https://fhir.dk.swisstph-mis.ch/matchbox/fhir
 
 @rootemcare=/home/delcpa/Development/smart-emcare
+
+
+
+POST {{host}} HTTP/1.1
+Content-Type: application/json
+
+< ../bundle.json
+
 ### library post
 PUT {{host}}/Library/emcaredt01
 content-type: application/json
@@ -37,7 +45,7 @@ content-type: text/cql
 PUT {{host}}/Patient/patient0
 content-type: application/json
 
-< /home/delcpa/Development/DAK-tools/test/patient.json
+< /home/delcpa/Development/DAK-tools/test/paticheckboxent.json
 
 
 ### evaluate
@@ -105,11 +113,15 @@ POST {{host}}/Library/emcarecombineddataelements/$evaluate?subject=/Patient/a122
 # emcareb23classification
 #emcareobservation
 @file = emcarebase
-@lib = emcarezscore
+@lib = emcaredt01
 PUT {{host}}/Library/{{lib}}
 content-type: application/json
 
 < {{rootemcare}}/input/resources/library/library-{{file}}.json
+####
+GET {{host}}/Library/{{lib}}
+content-type: application/json
+
 ####
 
 @patientid = 2f82c2f5-b57e-4b48-a7ef-327459f6ec99
@@ -185,9 +197,977 @@ content-type: application/json
   "parameter": [
     {
       "name": "expression",
-      "valueString": "(6.6729 * (4.72545133*-0.0235*0.12333-1)^(1/0.0248))"
-    }
-  ]
+      "valueString": "First([Observation ] O where (difference in days between O.issued and Today()) < 10 sort by issued.value desc)"
+    },
+    {
+      "name":"data",
+      "resource": {
+        "resourceType": "Bundle",
+        "entry": [
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "9ca1dd50-3ac6-476a-9cbb-fa4dee7bcdb1",
+                    "status":"final",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "b9959f77-d049-4008-81a3-6d4c610e65eb",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B11S2.DE01"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "9ca1dd50-3ac6-476a-9cbb-fa4dee7bcdb1",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "b9959f77-d049-4008-81a3-6d4c610e65eb",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B11S2.DE01"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-23T17:25:14.732+01:00",
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },{
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "9ca1dd50-3ac6-476a-9cbb-fa4dee7bcdb1",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "b9959f77-d049-4008-81a3-6d4c610e65eb",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B11S2.DE01"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-18T17:25:14.732+01:00",
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "89e19180-0dfa-4129-a371-aa7a48928c66",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "90eb9003-142a-4053-8e53-ee4eb4d49bbb",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "final",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B11S2.DE02"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:14.894+01:00",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B20S2.DE04",
+                                "display": "Skin Pinch goes back slowly (2 seconds or fewer, but not immediately)"
+                            }
+                        ]
+                    },
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "d49a719d-c51e-4d00-b0be-0bbbb5d06b52",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "bc05fbe7-8024-48a7-a6b1-8e2e51859e3c",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "cancelled",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B11S2.DE06"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:15.093+01:00",
+                    "valueBoolean": false,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "a6f21a82-3a49-41c7-a80d-e4771aa37130",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "0e78d6c9-026c-456d-9cfa-e5879724a274",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "cancelled",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B17S1.DE01"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:15.230+01:00",
+                    "valueBoolean": false,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "688e42be-eb00-41ef-ba17-7b42a17e0671",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "21a9a1f2-efd1-4705-bb93-26bfa307e4cf",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "cancelled",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B12S2.DE01"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:15.401+01:00",
+                    "valueBoolean": false,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "917b66a7-4a8c-4248-b2ef-b9b6ab4f79ef",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "ac22aa5a-f48f-4dc6-9b6d-4b5800161a85",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "cancelled",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B12S2.DE05"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:15.536+01:00",
+                    "valueBoolean": false,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "1a6dcaf4-7cc7-4b8a-941e-2797d57811b6",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "e1697464-2485-49fa-9ba5-32c8d543722e",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "cancelled",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B14S2.DE10"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:15.684+01:00",
+                    "valueBoolean": false,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "ef6bead8-6525-48b7-ae88-b2f60a80aabc",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "c5f15fba-0e4d-412a-ab94-97fdcf030ffc",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "cancelled",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B14S2.DE11"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:15.830+01:00",
+                    "valueBoolean": false,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "704011d2-590b-423d-b0c6-c7a24ef93ea4",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "6d46af45-28e4-4f94-ae93-5975a233ff37",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "cancelled",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B14S2.DE12"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:15.962+01:00",
+                    "valueBoolean": false,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "b08723a0-0810-4fe9-8599-470f1ff860df",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "0f58be67-5b44-4985-89ac-ec4055eb40c0",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "final",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B14S2.DE38"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:16.129+01:00",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B14S2.DE39",
+                                "display": "No Oral Sores or Mouth Ulcers"
+                            }
+                        ]
+                    },
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "1ceba456-c970-4472-81df-f53c93fcd5e8",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "fc9b9022-f628-4c1d-8405-240a78ff58e1",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "cancelled",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B14S2.DE43&EmCare.B14S2.DE44"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:16.275+01:00",
+                    "valueBoolean": false,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "88bbba19-a0b9-4017-8576-9451be57224a",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "e5c103c2-c3b1-4ccb-9c9b-6b8ee612cf25",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "cancelled",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B14S2.DE43&EmCare.B14S2.DE45"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:16.425+01:00",
+                    "valueBoolean": false,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "cab58bb3-7773-49f0-81fd-99fff455b5ef",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "c9d9c144-581f-42fa-92b2-8657524f0dab",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "cancelled",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B14S2.DE43&EmCare.B14S2.DE46"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:16.556+01:00",
+                    "valueBoolean": false,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "f0e8e3ce-20b5-443f-abf9-2f9efc7e77de",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "26e1faa5-4da7-4ebc-a543-7f905f3dde18",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "final",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B14S2.DE43&EmCare.B14S2.DE47"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:16.709+01:00",
+                    "valueBoolean": true,
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "2fabe1a3-2593-4022-b7bf-7b2db803c42c",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "19a7aff8-066b-48e3-b80f-3888540bd210",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "final",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B15S2.DE01"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:16.844+01:00",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B15S2.DE04",
+                                "display": "No Palmar Pallor"
+                            }
+                        ]
+                    },
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "id": "d969e02f-445e-4982-880d-212d06a97a64",
+                    "meta": {
+                        "profile": [
+                            "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/emcareobservation"
+                        ]
+                    },
+                    "identifier": [
+                        {
+                            "id": "c4c5ed08-7b18-4ed3-9686-c71b1f31d792",
+                            "use": "official",
+                            "system": "http://hl7.org/fhir/namingsystem-identifier-type",
+                            "value": "uuid"
+                        }
+                    ],
+                    "status": "final",
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B15S2.DE09"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                        "type": "Patient",
+                        "identifier": {
+                            "value": "0347019a-2f6b-4425-8bd5-62a07bb9d529"
+                        }
+                    },
+                    "encounter": {
+                        "id": "044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "reference": "Encounter/044da80c-79bc-4cf3-b492-ecf6edead0f2",
+                        "type": "Encounter",
+                        "identifier": {
+                            "value": "044da80c-79bc-4cf3-b492-ecf6edead0f2"
+                        }
+                    },
+                    "issued": "2023-01-20T17:25:17.029+01:00",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
+                                "code": "EmCare.B15S2.DE12",
+                                "display": "No mucous membrane pallor"
+                            }
+                        ]
+                    },
+                    "note": [
+                        {
+                            "text": "6f3127bf-22ba-490a-8afe-20c2f279ce9a"
+                        }
+                    ]
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "Patient",
+                    "id": "0347019a-2f6b-4425-8bd5-62a07bb9d529",
+                    "meta": {
+                        "versionId": "1",
+                        "lastUpdated": "2022-12-20T07:24:22.635+00:00"
+                    },
+                    "extension": [
+                        {
+                            "url": "http://hl7.org/fhir/StructureDefinition/patient-locationId",
+                            "valueIdentifier": {
+                                "use": "official",
+                                "value": "ea5f0cab-b493-42ec-815c-a1f52d6b9552"
+                            }
+                        }
+                    ],
+                    "identifier": [
+                        {
+                            "use": "official",
+                            "value": "P27"
+                        }
+                    ],
+                    "name": [
+                        {
+                            "use": "official",
+                            "family": "27",
+                            "given": [
+                                "Patient"
+                            ]
+                        }
+                    ],
+                    "gender": "female",
+                    "birthDate": "2021-08-03"
+                }
+            }
+        ]
+      }
+    }]
 }
 ####
 # true or null -> true  (6.6729 * (4.72545133*-0.0235*0.12333-1)^(1/0.0248))

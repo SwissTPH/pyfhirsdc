@@ -148,6 +148,7 @@ will follow the structure [type] [option]
 - all fhir type but choice : use one of the basic type
 - select_one option : choice when only one selection is possible
 - select_multile option : choice when multiple selections are possible
+- select_condition create a list with all the classification mapped in the questionnaire
 - mapping : will not apprear on the questionnaire, just to document mapping information
 - group start: will start a question group, an ID is mandatory, several levels are possible
 - group end: will end a question group, an ID is mandatory
@@ -167,13 +168,19 @@ can be a list separated by || (double pipe)
 
 - dropdown : only for select_one / select_multiple
 
-- checkbox: only for booleans
+- checkbox: only for  select_multiple
+
+- Choice only for  select_one
 
 - hidden : hide the question
 
 - candidateExpression : to use the candidate expression defined in the valueset
 
-- unit::code     # code from that value set https://build.fhir.org/valueset-ucum-units.html
+- unit::code     # code from that value set https://build.fhir.org/valueset-http://unitsofmeasure.org
+
+- toggle::code::expression this will create http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-answerOptionsToggleExpression 
+
+    code can can be compose of system-url|code or code
 
 ### parentId
 
@@ -201,11 +208,11 @@ only the first line may not have expression but then it must have '{{cql}}' in i
 
 ##### enableWhenExpression (optionnal)
 
- fhirpath code that will be added on the SDC enableWhenExpression extention
+ fhirpath code that will be added on the SDC enableWhenExpression extension
 
 ##### calculatedExpression (optionnal)
 
-fhirpath code that will be added on the SDC calculatedExpression extention
+fhirpath code that will be added on the SDC calculatedExpression extension
 
 #### map_extension 
   
@@ -234,19 +241,19 @@ THis column requires the same information that extensions need but for non exten
   
 #### map_resource
     
-List of Map rules, value separeted by ||
+List of Map rules, 
 
-will be use the generate map files
-https://www.hl7.org/fhir/mapping-tutorial.html
+Some usefull complex mapping are defined on the code level
 
-the source should not be provided as the last ;
+SetObservation  -> for observation code or quantity
+SetObservationBoolean ->
 
 ##### example
 
-the generate
+to generate
 ```
-src.a2 as a where a2.length <= 20 -> tgt.a2 = a; // ignore it
-src.a2 as a check a2.length <= 20 -> tgt.a2 = a; // error if it's longer than 20 characters
+src.a2 as a where a2.length <= 20 -> tgt.a2 = a 'rulename1'; // ignore it  if it's longer than 20 characters
+src.a2 as a check a2.length <= 20 -> tgt.a2 = a 'rulename2' ; // error if it's longer than 20 characters
 ``` 
 this will be needed
 ```
@@ -256,6 +263,12 @@ where a2.length <= 20 -> tgt.a2 = a||check a2.length <= 20 -> tgt.a2 = a
 
 use the create custom profiles and to create the structure map Questionnaire - Profile
 the details of the profile to the mapped will be in the profile tab
+
+the based profile will be deducted from the profile, this means that the profile name MUST include the base profile name
+
+if the base profile is Observation then the question code will be defined from the label in the {{scope}}observation library
+
+if the base profile is condition then the question code will be defined from the label in the {{scope}}condition  library
 
 #### add library:
 id = {{library}}
@@ -291,7 +304,7 @@ this sheet list the additionnal CQL required
 
 for the IG, two different profile type might be usfull
 - FHIR or WHO existing profiles
-- [scope] profile in case there is extention to be added to an existing profile
+- [scope] profile in case there is extension to be added to an existing profile
 
 Defining a profile can be used also to create event, for example a QuestionnaireResponse profile can be created for a specific quesitonnaire.
 

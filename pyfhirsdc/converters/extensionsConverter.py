@@ -305,9 +305,9 @@ def get_unit_ext(unit):
     if unit in ['month','months','year','years']:
         return Extension(
             #        url ="http://hl7.org/fhir/StructureDefinition/questionnaire-unitOption",
-            url ="http://hl7.org/fhirpath/CodeSystem/calendar-units",
+            url ="http://hl7.org/fhir/StructureDefinition/questionnaire-unit",
             valueCoding = Coding(
-                system = "http://unitsofmeasure.org",
+                system = "http://hl7.org/fhirpath/CodeSystem/calendar-units",
                 code = unit,
 
             )

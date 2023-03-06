@@ -11,5 +11,7 @@ requires = [
     "ocldev",
     "requests-toolbelt",
     "jsonpath-ng",
+    "textile",
+    'fhirpathpy'
 ]
 build-backend = "setuptools.build_meta"
