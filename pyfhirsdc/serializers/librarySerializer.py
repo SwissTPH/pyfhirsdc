@@ -579,7 +579,6 @@ def convert_reference_to_cql(cql_exp, df):
         logger.debug('rework {0}  to  {1}'.format(match[0],replacement))
         out = out.replace( match[0], replacement)
     return out
-    
 
 def get_additionnal_cql(id,df,expression_column ):
     ret = ''

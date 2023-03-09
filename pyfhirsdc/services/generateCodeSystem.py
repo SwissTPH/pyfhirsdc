@@ -57,7 +57,7 @@ def generate_custom_code_system():
         concept = concept +  obs_val_concepts        
     generate_other_valueset_libs(valueset_concepts, 'valueset', False)
     generate_other_valueset_libs(obs_concepts,'observation')
-    generate_other_valueset_libs(obs_val_concepts,'observation-valueset')
+    generate_other_valueset_libs(obs_val_concepts,'observationValueset')
     generate_other_valueset_libs(cond_concepts, 'condition')
     # path must end with /
     

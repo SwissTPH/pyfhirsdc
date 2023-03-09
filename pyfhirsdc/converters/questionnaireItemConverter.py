@@ -247,7 +247,7 @@ def get_question_extension(question, question_id, df_questions = None ):
     regex_slider = re.compile("^slider::.*")
     slider = list(filter(regex_slider.match, display))
     type, detail_1, detail_2 = get_type_details(question)
-    if type == 'boolean':
+    if type == 'boolean' or 'horizontal' in display and 'hidden' not in display :
         extensions.append(get_horizontal_ext())
     if "constraintExpression" in question and pd.notna(question["constraintExpression"]) and question["constraintExpression"] !='':
         message =  question["constraintDescription"] if "constraintDescription" in question and pd.notna(question["constraintDescription"]) else "Validation error"

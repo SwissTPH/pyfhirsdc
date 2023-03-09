@@ -47,10 +47,17 @@ def inject_sub_questionnaire(df_questions, questionnaire_name):
         
         
         if 'parentId' in sub_questionnaire:
-            updated_parentid = []
-            for id, row in sub_questionnaire.iterrows():
-                updated_parentid.append( row['parentId'] if pd.notna(row['parentId']) else questionnaire_name)
-            sub_questionnaire.update(pd.DataFrame({'parentId':updated_parentid}))
+            mask = pd.isna(sub_questionnaire['parentId'])
+            sub_questionnaire.loc[mask, 'parentId'] = questionnaire_name
+            
+            
+            
+#            updated_parentid = []
+#            for id, row in sub_questionnaire.iterrows():
+#                updated_parentid.append( row['parentId'] if pd.notna(row['parentId']) else questionnaire_name)
+#            sub_questionnaire.update(pd.DataFrame({'parentId':updated_parentid}))
+            
+            
         else:
             sub_questionnaire['parentId'] = [questionnaire_name  for x in range(len(sub_questionnaire))]
         df_questions = pd.concat([df_questions,sub_questionnaire], ignore_index=True)
