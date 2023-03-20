@@ -26,7 +26,8 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_hidden_ext, get_horizontal_ext, get_initial_expression_identifier_ext,
     get_instruction_ext, get_item_media_ext, get_open_choice_ext,
     get_radio_ext, get_security_ext, get_slider_ext, get_subquestionnaire_ext,
-    get_toggle_ext, get_unit_ext, get_variable_extension)
+    get_toggle_ext, get_unit_ext, get_variable_extension,
+    get_popup_ext)
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_resource_url)
 from pyfhirsdc.converters.valueSetConverter import (
@@ -87,7 +88,7 @@ def get_question_answeroption(question, id, df_questions):
     display= get_display(question)
     if type == 'select_boolean':
         return [QuestionnaireItemAnswerOption(valueCoding = Coding(code = id, display = question['label']))]
-    elif type.startswith('select_') :
+    elif type.startswith('select_') and 'candidateexpression' not in display :
         options = None
         if type == 'select_condition':
             options = get_value_set_answer_options(get_condition_valueset_df(df_questions))
@@ -104,6 +105,8 @@ def get_question_repeats(question):
     return True if question['type'] == 'select_boolean' or question['type'].startswith('select_multiple') or question['type'].startswith('select_condition') else False
 
 def get_clean_html(txt):
+    if pd.isna(txt) or txt is None or len(txt)==0:
+        return None
     html = textile.textile(txt)
     if html.startswith('\t'):
         html = html[1:]
@@ -138,16 +141,20 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
             #textile create html text
             # remove the leanding \t<p> and following </p>
             new_question.text = get_clean_html(question['label'])
+        display = get_display(question)
         if 'help' in question and pd.notna(question['help']) and len(question['help'])>0 :
             if new_question.item is None:
                 new_question.item = []
-            html = get_clean_html(question['help'])            
-            new_question.item.append( QuestionnaireItemSDC(
+            html = get_clean_html(question['help']) 
+            help = QuestionnaireItemSDC(
                     linkId = question['id']+"-help",
                     type= 'display',
                     text = html,
                     extension = [get_help_ext()],
-                ))
+            )
+            if 'help-popup' in display:
+                help.extension.append(get_popup_ext())
+            new_question.item.append(help)   
             # add instruction in case there is no text, sdc defect don't show the help if no text
             if new_question.text == None:
                 new_question.item.append( QuestionnaireItemSDC(
@@ -157,7 +164,7 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
                     extension = [get_instruction_ext()],
                 ))   
         #TODO  workarround for https://github.com/google/android-fhir/issues/1550
-        unit = get_unit(get_display(question))
+        unit = get_unit(display)
         if unit is not None:   
             if new_question.item is None:
                 new_question.item = []
@@ -185,7 +192,7 @@ def get_disabled_display(question):
 
 def get_initial_value(question): #TODO remove when uuid will be supported in cal/fhirpath
     if "initialExpression" in question and pd.notna(question["initialExpression"]):
-        if question["initialExpression"].strip() == "uuid()":
+        if str(question["initialExpression"]).strip() == "uuid()":
             return [QuestionnaireItemInitial(
                 valueString = "uuid()"
             )]
@@ -247,6 +254,8 @@ def get_question_extension(question, question_id, df_questions = None ):
     regex_slider = re.compile("^slider::.*")
     slider = list(filter(regex_slider.match, display))
     type, detail_1, detail_2 = get_type_details(question)
+    if 'item-popup' in display:
+        extensions.append(get_popup_ext())
     if type == 'boolean' or 'horizontal' in display and 'hidden' not in display :
         extensions.append(get_horizontal_ext())
     if "constraintExpression" in question and pd.notna(question["constraintExpression"]) and question["constraintExpression"] !='':
@@ -298,7 +307,7 @@ def get_question_extension(question, question_id, df_questions = None ):
     if "calculatedExpression" in question and pd.notna(question["calculatedExpression"]) and question["calculatedExpression"] !='':
         extensions.append(get_calculated_expression_ext(question["calculatedExpression"],df_questions))
     if "initialExpression" in question and pd.notna(question["initialExpression"]) and question["initialExpression"] !='':
-        if not question["initialExpression"].strip() == "uuid()": #TODO remove when uuid will be supported
+        if not str(question["initialExpression"]).strip() == "uuid()": #TODO remove when uuid will be supported
             extensions.append(get_initial_expression_identifier_ext(question_id))
     if 'parentId' in  df_questions:
         df_variables = df_questions[(df_questions.parentId==id) & (df_questions.type=='variable')].dropna(axis=0, subset=['calculatedExpression'])
@@ -334,7 +343,7 @@ def get_question_valueset(question):
             return  (detail_2)
         elif detail_2 is None  and  get_processor_cfg().answerValueSet == True:
             df_value_set = get_dict_df()['valueset']
-            # we assume it use a local valueset, TODO check if there is actual value in df_value_set
+            # we assume it use a local valueset, TODO check if there is actual value in df_value_setx
             valueset_dict = df_value_set[df_value_set['valueSet'] == detail_1]['valueSet'].unique()
             if isinstance(valueset_dict, numpy.ndarray) and len(valueset_dict)>0:
                 return  get_resource_url("ValueSet", detail_1)

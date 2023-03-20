@@ -52,6 +52,16 @@ def get_item_media_ext(media_data, option = False):
         )
     )
     
+def get_popup_ext():
+    return Extension(
+        url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+        valueCodeableConcept = CodeableConcept(
+                coding = [Coding( 
+                    system = "http://hl7.org/fhir/questionnaire-item-control",
+                    code = "popup",
+                    display = "Popup")],
+                text ="Popup")   
+    )
     
     
 
@@ -169,7 +179,8 @@ def get_variable_extension(name,expression,df_questions):
 def get_candidate_expression_ext(desc, uri):
     if desc is not None and uri is not None:
         return Extension(
-        url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-candidateExpression",
+        url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-answerExpression",
+        #url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-candidateExpression",
         valueExpression = ExpressionType(
                 description = desc,
                 language = "application/x-fhir-query",
@@ -366,8 +377,9 @@ FHIRPATH_FUNCTION = ['where', 'last', 'first']
 
 def convert_reference_to_fhirpath(expression, df_questions):
     # find all the reference
+    expression = str(expression)
     changes = []
-    matches = re.findall(pattern = r'(?P<op> *!?<< *| *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?(?P<op2> *!= *(?:true|false))?', string = expression)
+    matches = re.findall(pattern = r'(?P<op> *!?<< *| *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?(?P<op2> *!= *(?:true|false))?', string = str(expression))
     
     for match in matches:
         fpath = []
@@ -449,7 +461,7 @@ def convert_reference_to_fhirpath(expression, df_questions):
     # validate fhirparse grammar
     node = compile([], final)
     if node is not None:
-            return final
+        return final
 
 
 def get_enable_when_expression_ext(expression, df_questions, desc = None ):
