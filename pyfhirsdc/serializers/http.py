@@ -25,7 +25,7 @@ def post_files(file_path, url):
     buffer= read_file(file_path, type = "str")
     headers_map = {'Content-type': 'application/json'}
     response = requests.post(url, data = buffer.encode(), headers = headers_map)
-    if response.status_code == 200 or response.status_code == 201:
+    if response.status_code == 200 or response.status_code == 201 or response.status_code == 202:
         logger.debug(response.status_code)
     else:
         logger.error(str(response.status_code))
