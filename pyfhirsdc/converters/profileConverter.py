@@ -164,13 +164,13 @@ def get_extension_binding(row):
     if pd.notna(row.type) and row.type == "CodeableConcept":
         if pd.notna(row.value):
             return ElementDefinitionBinding(strength="required", valueSet=Canonical(get_resource_url("ValueSet", row.value)))
-        else: logger.error("Mising value for Extension %s with CodableConcept type", row.id)
+        else: logger.error("Missing value for Extension %s with CodableConcept type", row.id)
 
 def get_extension_profile(row):
     if pd.notna(row.type) and row.type == "Reference":
         if pd.notna(row.value):
             return [get_resource_url('StructureDefinition', Id(row['value'])),]
-        else: logger.error("Mising value for Extension %s with Reference type", row.id)
+        else: logger.error("Missing value for Extension %s with Reference type", row.id)
     
 def extend_profile(profile, df_extensions):
     differential_elements = []
