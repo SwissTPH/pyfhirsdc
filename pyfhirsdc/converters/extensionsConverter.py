@@ -242,7 +242,7 @@ def get_constraint_exp_ext(id,expr, human,df_questions = None):
     else:
         logger.error("missing constraint message")
     if expr_parts[0] == "MinMax":
-        expr = "getValue() >= {} and getValue() <= {}".format(expr_parts[1],expr_parts[2])
+        expr = "answer.first() >= {} and answer.first() <= {}".format(expr_parts[1],expr_parts[2])
         requirements = None
         #isDecimal = "." in expr_parts[1]
         #min_max_exts = [Extension(
