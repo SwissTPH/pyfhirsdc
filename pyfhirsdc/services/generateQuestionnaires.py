@@ -17,6 +17,7 @@ from pyfhirsdc.converters.questionnaireItemConverter import (
     convert_df_to_questionitems, get_timestamp_item, init_questionnaire,
     validate_fhirpath)
 from pyfhirsdc.converters.utils import inject_sub_questionnaires
+from pyfhirsdc.serializers.http import post_files
 from pyfhirsdc.serializers.librarySerializer import generate_attached_library
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
@@ -47,6 +48,8 @@ def generate_questionnaire( name ,df_questions) :
         # add timestamp
     questionnaire.item.append(get_timestamp_item())
     #### StructureMap ####
+    
+
     #structure_maps = get_structure_map_bundle(name, df_questions)
     #structure_maps = get_structure_maps(name, df_questions)
     mapping = get_questionnaire_mapping(name, df_questions_lib)
@@ -56,6 +59,8 @@ def generate_questionnaire( name ,df_questions) :
     # write file
     write_resource(fullpath, questionnaire, get_processor_cfg().encoding)
     #CQL files 
+    if get_processor_cfg().fhirpath_validator is not None:
+        post_files(fullpath, get_processor_cfg().fhirpath_validator)
     
 
 
