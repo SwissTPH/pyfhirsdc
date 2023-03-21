@@ -644,6 +644,8 @@ def get_notfound_rules(rule_name,question_id, df_questions_item):
         name = 'notfound-{}'.format(rule_name)
     )] )] 
 
+
+
  ####### SetObservationYesNo :  set an  observation from yes/no, No result in obs beeing cancelled  ######
   #args[0]: question name
 def SetObservationYesNo(mode, profile, question_id,df_questions_item, *args):
@@ -652,7 +654,6 @@ def SetObservationYesNo(mode, profile, question_id,df_questions_item, *args):
         code =  question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_yes_no_rules(code,df_questions_item))]
-    
 
     
 def get_obs_yes_no_rules(question_id,df_questions_item,):
@@ -950,10 +951,47 @@ def SetCommunicationRequest(mode, profile, question_id,df_questions,*args):
 
 
 
+### create Classification
+# args[x] post-coordination linkid under the item
+def SetCondition(mode, profile, question_id,df_questions,*args):
+    #FIXME
+    rule_name = clean_group_name(profile+question_id)
+    if mode == 'rules':
+        return [
+            wrapin_fpath(
+            [question_id],
+            df_questions,
+            [MappingRule(expression="item  then {}(src,item, tgt)".format(rule_name))])
+        ]
+    elif mode == 'groups':
+        
+        # clinicalStatus active | recurrence | relapse | inactive | remission | resolved
+        # subjet: Reference
+        # encounter : Reference
+        # verificationStatus
+        # recordedDate: dateTime
+        return [set_generic_classification(rule_name,question_id,get_condition_conf_status_rules(), get_post_coordination_rules(question_id,df_questions,*args))]
+
+
+def get_condition_conf_status_rules():
+    return [
+        MappingRule(expression= "a where value.code = 'agree'",
+            rules = [
+                MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'active', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
+                MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'confirmed', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
+            ]
+        ),
+        MappingRule(expression= "a where value.code = 'disagree'",
+            rules = [
+                MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'inactive', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
+                MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'refuted', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
+            ])
+    ]
+
 
 ### create Classification
 # args[x] post-coordination linkid under the item
-def SetClassification(mode, profile, question_id,df_questions,*args):
+def SetConditionYesNo(mode, profile, question_id,df_questions,*args):
     #FIXME
     rule_name = clean_group_name(profile+question_id)
     if mode == 'rules':
@@ -1029,7 +1067,7 @@ def get_add_classification_status_rules():
         MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'unconfirmed', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
     ]
 
-def SetClassificationMultiple(mode, profile, question_id, df_questions, *args):
+def SetConditionMultiple(mode, profile, question_id, df_questions, *args):
 
     question = df_questions[df_questions.id == question_id].iloc[0]
     if 'select_condition' in question.type :
