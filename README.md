@@ -157,7 +157,7 @@ will follow the structure [type] [option]
 ##### option
 - [valueSetUrl] valueSet defined in the valueSet tab 
 - url::[valueSetUrl] link to a remote value set
-- candidateExpression::<x-fhir-query> will fetch the result via the <x-fhir-query>, then will dieplay the result based on the data attached to the <candidateExpressionName> in the choiceColum sheet
+- candidateExpression::<x-fhir-query> will fetch the result via the <x-fhir-query>, then will display the result based on the data attached to the <candidateExpressionName> in the choiceColum sheet
 
 #### required
 set to True to make sure the question is required
