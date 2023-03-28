@@ -25,7 +25,7 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_dropdown_ext, get_enable_when_expression_ext, get_help_ext,
     get_hidden_ext, get_horizontal_ext, get_initial_expression_identifier_ext,
     get_instruction_ext, get_item_media_ext, get_open_choice_ext,
-    get_radio_ext, get_security_ext, get_slider_ext, get_subquestionnaire_ext,
+    get_radio_ext, get_rendering_style_ext, get_security_ext, get_slider_ext, get_subquestionnaire_ext,
     get_toggle_ext, get_unit_ext, get_variable_extension,
     get_popup_ext)
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
@@ -164,16 +164,16 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
                     extension = [get_instruction_ext()],
                 ))   
         #TODO  workarround for https://github.com/google/android-fhir/issues/1550
-        unit = get_unit(display)
-        if unit is not None:   
-            if new_question.item is None:
-                new_question.item = []
-            new_question.item.append( QuestionnaireItemSDC(
-                    linkId = question['id']+"-unit",
-                    type= 'display',
-                    text = unit,
-                    extension = [get_security_ext()],
-                )) 
+        #unit = get_unit(display)
+        #if unit is not None:   
+        #    if new_question.item is None:
+        #        new_question.item = []
+        #    new_question.item.append( QuestionnaireItemSDC(
+        #            linkId = question['id']+"-unit",
+        #            type= 'display',
+        #            text = unit,
+        #            extension = [get_security_ext()],
+        #        )) 
         #ENDTODO
         if 'parentId' in  df_questions:
             convert_df_to_questionitems(new_question,df_questions, id )
@@ -254,6 +254,11 @@ def get_question_extension(question, question_id, df_questions = None ):
     regex_slider = re.compile("^slider::.*")
     slider = list(filter(regex_slider.match, display))
     type, detail_1, detail_2 = get_type_details(question)
+
+    style_str = get_style(display)
+    if style_str is not None and len(style_str)>0:
+        extensions.append(get_rendering_style_ext(style_str))
+    
     if 'item-popup' in display:
         extensions.append(get_popup_ext())
     if type == 'boolean' or 'horizontal' in display and 'hidden' not in display :
@@ -322,7 +327,14 @@ def get_display(question):
     else:
         return []
 
-
+def get_style(display_arr):
+    for display_str in display_arr:
+        display_elmts = display_str.split('::')
+        if display_elmts[0] == 'style' and len(display_elmts) == 2:
+            return display_elmts[1]
+        
+    
+    
 def get_media(question):
     display_str = str(question["media"]) if "media" in question and pd.notna(question["media"]) else None
     if display_str is not None:

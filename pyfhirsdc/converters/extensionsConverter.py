@@ -16,6 +16,11 @@ from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
 
 logger = logging.getLogger("default")
 
+def get_rendering_style_ext(style_str):
+    return Extension( 
+        url = "http://hl7.org/fhir/StructureDefinition/rendering-style",
+        valueString= style_str
+        )
 
 # default is   vertical
 def get_horizontal_ext():
