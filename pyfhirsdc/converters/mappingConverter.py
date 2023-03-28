@@ -439,10 +439,10 @@ def generate_helper(helper_func, mode, profile, question_id,df_questions, *helpe
         
 def get_timestamp_rule( target = 'tgt.issued' ):
     return MappingRule(    
-                        expression = "src.item as item where linkId  =  'timestamp'",
+                        expression = "src.item as itemtimestamp where linkId  =  'timestamp'",
                         rules = [
-                            MappingRule(expression = 'item.answer first as a',
-                                rules = [MappingRule(expression = 'a.value as val -> {} = val '.format(target))])]
+                            MappingRule(expression = 'itemtimestamp.answer first as atimestamp',
+                                rules = [MappingRule(expression = 'atimestamp.value as val -> {} = val '.format(target))])]
         )
 
 
@@ -970,22 +970,23 @@ def SetCondition(mode, profile, question_id,df_questions,*args):
         # encounter : Reference
         # verificationStatus
         # recordedDate: dateTime
-        return [set_generic_classification(rule_name,question_id,get_condition_conf_status_rules(), get_post_coordination_rules(question_id,df_questions,*args))]
+        return [set_generic_classification(rule_name,question_id,[],get_condition_conf_status_rules() + get_post_coordination_rules(question_id,df_questions,*args))]
 
 
 def get_condition_conf_status_rules():
     return [
-        MappingRule(expression= "a where value.code = 'agree'",
-            rules = [
-                MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'active', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
-                MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'confirmed', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
-            ]
-        ),
-        MappingRule(expression= "a where value.code = 'disagree'",
-            rules = [
-                MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'inactive', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
-                MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'refuted', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
-            ])
+
+                MappingRule(expression= "item.answer where value.code = 'agree'",
+                    rules = [
+                        MappingRule(expression = " src -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'active', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
+                        MappingRule(expression = " src -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'confirmed', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
+                    ]
+                ),
+                MappingRule(expression= "item.answer where value.code = 'disagree'",
+                    rules = [
+                        MappingRule(expression = " src -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'inactive', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
+                        MappingRule(expression = " src -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'refuted', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
+                    ])
     ]
 
 
@@ -1008,7 +1009,7 @@ def SetConditionYesNo(mode, profile, question_id,df_questions,*args):
         # encounter : Reference
         # verificationStatus
         # recordedDate: dateTime
-        return [set_generic_classification(rule_name,question_id,get_classification_conf_status_rules(), get_post_coordination_rules(question_id,df_questions,*args))]
+        return [set_generic_classification(rule_name,question_id, get_post_coordination_rules(question_id,df_questions,*args))]
 
 def get_post_coordination_rules(stem_code,df_questions, *args):
     rules = []
