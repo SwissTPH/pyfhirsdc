@@ -18,17 +18,17 @@ from fhir.resources.questionnaire import (QuestionnaireItemAnswerOption,
                                           QuestionnaireItemInitial)
 from fhirpathpy import evaluate
 
-from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
+from pyfhirsdc.config import  get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import (
     get_calculated_expression_ext, get_candidate_expression_ext,
     get_checkbox_ext, get_choice_column_ext, get_constraint_exp_ext,
-    get_dropdown_ext, get_enable_when_expression_ext, get_help_ext,
+    get_dropdown_ext, get_enable_when_expression_ext, 
     get_hidden_ext, get_horizontal_ext, get_initial_expression_identifier_ext,
     get_instruction_ext, get_item_media_ext, get_open_choice_ext,
-    get_radio_ext, get_rendering_style_ext, get_security_ext, get_slider_ext, get_subquestionnaire_ext,
+    get_radio_ext, get_rendering_style_ext,  get_slider_ext, get_subquestionnaire_ext,
     get_toggle_ext, get_unit_ext, get_variable_extension,
     get_popup_ext)
-from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
+from pyfhirsdc.converters.utils import ( get_custom_codesystem_url,
                                         get_resource_url)
 from pyfhirsdc.converters.valueSetConverter import (
     get_condition_valueset_df, get_value_set_answer_options, get_valueset_df)
@@ -37,41 +37,7 @@ from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
 
 logger = logging.getLogger("default")
  
-def convert_df_to_questionitems(ressource,df_questions, parentId = None):
-    # create a dict to iterate
-    if parentId is None:
-        if 'parentId' in df_questions:
-            dict_questions = df_questions[df_questions.parentId.isna()].to_dict('index')
-        else:
-            dict_questions = df_questions.to_dict('index')
-    else:
-        if 'parentId' in df_questions:
-            dict_questions = df_questions[df_questions.parentId == parentId ].to_dict('index')
-        else:
-            return ressource
-    # Use first part of the id (before DE) as an ID
-    # questionnaire.id = list(dict_questions.keys())[0].split(".DE")[0]
-    # delete all item in case of overwrite strategy
-    for  question in dict_questions.values():
-        # manage group
-        type, detail_1, detail_2 = get_type_details(question)
-        if type is None:
-            if pd.notna(question['id']): logger.warning("${0} is not a valid type, see question ${1}".format(question['type'], question['id']))       
-        elif type == "skipped":
-            pass
-        # for multiline variables
-        elif  type == 'variable':
-            variable = get_variable_extension(question['id'],question['calculatedExpression'],df_questions)
-            if variable is not None:
-                ressource.extension.append(variable)
-        else:
-            process_quesitonnaire_line(ressource, question['id'], question,df_questions )
 
-
-    # close all open groups
-
-
-    return ressource
 
 def get_timestamp_item():
     return QuestionnaireItemSDC(
@@ -115,75 +81,7 @@ def get_clean_html(txt):
     return html
     
 
-def process_quesitonnaire_line(resource, id, question, df_questions):
-    type =get_question_fhir_data_type(question['type'])
-    if pd.notna(question['required']):
-        if int(question['required']) == 1:
-            question['required']=1
-        else : question['required']=0
-    else : question['required']=0
-    if type is not None:
-        new_question = QuestionnaireItemSDC(
-                    linkId = id,
-                    type = type,
-                    required= question['required'],
-                    extension = get_question_extension(question, id, df_questions),
-                    answerValueSet = get_question_valueset(question),
-                    answerOption=get_question_answeroption(question, id, df_questions ),
-                    repeats= get_question_repeats(question),
-                    #design_note = "status::draft",
-                    definition = get_question_definition(question),
-                    initial = get_initial_value(question),
-                    readOnly = get_disabled_display(question)
-                )
 
-        if pd.notna(question['label']) and question['type'] != "select_boolean":
-            #textile create html text
-            # remove the leanding \t<p> and following </p>
-            new_question.text = get_clean_html(question['label'])
-        display = get_display(question)
-        if 'help' in question and pd.notna(question['help']) and len(question['help'])>0 :
-            if new_question.item is None:
-                new_question.item = []
-            html = get_clean_html(question['help']) 
-            help = QuestionnaireItemSDC(
-                    linkId = question['id']+"-help",
-                    type= 'display',
-                    text = html,
-                    extension = [get_help_ext()],
-            )
-            if 'help-popup' in display:
-                help.extension.append(get_popup_ext())
-            new_question.item.append(help)   
-            # add instruction in case there is no text, sdc defect don't show the help if no text
-            if new_question.text == None:
-                new_question.item.append( QuestionnaireItemSDC(
-                    linkId = question['id']+"-instruction",
-                    type= 'display',
-                    text = 'help',
-                    extension = [get_instruction_ext()],
-                ))   
-        #TODO  workarround for https://github.com/google/android-fhir/issues/1550
-        #unit = get_unit(display)
-        #if unit is not None:   
-        #    if new_question.item is None:
-        #        new_question.item = []
-        #    new_question.item.append( QuestionnaireItemSDC(
-        #            linkId = question['id']+"-unit",
-        #            type= 'display',
-        #            text = unit,
-        #            extension = [get_security_ext()],
-        #        )) 
-        #ENDTODO
-        if 'parentId' in  df_questions:
-            convert_df_to_questionitems(new_question,df_questions, id )
-                    
-        # we save the question as a new ressouce
-        if resource.item is None:
-            resource.item = []
-
-        resource.item.append(new_question)             
-        return new_question
     
 def get_disabled_display(question):
     display_array = get_display(question)  
@@ -411,21 +309,6 @@ def get_type_details(question):
     else:
         return type_arr[0], None, None
 
-def init_questionnaire(filepath, id):
-    #commented to force re-generation questionnaire_json = read_resource(filepath, "Questionnaire")
-    questionnaire_json = None
-    default =get_defaut_fhir('Questionnaire')
-    if questionnaire_json is not None :
-        questionnaire = QuestionnaireSDC.parse_raw( json.dumps(questionnaire_json))  
-    elif default is not None:
-        # create file from default
-        questionnaire = QuestionnaireSDC.parse_raw( json.dumps(default))
-        questionnaire.id=clean_name(id)
-        questionnaire.title=id
-        questionnaire.name=id
-        questionnaire.url=get_resource_url('Questionnaire',id) 
-
-    return questionnaire
 
 def validate_fhirpath(resource, elm = None, elm_root = "%resource"):
     if elm == None:
@@ -443,3 +326,4 @@ def validate_fhirpath(resource, elm = None, elm_root = "%resource"):
             for item in  elm.item:
                 elm_root_child = elm_root + ".item.where(linkid='{}')".format(item.linkId)
                 validate_fhirpath(resource, item, elm_root_child)
+                
