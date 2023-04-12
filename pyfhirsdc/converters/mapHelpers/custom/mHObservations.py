@@ -23,7 +23,8 @@ def SetObservationValueSetStr(mode, profile, question_id, df_questions, *args):
     if mode == 'groups':
         df_valueset = get_valueset_df(args[0], True) 
         return [set_generic_observation_v2( profile, rule_name, question_id, [wrapin_first_answers_rules(rule_name, question_id, df_questions, get_obs_valueset_str_rules(df_valueset))])]
-    
+    elif mode == 'docs':
+        return get_base_obs_docs(question_id, 'CodeableConcept', df_questions)
     
     
 def get_obs_valueset_str_rules(df_valueset):
@@ -47,7 +48,10 @@ def SetObservationCodeStr(mode, profile, question_id,df_questions_item, *args):
         code =  question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_code_str_rules(code,df_questions_item))]
-
+    elif mode == 'docs':
+        return get_base_obs_docs(question_id, 'CodeableConcept', df_questions_item)
+    
+    
 def get_obs_code_str_rules(question_id, df_questions_item):
     rule_name = clean_group_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
@@ -66,7 +70,9 @@ def SetObservationCode(mode, profile, question_id,df_questions_item, *args):
         code =  question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_value_rules(code,df_questions_item, none_name))]
-
+    elif mode == 'docs':
+        return get_base_obs_docs(question_id, 'CodeableConcept', df_questions_item)
+    
 def get_obs_value_rules(question_id, df_questions_item,none_name):
     rule_name = clean_group_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
@@ -94,6 +100,18 @@ def SetObservationQuantity(mode,  profile, question_id,df_questions_item, *args)
         code = question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_qty_value_rules(code,df_questions_item))]
+    elif mode == 'docs':
+        return get_base_obs_docs(question_id, 'Quantity', df_questions_item)
+    
+    
+def get_base_obs_docs(question_id, valueType, df_questions_item):
+    return   {
+            'type' : 'Observation',
+            'code' : question_id,
+            'valueType' : valueType,
+            'description': df_questions_item[df_questions_item.id==question_id].iloc[0]['label']
+            
+        }
 
 def get_obs_qty_value_rules(question_id,df_questions_item):
     rule_name = clean_group_name(question_id)
@@ -108,7 +126,10 @@ def SetObservationNotFound(mode, profile, question_id,df_questions_item, *args):
         code = question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code,get_obs_value_rules(get_notfound_rules(code,question_id, df_questions_item)))]
-
+    elif mode == 'docs':
+        return get_base_obs_docs(question_id, 'boolean', df_questions_item)
+    
+    
 def get_notfound_rules(rule_name,question_id, df_questions_item):
     return [wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
         expression = "src -> tgt.status = 'cancelled',tgt.value = true",
@@ -125,7 +146,8 @@ def SetObservationYesNo(mode, profile, question_id,df_questions_item, *args):
         code =  question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_yes_no_rules(code,df_questions_item))]
-
+    elif mode == 'docs':
+        return get_base_obs_docs(question_id, 'boolean', df_questions_item)
     
 def get_obs_yes_no_rules(question_id,df_questions_item,):
     rule_name = clean_group_name(question_id)
@@ -145,7 +167,9 @@ def SetObservationBoolean(mode, profile, question_id,df_questions_item, *args):
         code =  question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code,get_obs_bool_rules(code, df_questions_item))]
-
+    elif mode == 'docs':
+        return get_base_obs_docs(question_id, 'boolean', df_questions_item)
+    
 def get_obs_bool_rules(question_id, df_questions_item):
     rule_name = clean_group_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
@@ -163,7 +187,9 @@ def SetObservationCodeBoolean(mode, profile, question_id,df_questions_item, *arg
         code =  question_id
         rule_name = clean_group_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code,get_obs_bool_code_rules(code, df_questions_item))]
-
+    elif mode == 'docs':
+        return get_base_obs_docs(question_id, 'boolean', df_questions_item)
+    
 def get_obs_bool_code_rules(question_id, df_questions_item):
     rule_name = clean_group_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
@@ -184,6 +210,28 @@ def SetObservationMultiple(mode, profile, question_id, df_questions, *args):
         return get_base_obs_muli_rules(profile, question_id,df_questions,df_valueset)
     elif mode == 'groups':
         return get_base_obs_muli_groups(profile, question_id,df_valueset)
+    elif mode == 'docs':
+        return get_docs_obs_muli(question_id,df_valueset,  df_questions)
+    
+
+def get_docs_obs_muli(question_id,df_valueset, df_questions_item):
+    docs = []
+    for index, row in df_valueset.iterrows():
+        if "map" in row and   pd.notna(row["map"]) and row['map'].lower().startswith('obs'):
+            docs.append(
+                {
+                    'type' : 'Observation',
+                    'code' : question_id+ "&" +  row['code'],
+                    'valueType' : 'boolean',
+                    'description': '{}:{}'.format(
+                        df_questions_item[df_questions_item.id==question_id].iloc[0]['label'],
+                        row['display']
+                    )
+                }
+            )
+  
+    return docs         
+    
         
 
 def get_base_obs_muli_rules(profile, question_id,df_questions,df_valueset):

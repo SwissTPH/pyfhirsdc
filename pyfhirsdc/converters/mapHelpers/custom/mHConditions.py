@@ -36,8 +36,18 @@ def SetCondition(mode, profile, question_id,df_questions,*args):
         # encounter : Reference
         # verificationStatus
         # recordedDate: dateTime
-        return [set_generic_classification(rule_name,question_id,[],get_condition_conf_status_rules() + get_post_coordination_rules(question_id,df_questions,*args))]
-
+        return [set_generic_condition(rule_name,question_id,[],get_condition_conf_status_rules() + get_post_coordination_rules(question_id,df_questions,*args))]
+    elif mode == 'docs':    
+        return get_condtion_docs(profile,question_id,df_questions, len(args) )
+    
+def get_condtion_docs(profile,question_id,df_questions, nb_postcoordination= 0):
+        
+        return   {
+            'type' : profile,
+            'code' : question_id,
+            'valueType' : 'boolean',
+            'description': 'generate a condition with possible postcoordition' if nb_postcoordination > 0 else 'generate a condition'
+        }
 
 def get_condition_conf_status_rules():
     return [
@@ -75,8 +85,10 @@ def SetConditionYesNo(mode, profile, question_id,df_questions,*args):
         # encounter : Reference
         # verificationStatus
         # recordedDate: dateTime
-        return [set_generic_classification(rule_name,question_id, get_post_coordination_rules(question_id,df_questions,*args))]
-
+        return [set_generic_condition(rule_name,question_id, get_post_coordination_rules(question_id,df_questions,*args))]
+    elif mode == 'docs':    
+        return get_condtion_docs(profile,question_id,df_questions, len(args) )
+    
 def get_post_coordination_rules(stem_code,df_questions, *args):
     rules = []
 
@@ -96,7 +108,7 @@ def get_post_coordination_rules(stem_code,df_questions, *args):
     return rules
 ### create Classification
 # args[0] linkid for classificaitonchoice, valueSet
-def set_generic_classification(name, code, status_rules, other_rules = []):
+def set_generic_condition(name, code, status_rules, other_rules = []):
     return MappingGroup(
         name = name,
         sources = [MappingGroupIO(name = 'src'),MappingGroupIO(name = 'item')],
@@ -149,6 +161,8 @@ def SetConditionMultiple(mode, profile, question_id, df_questions, *args):
         return get_base_cond_muli_rules(profile, question_id,df_questions,df_valueset)
     elif mode == 'groups':
         return get_base_cond_muli_groups(profile,question_id,df_valueset)
+    elif mode == 'docs':    
+        return None
         
 
 def get_base_cond_muli_rules(profile, question_id,df_questions,df_valueset):
@@ -172,5 +186,5 @@ def get_base_cond_muli_groups(profile, question_id,df):
     groups = []
     for index, row in df.iterrows():
         rule_name = clean_group_name(profile + question_id + row['code']) 
-        groups.append(set_generic_classification(rule_name,row['code'],get_add_classification_status_rules()))
+        groups.append(set_generic_condition(rule_name,row['code'],get_add_classification_status_rules()))
     return groups

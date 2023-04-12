@@ -20,7 +20,7 @@ logger = logging.getLogger("default")
 def SetOfficalGivenName(mode, profile, question_id,df_questions_item, *args):
     rule_name = clean_group_name(profile)
     if len(args)< 2:
-        logger.error('SetOfficalGivenName must have 3 parameters')
+        logger.error('SetOfficalGivenName must have 2 or 3 parameters')
         return None
     if mode == 'rules':
         return [
@@ -48,7 +48,13 @@ def SetOfficalGivenName(mode, profile, question_id,df_questions_item, *args):
                 )
             ]
         )]
-
+    elif mode == 'docs':    
+            return   {
+            'type' : profile,
+            'code' : 'name',
+            'valueType' : 'HumanName',
+            'description': 'set a ressource value'
+        }
 
 
 
@@ -83,6 +89,13 @@ def MapValueSetExtCode(mode, profile,question_id,df_questions, *args):
                     )
                 ]
             )]
+        elif mode == 'docs':    
+            return   {
+            'type' : profile,
+            'code' : args[1],
+            'valueType' : 'CodeableConcept',
+            'description': 'set human name'
+        }
 # maptype :: system :: code 
 def get_valueset_map_source(valueset_name, map_path, tgttype):
     sub_rules = []
@@ -159,6 +172,13 @@ def MapWalk(mode, profile, question_id,df_questions,*args):
                 targets = [MappingGroupIO(name = 'tgt')],
                 rules = [get_map_path_rule(map_path_list, rules, val_a)]
             )]
+    elif mode == 'docs':    
+            return   {
+            'type' : profile,
+            'code' : args[0],
+            'valueType' : df_questions[df_questions.id==question_id]['type'],
+            'description': 'set a ressource value'
+        }
 
 def get_map_path_list(map_path):
     map_path_list = map_path.split('.')

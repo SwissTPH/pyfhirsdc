@@ -38,4 +38,14 @@ def SetCommunicationRequest(mode, profile, question_id,df_questions,*args):
                 
             ],  
 
-        )]   
+        )]
+    elif mode == 'docs':
+        return   {
+            'type' : 'CommunicationRequest',
+            'code' : question_id,
+            'valueType' : 'N/A',
+            'description': 'set a communication request to the care giver'
+        }
+
+    
+    

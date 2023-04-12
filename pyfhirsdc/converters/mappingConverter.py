@@ -104,6 +104,23 @@ def get_bundle_group(df_questions_item):
         rules = rules
 
     )
+def get_outputs_docs( df_questions_item):
+    docs = []
+    questions = df_questions_item.to_dict('index')
+    for question in questions.values():
+        doc=None
+        helper_func, helper_args= get_helper(question)
+        if pd.notna(question['map_profile']) and question['map_profile'] != '':
+            profile = get_base_profile(question['map_profile'])
+            # get main rules from helper
+            if helper_func is not None:
+                doc = generate_helper(helper_func, 'docs', profile, question['id'],df_questions_item, *helper_args)
+            if doc is not None:
+                if isinstance(doc, list):
+                    docs+=doc
+                else:
+                    docs.append(doc)
+    return docs       
 
 
 # this function create as many ressource as get_helper 'rules' function returns rules
