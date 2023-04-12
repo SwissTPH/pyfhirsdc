@@ -16,7 +16,7 @@ from pyfhirsdc.converters.extensionsConverter import (
 from pyfhirsdc.converters.utils import (clean_name, get_codableconcept_code,
                                         init_list, init_resource_meta)
 
-from ..serializers.librarySerializer import ROW_EXPRESSIONS
+from pyfhirsdc.converters.libraryConverter import ROW_EXPRESSIONS
 
 logger = logging.getLogger("default")
 

@@ -98,7 +98,7 @@ def get_questions_profiles(df_questions):
     profiles = df_questions['map_profile'].dropna().unique()
     return profiles
 
-def get_profiles_quesitons(df_questions, profile):
+def get_profiles_questions(df_questions, profile):
     return df_questions[df_questions['map_profile'] == profile ].to_dict('index')
 
 def get_helper(question):

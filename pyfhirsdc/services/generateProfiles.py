@@ -8,10 +8,10 @@
 #from tkinter.font import names
 import logging
 
-import pandas as pd 
+import pandas as pd
 
 from pyfhirsdc.config import get_dict_df, get_processor_cfg
-from pyfhirsdc.converters.profileConverter import (convert_df_to_profiles)
+from pyfhirsdc.converters.profileConverter import convert_df_to_profiles
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
 logger = logging.getLogger("default")
@@ -20,11 +20,11 @@ def generate_profiles():
     logger.info('processing profiles.................')
 
     #### Profiles for the rest of the resources ####
-    profiles, names_profiles = convert_df_to_profiles()
+    profiles = convert_df_to_profiles()
     # write profiles to file
-    logger.info(len(names_profiles))
     if len(profiles)>0:
-        for i in range(len(names_profiles)):
-            fullpath_profiles = get_resource_path("Profiles",names_profiles[i])
-            write_resource(fullpath_profiles, profiles[i], get_processor_cfg().encoding)
+        for profile in profiles:
+            logger.info( "Saving structureDefinition %s", profile.name)
+            fullpath_profiles = get_resource_path("StructureDefinition",profile.name)
+            write_resource(fullpath_profiles, profile, get_processor_cfg().encoding)
     return 

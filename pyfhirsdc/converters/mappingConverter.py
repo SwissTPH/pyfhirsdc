@@ -3,7 +3,7 @@ import os
 import re
 
 import pandas as pd
-from pyfhirsdc.converters.mapHelpers.utils import get_ans_rule,VAL_REGEX,get_helper, get_val_rule, wrapin_first_answers_rules,wrapin_entry_create,generate_helper, is_oneliner_profile, get_questions_profiles,get_profiles_quesitons, wrapin_fpath, get_base_profile
+from pyfhirsdc.converters.mapHelpers.utils import get_ans_rule,VAL_REGEX,get_helper, get_val_rule, wrapin_first_answers_rules,wrapin_entry_create,generate_helper, is_oneliner_profile, get_questions_profiles,get_profiles_questions, wrapin_fpath, get_base_profile
 from pyfhirsdc.converters.extensionsConverter import get_structure_map_extension
 
 from pyfhirsdc.config import get_defaut_path,  get_processor_cfg
@@ -77,7 +77,7 @@ def get_bundle_group(df_questions_item):
     for profile in profiles:
         base_profile = get_base_profile(profile)
         if is_oneliner_profile(profile):
-            questions =  get_profiles_quesitons(df_questions_item, profile)
+            questions =  get_profiles_questions(df_questions_item, profile)
             for question in questions.values():
                 q_rules = get_post_oneliner_bundle_profile_rule(profile,question, df_questions_item )
                 if q_rules is not None:
@@ -121,7 +121,7 @@ def get_outputs_docs( df_questions_item):
                 else:
                     docs.append(doc)
     return docs       
-
+        
 
 # this function create as many ressource as get_helper 'rules' function returns rules
 def get_post_oneliner_bundle_profile_rule(profile,question,df_questions_item):
@@ -271,7 +271,7 @@ def get_mapping_group(profile, questionnaire_name, df_questions_item):
 def get_mapping_details(profile, df_questions_item):
     rules = []
     groups = []
-    questions =  get_profiles_quesitons(df_questions_item, profile)
+    questions =  get_profiles_questions(df_questions_item, profile)
     for question in questions.values():
         q_rules, q_groups = get_mapping_detail(question['id'],  question,  df_questions_item)
         if q_rules is not None:

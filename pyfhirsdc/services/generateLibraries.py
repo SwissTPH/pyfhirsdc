@@ -10,7 +10,7 @@
 import numpy as np
 
 from pyfhirsdc.config import get_dict_df
-from pyfhirsdc.serializers.librarySerializer import generate_library
+from pyfhirsdc.converters.libraryConverter import generate_library
 
 
 def generate_libraries():

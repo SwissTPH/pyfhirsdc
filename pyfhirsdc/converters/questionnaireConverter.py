@@ -12,11 +12,11 @@ from pyfhirsdc.converters.questionnaireItemConverter import (
     get_type_details, get_initial_value,get_disabled_display  )
 from pyfhirsdc.converters.utils import clean_name, get_resource_url, inject_sub_questionnaires
 from pyfhirsdc.serializers.http import post_files
-from pyfhirsdc.serializers.librarySerializer import generate_attached_library
+from pyfhirsdc.converters.libraryConverter import generate_attached_library
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 from pyfhirsdc.converters.extensionsConverter import (get_variable_extension,get_popup_ext,get_help_ext, get_instruction_ext)
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
-                                               QuestionnaireSDC)    
+                                               QuestionnaireSDC)  
 
 from pyfhirsdc.converters.mappingConverter import get_outputs_docs
 
@@ -58,7 +58,7 @@ def generate_questionnaire( name ,df_questions) :
     #CQL files 
     if get_processor_cfg().fhirpath_validator is not None:
         post_files(fullpath, get_processor_cfg().fhirpath_validator)
-    
+
     
 def generate_docs(questionnaire,df_questions_item, library_created = False):    
     out_docs =  get_outputs_docs( df_questions_item)
