@@ -499,7 +499,7 @@ def get_cql_epression(id, desc = None):
     return ExpressionType(
                 description = desc,
                 language = "text/cql-identifier",
-                expression = str(id).lower())
+                expression = str(id))
 
 def get_initial_expression_identifier_ext(quesiton_id, desc = None ):
     return Extension(

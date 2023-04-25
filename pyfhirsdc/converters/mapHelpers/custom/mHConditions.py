@@ -51,18 +51,17 @@ def get_condtion_docs(profile,question_id,df_questions, nb_postcoordination= 0):
 
 def get_condition_conf_status_rules():
     return [
-
-                MappingRule(expression= "item.answer where value.code = 'agree'",
-                    rules = [
-                        MappingRule(expression = " src -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'active', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
-                        MappingRule(expression = " src -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'confirmed', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
-                    ]
-                ),
-                MappingRule(expression= "item.answer where value.code = 'disagree'",
-                    rules = [
-                        MappingRule(expression = " src -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'inactive', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
-                        MappingRule(expression = " src -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'refuted', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
-                    ])
+        MappingRule(expression= "item.answer first as a where value.code = 'agree'",
+            rules = [
+                MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'active', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
+                MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'confirmed', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
+            ]
+        ),
+        MappingRule(expression= "item.answer first as a where value.code = 'disagree'",
+            rules = [
+                MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'inactive', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
+                MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'refuted', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
+            ])
     ]
 
 

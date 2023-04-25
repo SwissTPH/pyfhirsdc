@@ -78,7 +78,7 @@ def get_obs_value_rules(question_id, df_questions_item,none_name):
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
         expression = "a.value as val",
     rules = [MappingRule(
-        expression = "val where val.code = '{}' -> tgt.swrapin_entry_createtatus = 'cancelled'".format(none_name),
+        expression = "val where val.code = '{}' -> tgt.status = 'cancelled'".format(none_name),
     ), MappingRule(
         expression="val where val.code != '{}' -> tgt.value = create('CodeableConcept') as cc, cc.coding = val, tgt.status = 'final'".format(none_name)
     )])])]

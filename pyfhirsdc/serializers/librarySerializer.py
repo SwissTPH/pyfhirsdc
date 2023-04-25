@@ -7,6 +7,8 @@ from fhir.resources.identifier import Identifier
 
 from pyfhirsdc.config import append_used_obs, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.utils import get_custom_codesystem_url
+from pyfhirsdc.converters.valueSetConverter import add_concept_in_valueset_df
+from pyfhirsdc.serializers.utils import reindent
 
 logger = logging.getLogger("default")
 
@@ -15,6 +17,12 @@ def getIdentifierFirstRep(planDef):
         identifier = Identifier.construct()
         planDef.identifier = [identifier]
     return planDef.identifier[0]  
+
+
+GETOBSVALUE_FORMAT = "Base.GetObsValue('{0}')"
+GETOBS_FORMAT = '"OBSdefine.{}"'
+GETOBSCODE_FORMAT = "Base.HasObsValueCode('{}', '{}')"
+VAL_FORMAT='val."{0}"'
 
 
     
@@ -81,7 +89,7 @@ def write_library_CQL(output_path, lib, cql):
                 output.write(cql[entry])
         
 
-def get_code_cql_from_concepts(concepts, lib):
+def get_code_cql_from_concepts(concepts, lib, add_to_valueset,low_case = False):
     # write 3 cql : start, end, applicability
     list_of_display = []
     cql = {}
@@ -91,16 +99,26 @@ def get_code_cql_from_concepts(concepts, lib):
     i = 0
     if concepts is not None:
         for concept in concepts:
-            concept.display=str(concept.display).lower()
+            concept.display=str(concept.display)
             if concept.display not in list_of_display:
                 list_of_display.append(concept.display)
                 if (concept is not None and concept.code is not None):       
                     concept_cql = write_code(concept)
+ 
+                        
                     #concept_cql = write_obsevation(concept)
                     if concept_cql is not None:
-                        append_used_obs(concept.code, concept.display)
+                        if add_to_valueset:
+                            add_concept_in_valueset_df(lib.name, concepts)
+                        else:
+                            append_used_obs(concept.code, concept.display)
                         cql[i] = concept_cql
                         i = i+1
+                        if low_case:
+                            concept_lc = concept.copy()
+                            concept_lc.display = concept_lc.display.lower()
+                            cql[i] = write_code(concept_lc)
+                            i = i+1
             else:
                 logger.warning("{} :{} is defined multiple times".format(lib.name,concept.display))
     return cql    
@@ -122,11 +140,11 @@ def write_obsevation(concept):
     if concept.display is not None and pd.notna(concept.display):
         ## Output false, manual process to convert the pseudo-code to CQL
         cql += "/*\"{0}\"*/\n".format(concept.display)+\
-            "define \"{0}\":\n".format(str(concept.display).lower().replace("\n", ""))+ \
+            "define \"{0}\":\n".format(str(concept.display).replace("\n", ""))+ \
                 "  B.HasObs('{}')".format(concept.code,get_custom_codesystem_url()) + "\n\n"
     if concept.code is not None and concept.code:
         ## Output false, manual process to convert the pseudo-code to CQL    
-        cql += "define \"{0}\":\n".format(str(concept.code).lower().replace("\n", ""))+ \
+        cql += "define \"{0}\":\n".format(str(concept.code).replace("\n", ""))+ \
                 "  B.HasObs('{}')".format(concept.code, get_custom_codesystem_url()) + "\n\n"
     return cql    
 
@@ -137,6 +155,19 @@ def write_code(concept):
         cql += "code \"{0}\": '{1}' from \"{2}\" display '{3}'\n".format(concept.display.replace('"', '\\"'),concept.code, get_processor_cfg().scope  ,concept.display.replace("'", "\\'"))
         
         return cql
+    
+
+"""
+docs are list of this structure
+{
+    'type' : profile,
+    'code' : id or path,
+    'valueType' :data type,
+    'description': decription
+}
+"""
+    
+      
 
 
 
@@ -151,18 +182,15 @@ def write_cql_action(name,desc, cql_exp, prefix,display=None):
 define "{1}{2}":
 {4}
 """.format(
-    (str(display).lower().replace("\n", "") if display is not None else '') , 
-    (str(prefix).lower().replace("\n", "") if prefix is not None else '') , 
-    name.lower(),
+    (str(display).replace("\n", "") if display is not None else '') , 
+    (str(prefix).replace("\n", "") if prefix is not None else '') , 
+    name,
     desc,
-    cql_exp
+    reindent(cql_exp,4)
     )
     return ret
 
 
 def write_cql_alias(prefix, alias,reference):
-    return   """
-/* alias {1}{0} : {2}*/
-define "{1}{0}":
-    "{2}"
-""".format(prefix.replace("\n", ""), alias.replace("\n", ""),reference)
+    return write_cql_action(alias,"Alias", '"'+reference+'"', prefix,reference)
+

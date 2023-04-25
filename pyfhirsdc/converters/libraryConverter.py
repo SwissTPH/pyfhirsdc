@@ -23,10 +23,11 @@ from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
                                         get_codableconcept_code,
                                         get_resource_url, inject_config)
 from pyfhirsdc.serializers.docSerializer import get_doc_table, write_docs
-from pyfhirsdc.serializers.librarySerializer import (write_cql_action,
+from pyfhirsdc.serializers.librarySerializer import (GETOBS_FORMAT, GETOBSVALUE_FORMAT, write_cql_action,
                                                      write_cql_alias,
-                                                     write_library_CQL,
-                                                     writeLibraryHeader)
+                                                     write_library_CQL, 
+                                                     writeLibraryHeader,
+                                                     VAL_FORMAT,GETOBSCODE_FORMAT)
 
 from pyfhirsdc.serializers.utils import reindent, write_resource
 
@@ -151,7 +152,7 @@ def get_lib_parameters(df_in, type = "pd"):
     for param in  parameters_in:
         parameters.append(ParameterDefinition(
             use = 'out',
-            name = param["name"].lower() ,
+            name = param["name"] ,
             type = get_lib_type(param["type"])
         ))
 
@@ -210,14 +211,14 @@ def get_lib_data_requirement(df_in, type = 'pd'):
 
 def convert_reference_to_cql(cql_exp, df, list_inputs):
     # find "([^"]+)" *= *"([^"]+)" 
-    valueset_linkid = [x.lower() for x in  get_used_valueset().keys()]
-    valueset_label = [x.lower() for x in  get_used_valueset().values()]
-    obs_valueset_linkid = [x.lower() for x in get_used_obs_valueset().keys()]
-    obs_valueset_label = [x.lower() for x in get_used_obs_valueset().values()]
-    obs_linkid = [x.lower() for x in get_used_obs().keys()]
-    obs_label = [x.lower() for x in get_used_obs().values()]
+    valueset_linkid = [x  for x in  get_used_valueset().keys()]
+    valueset_label = [x  for x in  get_used_valueset().values()]
+    obs_valueset_linkid = [x  for x in get_used_obs_valueset().keys()]
+    obs_valueset_label = [x  for x in get_used_obs_valueset().values()]
+    obs_linkid = [x  for x in get_used_obs().keys()]
+    obs_label = [x for x in get_used_obs().values()]
     changed = []
-    matches = re.findall(r'([ !=<>voc\.]+)?"([^"\.]+)"',cql_exp)
+    matches = re.findall(r'([ !=<>voc\.]+)?"(\w[^"\.]+)"',cql_exp)
     out = cql_exp
     out = out.replace('HasCond', 'Base.HasCond')
     out = out.replace('HasObs', 'Base.HasObs')
@@ -233,7 +234,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
             if match not in changed:
                 if df is not None and (bool(re.search('[^a-zA-Z]', prefix)) or prefix == '') and  len(df[(df.id == match) | (df.label == match)]):
                     # Localy define variable should NOT be converted but put in lower case
-                    out = out.replace('"{}"'.format(match), '"{}"'.format(match.lower()) )
+                    out = out.replace('"{}"'.format(match), '"{}"'.format(match) )
                 elif match  in ("Yes"):
                     out = out.replace('"{}"'.format(match), 'true'.format(match) )
                     changed.append(match)
@@ -241,38 +242,41 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
                     out = out.replace('"{}"'.format(match), 'false'.format(match) )
                     changed.append(match)
                 # for valueset attached converted in obs
-                elif match.lower() in obs_valueset_linkid and (prefix == 'v' or (prefix != 'o'  and operator == True)):
+                elif match in obs_valueset_linkid and (prefix == 'v' or (prefix != 'o'  and operator == True)):
                     changed.append(match)
-                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), "Base.GetObsValue('{0}')".format(match) )
-                elif match.lower() in obs_valueset_label and (prefix == 'v' or (prefix != 'o'  and operator == True)):
-                    linkid = list(get_used_obs_valueset().keys())[list(obs_valueset_label).index(match.lower())]
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), GETOBS_FORMAT.format(match) )
+                elif match in obs_valueset_label and (prefix == 'v' or (prefix != 'o'  and operator == True)):
+                    linkid = list(get_used_obs_valueset().keys())[list(obs_valueset_label).index(match)]
                     changed.append(match)
-                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), "Base.GetObsValue('{0}')".format(linkid) )
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), GETOBS_FORMAT.format(linkid) )
                 # for valueset
-                elif match.lower() in valueset_linkid and (prefix == 'v' or (prefix != 'o'  and operator == True)):
+                elif match in valueset_linkid and (prefix == 'v' or (prefix != 'o'  and operator == True)):
                     changed.append(match)
-                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), 'val."{0}"'.format(get_used_valueset()[match].lower()) )
-                elif match.lower() in valueset_label and (prefix == 'v'   or (prefix != 'o'  and operator == True)):
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), VAL_FORMAT.format(get_used_valueset()[match]) )
+                elif match in valueset_label and (prefix == 'v'   or (prefix != 'o'  and operator == True)):
                     changed.append(match)
-                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), 'val."{0}"'.format(match.lower()) )
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), VAL_FORMAT.format(match) )
                 # for obs
-                elif match.lower() in obs_linkid and prefix in ('',' ','o'):
+                elif match in obs_linkid and prefix in ('',' ','o'):
                     changed.append(match)
-                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'o' else '',match), "Base.GetObsValue('{0}')".format(match) )
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'o' else '',match), GETOBS_FORMAT.format(match) )
                     list_inputs[match]=get_input('Observation',match,'boolean/quantity',get_used_obs()[match])
-                elif match.lower() in obs_label and prefix in ('',' ','o'):
-                    linkid = list(get_used_obs().keys())[list(obs_label).index(match.lower())]
+                elif match in obs_label and prefix in ('',' ','o'):
+                    linkid = list(get_used_obs().keys())[list(obs_label).index(match)]
                     changed.append(match)
-                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'o' else '',match), "Base.GetObsValue('{0}')".format(linkid) )
+                    out = out.replace('{0}"{1}"'.format(prefix if prefix == 'o' else '',match), GETOBS_FORMAT.format(linkid) )
                     list_inputs[linkid]=get_input('Observation',linkid,'boolean/quantity',match)
                 else:
                      logger.warning("string not translated {} {} ".format(prefix,match))
                     
     # quick fix remove the select multiple
-    matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *= *Base\.GetObsValue\('([^']+)'\))",out)
+    #matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *= *Base\.GetObsValue\('([^']+)'\))",out)
+    
+    matches = re.findall(r"({0} *= *{0})".format(re.escape(GETOBS_FORMAT).replace("\{\}",'([^"]+)')),out)
+    
     for match in matches:
         newid='{}&{}'.format(match[1],match[2])
-        replacement = "Base.GetObsValue('{}') = true".format(newid)
+        replacement = (GETOBS_FORMAT + " = true").format(newid)
         logger.debug('rework {}-{} is an observation (present) '.format(match[2],get_used_obs()[match[2]] ))
         out = out.replace( match[0], replacement)
         desc = ''
@@ -286,10 +290,10 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
  
         list_inputs[newid]=get_input('Observation',newid,'boolean/quantity',desc)
     # quick fix remove the select multiple
-    matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *!= *Base\.GetObsValue\('([^']+)'\))",out)
+    matches = re.findall(r"({0} *!= *{0})".format(re.escape(GETOBS_FORMAT).replace("\{\}",'([^"]+)')),out)
     for match in matches:
         newid='{}&{}'.format(match[1],match[2])
-        replacement = "Base.GetObsValue('{}') = false".format(newid)
+        replacement = (GETOBS_FORMAT + " = false").format(newid)
         logger.debug('rework {}-{} is an observation (absent)'.format(match[2],get_used_obs()[match[2]] ))
         out = out.replace( match[0], replacement)
         desc = ''
@@ -301,12 +305,14 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
             del list_inputs[match[2]]
         list_inputs[newid]=get_input('Observation',newid,'boolean/quantity',desc)
     # Base.GetObsValue('EmCare.B15S2.DE09') = val."some mucous membrane pallor"
-    matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *= *val\.\"([^\"]+)\")",out)
+    matches = re.findall(r"({0} *= *{1})".format(re.escape(GETOBS_FORMAT).replace("\{\}","([^']+)"),re.escape(VAL_FORMAT).replace("\{\}","([^']+)")),out)
+
+    #matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *= *val\.\"([^\"]+)\")",out)
     for match in matches:
-        linkid = list(get_used_valueset().keys())[list(valueset_label).index(match[2].lower())]
-        replacement = "Base.HasObsValueCode('{}', '{}')".format(match[1],linkid)
+        linkid = list(get_used_valueset().keys())[list(valueset_label).index(match[2])]
+        replacement = GETOBSCODE_FORMAT.format(match[1],linkid)
         logger.debug('rework {0} = val."{1}" to  GetObsValueCode("{0}, "{2}")'.format(match[1],match[2],linkid ))
-        out = out.replace( match[0], replacement)
+        #out = out.replace( match[0], replacement)
         
         list_inputs[match[1]]['valueType'] = 'CodeableConcept'
     # support "dsfsdfs" !=true or Base.ASDFwsed('code')!=true
@@ -316,7 +322,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
         logger.debug('rework {0} != true to  Coalesce({0},false)!=true'.format(match[1]))
         out = out.replace( match[0], replacement)
         # support "dsfsdfs" !=true or Base.ASDFwsed('code')!=true
-    matches = re.findall(r"(ToInteger\( *((?:[a-zA-Z'_\.]+(\([^\)]+\))?|\"[^\"]+\")[^\)]*)\))",out)
+    matches = re.findall(r"(ToInteger\( *((?:[a-zA-Z'_\.]+(\([^\)]+\))?|\"[^\"]+\")[^\)=!<>]*)\))",out)
     for match in matches:
         replacement = "ToInteger(Coalesce({},false))".format(match[1])
         logger.debug('rework {0}  to  {1}'.format(match[0],replacement))
@@ -356,17 +362,14 @@ def get_additionnal_cql(id,df,expression_column ):
     return ''
 
 def get_cql_raw_action(id, row, expression_column, df ):
-    cql_exp = None
     cql_exp_raw = row[expression_column] if row[expression_column].strip() != '{{cql}}' else ''
     # to create the reverse rule
-    name = row['label'] if "label" in row else row['description'] if row['description']!= id  else row['id']
     sub =  get_additionnal_cql(id,df,expression_column)
     if len(sub)>0 and cql_exp_raw != '':
         cql_exp_raw =reindent("({})\n and ({})\n".format(cql_exp_raw,sub),4)
     elif len(sub)>0:
         cql_exp_raw =reindent("{}\n".format(sub),4)
-    elif cql_exp_raw != '':    
-        cql_exp_raw =reindent("{}\n".format(cql_exp_raw),4)   
+
     # translation to CQL function
     return  cql_exp_raw
 
@@ -380,7 +383,7 @@ def write_action_condition(action):
             
             ## Output false, manual process to convert the pseudo-code to CQL
             cql += "/*\n \"{0}\":\n ".format(condition.expression.description if condition.expression.description is not None else action.description)+"\n */\n "+\
-                "define \"{0}\":\n ".format(str(condition.expression.expression).lower().replace("\n", ""))+ \
+                "define \"{0}\":\n ".format(str(condition.expression.expression).replace("\n", ""))+ \
                     "  false" + "\n\n "
     return cql    
 
@@ -424,9 +427,7 @@ def format_cql_df(library, df_actions,  type):
             # end -> "end::id" : cql
             # write_cql_action(name,desc, cql_exp, prefix,display=None
             if 'stopExpressions' in row and pd.notna(row['stopExpressions']):
-                
                 cql[i] = get_cql_define(ref, row,'stopExpressions', df_actions,list_inputs)
-                
                 i += 1
             if 'startExpressions' in row and pd.notna(row['startExpressions']):
                 cql[i] = get_cql_define(ref, row,'startExpressions', df_actions,list_inputs)
@@ -436,14 +437,14 @@ def format_cql_df(library, df_actions,  type):
                 i += 1
                 # add the wrapper name -> id
                 if pd.notna(row['description']):
-                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['applicabilityExpressions']['prefix'], row['description'].lower(),ref.lower())
+                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['applicabilityExpressions']['prefix'], row['description'],ref)
                     i += 1
             ## questionnaire initial expression in CQL, FIXMDe
             if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()) and row['type'] != '{{cql}}' :
                 cql[i] = get_cql_define(ref, row,'initialExpression',df_actions,list_inputs)
                 i += 1
                 if pd.notna(row['label']):
-                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['initialExpression']['prefix'], row['label'].lower(),ref.lower())
+                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['initialExpression']['prefix'], row['label'],ref)
                     i += 1
             while  i > oi :
                 cql[oi] = inject_config(cql[oi])
@@ -451,11 +452,20 @@ def format_cql_df(library, df_actions,  type):
 
     
     cql['header'] = writeLibraryHeader(library, libs)
+    cql['header'] += writeGetObs(list_inputs)
     return cql, list_inputs
+
+def writeGetObs(list_inputs):
+    ret = ""
+    for input in list_inputs.values():
+        if input['type'] == "Observation":
+            ret += write_cql_action(GETOBS_FORMAT.format(input['code'])[1:-1],'', GETOBSVALUE_FORMAT.format(input['code']), '',input['description'] if 'description'in input else '')
+    return ret
+
 
 def get_cql_define(name, row, expression_column, df_actions, list_inputs):
     prefix = ROW_EXPRESSIONS[expression_column]['prefix']
-    cql_exp_raw = get_cql_raw_action(id, row, expression_column, df_actions )
+    cql_exp_raw = get_cql_raw_action(row['id'], row, expression_column, df_actions )
     if cql_exp_raw != '':
         cql_exp = convert_reference_to_cql(cql_exp_raw,df_actions, list_inputs)
         return write_cql_action(name,cql_exp_raw, cql_exp, prefix,display=None) 

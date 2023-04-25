@@ -12,7 +12,7 @@ from fhir.resources.attachment import Attachment
 from fhir.resources.codesystem import CodeSystem
 from fhir.resources.library import Library
 
-from pyfhirsdc.config import (get_defaut_fhir, get_defaut_path, get_dict_df,
+from pyfhirsdc.config import (get_defaut_fhir, get_defaut_path, get_dict_df, get_fhir_cfg,
                               get_processor_cfg)
 from pyfhirsdc.converters.codeSystemConverter import (
     generate_condition_concept, generate_observation_concept,
@@ -55,10 +55,10 @@ def generate_custom_code_system():
         concept = concept +  valueset_concepts
     if len(obs_val_concepts)>0:
         concept = concept +  obs_val_concepts        
-    generate_other_valueset_libs(valueset_concepts, 'valueset', False)
+    generate_other_valueset_libs(valueset_concepts, 'valueset', True)
     generate_other_valueset_libs(obs_concepts,'observation')
     generate_other_valueset_libs(obs_val_concepts,'observationValueset')
-    generate_other_valueset_libs(cond_concepts, 'condition')
+    generate_other_valueset_libs(cond_concepts, 'condition', low_case = True)
     # path must end with /
     
     # create directory if not exists
@@ -78,7 +78,7 @@ def generate_custom_code_system():
 
 
 
-def generate_other_valueset_libs(question_concepts,list_name,add_to_valueset = True):
+def generate_other_valueset_libs(question_concepts,list_name,add_to_valueset = False, low_case = False):
 
     
     if len(question_concepts)>0:    
@@ -89,6 +89,7 @@ def generate_other_valueset_libs(question_concepts,list_name,add_to_valueset = T
             id=lib_id,
             name=name_vs,
             url = get_resource_url('Library', clean_group_name(name_vs)),
+            version=get_fhir_cfg().lib_version,
             type = get_codableconcept_code( 
             "http://hl7.org/fhir/ValueSet/library-type", 
             'logic-library'),
@@ -97,9 +98,8 @@ def generate_other_valueset_libs(question_concepts,list_name,add_to_valueset = T
             )])
         
         
-        cql = get_code_cql_from_concepts(question_concepts, lib)
-        if add_to_valueset:
-            add_concept_in_valueset_df(name_vs, question_concepts)
+        cql = get_code_cql_from_concepts(question_concepts, lib, add_to_valueset,low_case )
+        
         cql_path = get_defaut_path('CQL', 'cql')
         lib_path =get_resource_path('Library', name_vs )
         write_library_CQL(cql_path, lib, cql)
