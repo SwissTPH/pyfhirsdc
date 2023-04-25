@@ -10,7 +10,7 @@ from pyfhirsdc.services.uploadFiles import upload_files
 
 def print_help():
     print('-c / --conf config_file_path')
-    print('-o to generate fhir ressoruces')
+    print('-o to generate fhir resources')
     print('-h / --help to generate this message')
     print('-b to bundle the fhir ressource int the output path')
     print('-l to build the library with cql in base64')
