@@ -1,6 +1,14 @@
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=42"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyfhirsdc"
+version = "0.0.1"
+description = "A tool for FHIR structure data capture"
+dependencies = [
     "wheel",
     "pandas",
     "openpyxl",
@@ -12,6 +20,5 @@ requires = [
     "requests-toolbelt",
     "jsonpath-ng",
     "textile",
-    'fhirpathpy'
+    "fhirpathpy"
 ]
-build-backend = "setuptools.build_meta"
