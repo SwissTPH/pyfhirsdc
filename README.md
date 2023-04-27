@@ -8,7 +8,9 @@ The goal of the project is to have tool like pyxform but for fhir structure data
 
 Clone the repository from the GitHub repositroy to your local computer
 
-`git clone https://github.com/SwissTPH/pyfhirsdc`
+```
+git clone https://github.com/SwissTPH/pyfhirsdc
+```
 
 ### Create and activate a python virtual environment
 
@@ -24,11 +26,15 @@ bash venv/bin/activate.sh
 
 Install the python dependencies needed to run pyfhirsdc
 
-`python -m pip install .`
+```
+python -m pip install .
+```
 
 ## Running pyfhirsdc
 
-`python -m main -[options]`
+```
+python -m main -[options]
+```
 
 ## input file
 
