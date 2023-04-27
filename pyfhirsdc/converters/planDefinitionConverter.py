@@ -107,7 +107,7 @@ def get_triggers(row):
 def get_conditions(row):
     condition = []
     for name, exp in ROW_EXPRESSIONS.items():
-        if name is not 'id' and name in row and pd.notna(row[name]):
+        if name != 'id' and name in row and pd.notna(row[name]):
             condition.append( PlanDefinitionActionCondition(
                 kind = Code(exp['kind']),
                 expression = get_cql_epression(exp['prefix']+row['id'], desc = row[name].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase) )
