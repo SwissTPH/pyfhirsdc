@@ -29,6 +29,22 @@ def get_horizontal_ext():
         valueCode= "horizontal"
         )
 
+def get_regex_ext(regex):
+    return Extension( 
+        url = "http://hl7.org/fhir/StructureDefinition/regex",
+        valueCode= "regex"
+        )
+
+def get_number_only_ext():
+ return Extension(
+    url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+    valueCodeableConcept = CodeableConcept(
+            coding = [Coding( 
+                system = "http://hl7.org/fhir/questionnaire-item-control",
+                code = "number-only",
+                display = "Number Only")],
+            text ="Number Only")
+)
 
 def get_item_media_ext(media_data, option = False):
     media_parts = media_data.split('::')

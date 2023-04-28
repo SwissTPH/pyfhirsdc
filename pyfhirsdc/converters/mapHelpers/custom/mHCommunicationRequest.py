@@ -1,10 +1,7 @@
 import logging
 
-
 from pyfhirsdc.converters.utils import clean_group_name
-from pyfhirsdc.models.mapping import ( MappingGroup, MappingGroupIO,
-                                       MappingRule)
-
+from pyfhirsdc.models.mapping import MappingGroup, MappingGroupIO, MappingRule
 
 logger = logging.getLogger("default")
 ### create related person

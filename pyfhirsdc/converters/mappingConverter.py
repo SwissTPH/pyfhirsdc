@@ -3,13 +3,23 @@ import os
 import re
 
 import pandas as pd
-from pyfhirsdc.converters.mapHelpers.utils import get_ans_rule,VAL_REGEX,get_helper, get_val_rule, wrapin_first_answers_rules,wrapin_entry_create,generate_helper, is_oneliner_profile, get_questions_profiles,get_profiles_questions, wrapin_fpath, get_base_profile
-from pyfhirsdc.converters.extensionsConverter import get_structure_map_extension
 
-from pyfhirsdc.config import get_defaut_path,  get_processor_cfg
-
-from pyfhirsdc.converters.utils import (clean_group_name, clean_name, get_resource_url)
-
+from pyfhirsdc.config import get_defaut_path, get_processor_cfg
+from pyfhirsdc.converters.extensionsConverter import \
+    get_structure_map_extension
+from pyfhirsdc.converters.mapHelpers.utils import (VAL_REGEX, generate_helper,
+                                                   get_ans_rule,
+                                                   get_base_profile,
+                                                   get_helper,
+                                                   get_profiles_questions,
+                                                   get_questions_profiles,
+                                                   get_val_rule,
+                                                   is_oneliner_profile,
+                                                   wrapin_entry_create,
+                                                   wrapin_first_answers_rules,
+                                                   wrapin_fpath)
+from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
+                                        get_resource_url)
 from pyfhirsdc.models.mapping import (Mapping, MappingGroup, MappingGroupIO,
                                       MappingIO, MappingRule)
 from pyfhirsdc.serializers.mappingSerializer import write_mapping_file

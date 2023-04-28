@@ -18,17 +18,17 @@ from fhir.resources.questionnaire import (QuestionnaireItemAnswerOption,
                                           QuestionnaireItemInitial)
 from fhirpathpy import evaluate
 
-from pyfhirsdc.config import  get_dict_df, get_processor_cfg
+from pyfhirsdc.config import get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import (
     get_calculated_expression_ext, get_candidate_expression_ext,
     get_checkbox_ext, get_choice_column_ext, get_constraint_exp_ext,
-    get_dropdown_ext, get_enable_when_expression_ext, 
-    get_hidden_ext, get_horizontal_ext, get_initial_expression_identifier_ext,
-    get_instruction_ext, get_item_media_ext, get_open_choice_ext,
-    get_radio_ext, get_rendering_style_ext,  get_slider_ext, get_subquestionnaire_ext,
-    get_toggle_ext, get_unit_ext, get_variable_extension,
-    get_popup_ext)
-from pyfhirsdc.converters.utils import ( get_custom_codesystem_url,
+    get_dropdown_ext, get_enable_when_expression_ext, get_hidden_ext,
+    get_horizontal_ext, get_initial_expression_identifier_ext,
+    get_instruction_ext, get_item_media_ext, get_number_only_ext,
+    get_open_choice_ext, get_popup_ext, get_radio_ext, get_regex_ext,
+    get_rendering_style_ext, get_slider_ext, get_subquestionnaire_ext,
+    get_toggle_ext, get_unit_ext, get_variable_extension)
+from pyfhirsdc.converters.utils import (get_custom_codesystem_url,
                                         get_resource_url)
 from pyfhirsdc.converters.valueSetConverter import (
     get_condition_valueset_df, get_value_set_answer_options, get_valueset_df)
@@ -105,7 +105,7 @@ QUESTION_TYPE_MAPPING = {
                 '{{cql}}':None,
                 'variable':None,
                 "checkbox" : "boolean",
-                "phone" : "integer",
+                "phone" : "string",
                 "text" : "text",
                 "string" : "string",
                 "boolean" : "boolean",
@@ -156,6 +156,10 @@ def get_question_extension(question, question_id, df_questions = None ):
     style_str = get_style(display)
     if style_str is not None and len(style_str)>0:
         extensions.append(get_rendering_style_ext(style_str))
+        
+    if type == 'phone':
+        extensions.append(get_regex_ext('^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$'))
+        extensions.append(get_number_only_ext())
     
     if 'item-popup' in display:
         extensions.append(get_popup_ext())
