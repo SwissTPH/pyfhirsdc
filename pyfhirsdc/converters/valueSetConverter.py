@@ -169,13 +169,16 @@ def get_value_set_title(vs, line):
         vs.description = line['definition']
     return vs
 
+#TODO: check if it makes sense to have the valuset special id mixed with questionnaire/libs ones
 
 METADATA_CODES =  [
         '{{title}}',
         '{{exclude}}',
         '{{include}}',
         '{{choiceColumn}}',
-        '{{url}}'
+        '{{url}}',
+        '{{library}}',
+        '{{cql}}'
          ]
 
 def get_value_set_additional_data_keyword():

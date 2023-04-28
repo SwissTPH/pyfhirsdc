@@ -27,7 +27,7 @@ def write_bundle(conf):
             if "ext_ig" not in path and "tests" not in path:
                 for name in files:
                     if name.endswith(ext):
-                        logger.info('{}{}{}{}'.format(conf, path, dirc , name)) # printing file name
+                        logger.debug('{}{}{}{}'.format(conf, path, dirc , name)) # printing file name
                         add_resource(path,name,bundle)
     write_resource('./bundle.json', bundle)
                     

@@ -14,7 +14,7 @@ import pkgutil
 def get_custom_helpers():
     custFunc = {}
     root = __file__
-    path = os.path.join('/',*root.split('/')[:-1],'custom')
+    path = os.path.join(os.path.dirname(__file__),'custom')
     for loader, module_name, is_pkg in pkgutil.walk_packages([path]):
         _module = loader.find_module(module_name).load_module(module_name)
         for name, val in _module.__dict__.items(): # iterate through every module's attributes

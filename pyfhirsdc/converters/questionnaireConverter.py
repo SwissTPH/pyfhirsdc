@@ -11,6 +11,7 @@ from pyfhirsdc.converters.questionnaireItemConverter import (
     get_question_repeats,get_question_definition, get_timestamp_item, get_display,
     get_type_details, get_initial_value,get_disabled_display  )
 from pyfhirsdc.converters.utils import clean_name, get_resource_url, inject_sub_questionnaires
+from pyfhirsdc.converters.valueSetConverter import get_value_set_additional_data_keyword
 from pyfhirsdc.serializers.http import post_files
 from pyfhirsdc.converters.libraryConverter import generate_attached_library
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
@@ -37,6 +38,10 @@ def generate_questionnaire( name ,df_questions) :
     
     
     df_questions = inject_sub_questionnaires(df_questions)
+    duplicates = df_questions[(df_questions.duplicated(subset=['id']) == True) & ~df_questions['id'].isin(get_value_set_additional_data_keyword())]
+    if not duplicates.empty: 
+        for id, row in duplicates.iterrows():
+            logger.error("Duplicate id %s", row['id'])
     df_questions_item = df_questions[df_questions.type != 'mapping']
     df_questions_lib = df_questions
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)

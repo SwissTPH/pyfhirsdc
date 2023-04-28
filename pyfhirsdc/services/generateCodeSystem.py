@@ -38,7 +38,9 @@ def generate_custom_code_system():
     question_concepts = []
     valueset_concepts = []
     obs_val_concepts = []
+    logger.info("Generating codesystems...")
     for name, df_questions in dfs_questionnaire.items():
+        logger.info("Generating codes for %s",name)
         question_concept = generate_questionnaire_concept(df_questions)
         obs_concept= generate_observation_concept(df_questions)
         cond_concept= generate_condition_concept(df_questions)
