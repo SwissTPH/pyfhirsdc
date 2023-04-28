@@ -1,8 +1,9 @@
+import json
 import os
 from pathlib import Path
+
 from pyfhirsdc.config import get_defaut_path, get_processor_cfg
 from pyfhirsdc.converters.utils import get_resource_name
-import json
 
 
 def write_resource(filepath, resource, encoding = None):

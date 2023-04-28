@@ -23,12 +23,14 @@ from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
                                         get_codableconcept_code,
                                         get_resource_url, inject_config)
 from pyfhirsdc.serializers.docSerializer import get_doc_table, write_docs
-from pyfhirsdc.serializers.librarySerializer import (GETOBS_FORMAT, GETOBSVALUE_FORMAT, write_cql_action,
+from pyfhirsdc.serializers.librarySerializer import (GETOBS_FORMAT,
+                                                     GETOBSCODE_FORMAT,
+                                                     GETOBSVALUE_FORMAT,
+                                                     VAL_FORMAT,
+                                                     write_cql_action,
                                                      write_cql_alias,
-                                                     write_library_CQL, 
-                                                     writeLibraryHeader,
-                                                     VAL_FORMAT,GETOBSCODE_FORMAT)
-
+                                                     write_library_CQL,
+                                                     writeLibraryHeader)
 from pyfhirsdc.serializers.utils import reindent, write_resource
 
 logger = logging.getLogger("default")
@@ -47,7 +49,7 @@ ROW_EXPRESSIONS = {
 def generate_attached_library(resource, df_actions, type = 'pd'):
     library = generate_library(resource.name, df_actions, type)
     if library is not None:
-        libraryCanonical = Canonical(library.url)
+        libraryCanonical = Canonical(library.url+"|"+get_fhir_cfg().lib_version)
         if hasattr(resource, 'library') and resource.library is None: 
             resource.library = []    
             resource.library.append(libraryCanonical)
@@ -85,6 +87,12 @@ def generate_library(name, df_actions, type = 'pd', description = None):
     )
     
     cql, list_inputs =format_cql_df(library, df_actions, type)
+    if type == 'q':
+        cql['backref'] = write_cql_action(
+            'BackReference',
+            'back reference to resource', 
+            """Reference {{reference: string {{ value: 'Questionnaire/{}'}}}}""".format(name), 
+            '')
     if len(cql)>1:
         output_lib_path = os.path.join(
                 get_processor_cfg().outputPath,
@@ -369,7 +377,8 @@ def get_cql_raw_action(id, row, expression_column, df ):
         cql_exp_raw =reindent("({})\n and ({})\n".format(cql_exp_raw,sub),4)
     elif len(sub)>0:
         cql_exp_raw =reindent("{}\n".format(sub),4)
-
+    elif cql_exp_raw == '':
+        logger.debug('no CQL found {}'.format(id))
     # translation to CQL function
     return  cql_exp_raw
 

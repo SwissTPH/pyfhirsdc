@@ -42,8 +42,8 @@ def generate_questionnaire( name ,df_questions) :
     # clean the data frame
     
     
-    df_questions = inject_sub_questionnaires(df_questions).dropna(axis=0, subset=['id'])
-    duplicates = df_questions[(df_questions.duplicated(subset=['id']) == True) & ~df_questions['id'].isin(get_value_set_additional_data_keyword())]
+    df_questions = inject_sub_questionnaires(df_questions)
+    duplicates = df_questions[(df_questions.duplicated(subset=['id']) == True) & ~df_questions['id'].isin(get_value_set_additional_data_keyword())].dropna(axis=0, subset=['id'])
     if not duplicates.empty: 
         for id, row in duplicates.iterrows():
             logger.error("Duplicate id %s", row['id'])
