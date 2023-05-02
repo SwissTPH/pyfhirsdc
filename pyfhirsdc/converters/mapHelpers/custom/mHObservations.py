@@ -34,7 +34,7 @@ def get_obs_valueset_str_rules(df_valueset):
             MappingRule(
             expression = "a where value = '{}', a.value as val".format(concept['display']),
             rules = [ MappingRule(
-                expression="val -> tgt.value = create('CodeableConcept') as cc, cc.coding = create('Coding') as c, c.code={}, c.system= '{}', tgt.status = 'final'".format(concept['code'], get_custom_codesystem_url())
+                expression="val -> tgt.value = create('CodeableConcept') as cc, cc.coding = create('Coding') as c, c.code='{}', c.system= '{}', tgt.status = 'final'".format(concept['code'], get_custom_codesystem_url())
             )])
         )
         
