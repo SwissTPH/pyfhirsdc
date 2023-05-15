@@ -403,6 +403,7 @@ def convert_reference_to_fhirpath(expression, df_questions):
     matches = re.findall(pattern = r'(?P<op> *!?<< *| *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?(?P<op2> *!= *(?:true|false))?', string = str(expression))
     
     for match in matches:
+        null_or_path = None
         fpath = []
         path = ''
         Iscode = False
@@ -441,7 +442,6 @@ def convert_reference_to_fhirpath(expression, df_questions):
                 for elm in fpath:
                     path= ".repeat(item).where(linkId='{}')".format(elm) +path
                 path += ".answer"
-                null_or_path= None
                 if  len(null_or)>0:
                     null_or_path = path + ".empty() "
                 if sufix not in FHIRPATH_FUNCTION:
