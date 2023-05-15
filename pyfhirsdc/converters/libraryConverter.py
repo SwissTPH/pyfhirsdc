@@ -334,7 +334,14 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
     for match in matches:
         replacement = "ToInteger(Coalesce({},false))".format(match[1])
         logger.debug('rework {0}  to  {1}'.format(match[0],replacement))
-        out = out.replace( match[0], replacement)
+        out = out.replace( match[0], replacement)    
+    matches = re.findall(r"= val\.",out)
+    
+    # ~ required to test code against codeableconcept
+    for match in matches:
+        replacement = "~ val."
+        logger.debug('rework = val to ~ val')
+        out = out.replace( match, replacement)
     return out
 
 def get_input(profile,code,valueType,desc=''):
@@ -470,6 +477,8 @@ def writeGetObs(list_inputs):
         if input['type'] == "Observation":
             ret += write_cql_action(GETOBS_FORMAT.format(input['code'])[1:-1],'', GETOBSVALUE_FORMAT.format(input['code']), '',input['description'] if 'description'in input else '')
     return ret
+
+
 
 
 def get_cql_define(name, row, expression_column, df_actions, list_inputs):
