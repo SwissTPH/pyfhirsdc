@@ -1,8 +1,8 @@
 {
     "processor":{
-        "inputFile":"/home/delcpa/switchdrive/DHU/DHU Projects/WHO DAK/merged/xls_form_iraq_v1.xlsx",
+        "inputFile":"/home/delcpa/Development/smart-emcare-irq/input/l2/xls_form_iraq_v1.xlsx",
         "manual_content":"/home/delcpa/Development/smart-emcare/manual",
-        "outputPath":"/home/delcpa/Development/smart-emcare/input",
+        "outputPath":"/home/delcpa/Development/smart-emcare-irq/input",
         "cql_translator": "https://fhir.cql-translator.dk.swisstph-mis.ch/cql/translator",
         "mapping_translator": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureMap",
         "fhirpath_validator":"https://fhirpath.dk.swisstph-mis.ch/validate",
@@ -20,7 +20,7 @@
     },
     "fhir":{
         "version": "4.0.1",
-        "lib_version": "1.0.1.rc12.build.144",
+        "lib_version": "1.0.1.rc12.build.671",
         "canonicalBase" : "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/",
         "guideBase":"http://fhir.org/guides/who/emc-cds/",
         "activity":{
