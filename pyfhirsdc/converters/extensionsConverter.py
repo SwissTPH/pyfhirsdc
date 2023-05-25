@@ -51,7 +51,7 @@ def get_item_media_ext(media_data, option = False):
     if len(media_parts)<2:
         return None
     media_type = media_parts[0]
-    media_url = media_parts[1]
+    media_url = media_parts[1].replace('{{canonical_base}}',get_fhir_cfg().canonicalBase)
     
     
     
@@ -523,8 +523,7 @@ def get_initial_expression_identifier_ext(quesiton_id, desc = None ):
         valueExpression = get_cql_epression(quesiton_id, desc)
     )
 def get_questionnaire_library(library):
-    if not re.search("$https?\:\/\/", library):
-        library = get_fhir_cfg().canonicalBase + "Library/{}".format(clean_name(library))
+
     return Extension(
         url ="http://hl7.org/fhir/StructureDefinition/cqf-library",
         valueCanonical  = library)
