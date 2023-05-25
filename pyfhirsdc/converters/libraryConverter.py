@@ -49,12 +49,15 @@ ROW_EXPRESSIONS = {
 def generate_attached_library(resource, df_actions, type = 'pd'):
     library = generate_library(resource.name, df_actions, type)
     if library is not None:
-        libraryCanonical = Canonical(library.url+"|"+get_fhir_cfg().lib_version)
+        if  re.search(get_fhir_cfg().canonicalBase, library.url):
+            libraryCanonical = Canonical(library.url+"|"+get_fhir_cfg().lib_version)
+        else:
+            libraryCanonical = Canonical(library.url)
         if hasattr(resource, 'library') and resource.library is None: 
             resource.library = []    
             resource.library.append(libraryCanonical)
         else:
-            resource = add_library_extensions(resource, library.id)
+            resource = add_library_extensions(resource, libraryCanonical)
         return True
         
 def generate_library(name, df_actions, type = 'pd', description = None):
@@ -321,7 +324,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
         replacement = GETOBSCODE_FORMAT.format(match[1],linkid)
         logger.debug('rework {0} = val."{1}" to  GetObsValueCode("{0}, "{2}")'.format(match[1],match[2],linkid ))
         #out = out.replace( match[0], replacement)
-        
+        x
         list_inputs[match[1]]['valueType'] = 'CodeableConcept'
     # support "dsfsdfs" !=true or Base.ASDFwsed('code')!=true
     matches = re.findall(r"(((?:[a-zA-Z][a-zA-Z'\(\)_\.]+)?(?:\"[^\"]+\")?) *!= *true)",out)
@@ -330,7 +333,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
         logger.debug('rework {0} != true to  Coalesce({0},false)!=true'.format(match[1]))
         out = out.replace( match[0], replacement)
         # support "dsfsdfs" !=true or Base.ASDFwsed('code')!=true
-    matches = re.findall(r"(ToInteger\( *((?:[a-zA-Z'_\.]+(\([^\)]+\))?|\"[^\"]+\")[^\)=!<>]*)\))",out)
+    matches = re.findall(r"(ToInteger\(((?: *(?:[a-zA-Z]+\.)?\"[^\"]+\" *[~=<>!]+ *(?:(?:[a-zA-Z]+\.)?(?:\"[^\"]+\")|[a-z]+) *(?:or|and)?)+)\))",out)
     for match in matches:
         replacement = "ToInteger(Coalesce({},false))".format(match[1])
         logger.debug('rework {0}  to  {1}'.format(match[0],replacement))
