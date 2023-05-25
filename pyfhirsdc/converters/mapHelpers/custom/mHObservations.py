@@ -204,7 +204,7 @@ def get_obs_bool_code_rules(question_id, df_questions_item):
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
         expression = "a.value as val",
     rules = [MappingRule(
-        expression = "val where val.code = 'true' -> tgt.status = 'final',tgt.value = true ",
+        expression = "val where val.code = '{}' -> tgt.status = 'final',tgt.value = true ".format(question_id),
     )])])]
             
 
