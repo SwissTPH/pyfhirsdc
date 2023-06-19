@@ -166,7 +166,7 @@ def get_post_oneliner_bundle_profile_rule(profile,question,df_questions_item):
 def get_post_bundle_profile_rule(profile,df_questions_item):
     rule_name = clean_group_name(profile)
     base_profile = get_base_profile(profile)
-            
+    logger.debug("create mapping rule, expect to find %sid",rule_name)
     rule =   wrapin_fpath(["{0}id".format(rule_name)],df_questions_item,[
                 MappingRule(
                 expression = "src -> bundle.entry as entry ,entry.request as request, request.method = 'POST' , entry.resource = create('{0}') as tgt".format(base_profile),

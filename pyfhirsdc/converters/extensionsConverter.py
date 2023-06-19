@@ -46,20 +46,12 @@ def get_number_only_ext():
             text ="Number Only")
 )
 
-def get_item_media_ext(media_data, option = False):
-    media_parts = media_data.split('::')
-    if len(media_parts)<2:
-        return None
-    media_type = media_parts[0]
-    media_url = media_parts[1].replace('{{canonical_base}}',get_fhir_cfg().canonicalBase)
-    
-    
-    
+def get_item_media_ext(media_type,media_url , option = False):
     # https://terminology.hl7.org/1.0.0/CodeSystem-v3-mediatypes.html
     if media_type == 'png':
-        media_type == 'image/png'
+        media_type = 'image/png'
     elif media_type == 'jpg' or media_type == 'jpeg':
-        media_type == 'image/jpeg'
+        media_type = 'image/jpeg'
         
     #TODO: #36 support, URL, FHIRBinaries, includedB64
     

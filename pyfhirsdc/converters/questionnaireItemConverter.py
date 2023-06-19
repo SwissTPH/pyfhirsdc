@@ -28,7 +28,7 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_open_choice_ext, get_popup_ext, get_radio_ext, get_regex_ext,
     get_rendering_style_ext, get_slider_ext, get_subquestionnaire_ext,
     get_toggle_ext, get_unit_ext, get_variable_extension)
-from pyfhirsdc.converters.utils import (get_custom_codesystem_url,
+from pyfhirsdc.converters.utils import (get_custom_codesystem_url, get_media,
                                         get_resource_url)
 from pyfhirsdc.converters.valueSetConverter import (
     get_condition_valueset_df, get_value_set_answer_options, get_valueset_df)
@@ -207,7 +207,7 @@ def get_question_extension(question, question_id, df_questions = None ):
     if "media" in question and pd.notna(question["media"]) and question["media"] !='':
         type_media, url_media = get_media(question)
         if type_media is not None:
-            extensions.append(get_item_media_ext(question["media"]))
+            extensions.append(get_item_media_ext(type_media, url_media))
 
     if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]) and question["enableWhenExpression"] !='':
         extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"],df_questions))    
@@ -237,15 +237,7 @@ def get_style(display_arr):
         
     
     
-def get_media(question):
-    display_str = str(question["media"]) if "media" in question and pd.notna(question["media"]) else None
-    if display_str is not None:
-        arr =  display_str.split('::')
-        if len(arr)==2:
-            return arr[0], arr[1]
-        else:
-            logger.error("Media must have 2 parameters type, url")
-    return None, None
+
 
 def get_question_valueset(question):
     # split question type and details

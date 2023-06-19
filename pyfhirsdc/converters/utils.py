@@ -88,6 +88,15 @@ def get_code(system, code, display = None ):
                 code = code,
                 display = display
                 )
+def get_media(question):
+    display_str = str(question["media"]) if "media" in question and pd.notna(question["media"]) else None
+    if display_str is not None:
+        arr =  display_str.split('::')
+        if len(arr)==2:
+            return arr[0], arr[1].replace('{{canonical_base}}',get_fhir_cfg().canonicalBase)
+        else:
+            logger.error("Media must have 2 parameters type, url")
+    return None, None
     
 def get_fpath(df_questions, linkid, fpath = [] ):
     # get the questions
