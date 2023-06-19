@@ -120,9 +120,6 @@ FHIR:
     }
 ```
 
-### carePlan
-
-this sheet define the main object that contain the sdc data capture
 
 ### pd.<planDefinitionReference>
 
@@ -197,6 +194,8 @@ the format is inpired by the pyxform 'survey' sheet but addapted to fhir SDC que
 
 Mandatory, used as linkid
 
+can be set to {{library}} to speficy the questionnaires libraries dependencies
+
 #### type
 
 will follow the structure [type] [option]
@@ -204,12 +203,13 @@ will follow the structure [type] [option]
 ##### type
 
 - all fhir type but choice : use one of the basic type
+- note, equivalen to text
 - select_one option : choice when only one selection is possible
 - select_multile option : choice when multiple selections are possible
 - select_condition create a list with all the classification mapped in the questionnaire
+- select_boolean quesiton with only one checkbox
 - mapping : will not apprear on the questionnaire, just to document mapping information
-- group start: will start a question group, an ID is mandatory, several levels are possible
-- group end: will end a question group, an ID is mandatory
+- group  will start a question group, an ID is mandatory, several levels are possible
 - variable : add a variable in the questionnaire, on the questionnaire level if no parentId is specified, else on the question where id == parentId, the expression MUST be in calcualtedExpression column
 
 ##### option
@@ -230,6 +230,10 @@ can be a list separated by || (double pipe)
 
 - checkbox: only for select_multiple
 
+- horizonal: show answers in an horizontal manner
+
+- sytle: define a Css style
+
 - Choice only for select_one
 
 - hidden : hide the question
@@ -246,6 +250,10 @@ can be a list separated by || (double pipe)
 
 used to add subItem or/and cql details
 
+### help
+
+content for the help extension
+
 ### expression
 
 Expression can be written on several lines to clarify the sub line must refer to the parent line through the parentId column
@@ -254,18 +262,17 @@ several line with the same parentId will be joined with an OR
 each set of subline is joined to the parent with an AND
 only the first line may not have expression but then it must have '{{cql}}' in it in order to triger the conversion to library
 
+the type of the subline should be '{{cql}}'
+
 ##### initialExpression (optionnal)
 
 fhirpath/CQL code that will be executed by the api with the $populate opearation
 
 When writing the CQL please note:
 
-- all objservations (i.e. questions mapped to Observation) can be access via their label or id
-- if an Observation was assessed but not found it will return "No" ('no' coding from the custom codingsystem)
-  - if an observation returns a boolean, it would be transformed to "Yes" (true) and "No" (false)
-  - if an Observation returns a coding that it could take all possible value from the valueset + "No"
-  - if an Observation returns a integer/quantity it could returns integer/quantity + "No" (coding)
-- if an observation returns a coding and you want to insure it not could list the possible coding
+- all observations (i.e. questions mapped to Observation) can be access via their label or id
+
+
 
 Cql identifier (label) must only use ascii
 
@@ -291,18 +298,6 @@ Path :: min :: max
 - For the slicing name, the question label will be used
 - Min will default to 0 and max will default \* unless defined otherwise
 
-#### map_path
-
-THis column requires the same information that extensions need but for non extension elements.
-
-```
-Path :: min :: max
-```
-
-- The id of the element
-- The value type of the element will be derived from the type of the question
-- The reference will be derived from the map_profile column
-- Min will default to 0 and max will default \* unless defined otherwise
 
 #### map_resource
 
@@ -367,13 +362,13 @@ but "additionnal" inforamation can be added when keyword are used in the code
 - {{choiceColumn}} : Only for candidteExpression, the choice column details will be defined as a json [definition] : {"path":".last_name", "width": "30", "forDisplay":"1"}
 - {{choiceColumn}} : Only for candidteExpression, will define the URL including the query parameters
 
-### cql
+### library
 
 this sheet list the additionnal CQL required
 
 ### profile
 
-for the IG, two different profile type might be usfull
+for the IG, two different profile type might be usefull
 
 - FHIR or WHO existing profiles
 - [scope] profile in case there is extension to be added to an existing profile
@@ -387,7 +382,46 @@ Different profile will need to be generated:
 - [scope] Measure: to define in which conditions some measure must be done
 - [scope] Conditions: either one per condition or per group of condition like "Emergency Conditions", "Mild Condition", "chronic conditon" etc
 - [scope] Activity: to trigger a questionnaire (CPG collectWhith) with a task (TBC)
-- [scope] task: (TBC)
+
+
+ This approach have limits, 
+ - an extension cannot yet be reuse in 2 profiles
+ - Cardinality of the values is set to 1:1
+
+#### definitionType
+
+##### resource
+    create a recipient for extention
+
+##### Extenstion
+    extention to add on a profile
+
+#### profile
+
+only use for Extention, define the resource on which this extenion need to be added
+
+#### baseProfile
+
+cannonical url of the based profile 
+
+#### cardinality
+
+cardinalliy of the extention in the profile
+
+
+#### map_path
+
+THis column requires the same information that extensions need but for non extension elements.
+
+```
+Path :: min :: max
+```
+
+- The id of the element
+- The value type of the element will be derived from the type of the question
+- The reference will be derived from the map_profile column
+- Min will default to 0 and max will default \* unless defined otherwise
+
 
 ## output files
 
