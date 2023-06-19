@@ -413,10 +413,6 @@ def format_cql_df(library, df_actions,  type):
                 'version':get_fhir_cfg().lib_version,
                 'alias':"Base"
             },{
-                'name':get_processor_cfg().scope.lower()+"observation",
-                'version':get_fhir_cfg().lib_version,
-                'alias':"obs"
-            },{
                 'name':get_processor_cfg().scope.lower()+"valueset",
                 'version':get_fhir_cfg().lib_version,
                 'alias':"val"
@@ -469,6 +465,12 @@ def format_cql_df(library, df_actions,  type):
                 cql[oi] = inject_config(cql[oi])
                 oi+=1
 
+    if "Observation" in [l.type for l in list_inputs]:
+        libs.append(    {
+                'name':get_processor_cfg().scope.lower()+"observation",
+                'version':get_fhir_cfg().lib_version,
+                'alias':"obs"
+            })
     
     cql['header'] = writeLibraryHeader(library, libs)
     cql['header'] += writeGetObs(list_inputs)
