@@ -465,7 +465,7 @@ def format_cql_df(library, df_actions,  type):
                 cql[oi] = inject_config(cql[oi])
                 oi+=1
 
-    if "Observation" in [l.type for l in list_inputs]:
+    if  any([l['type'] == "Observation" for l in list_inputs.values()]):
         libs.append(    {
                 'name':get_processor_cfg().scope.lower()+"observation",
                 'version':get_fhir_cfg().lib_version,
