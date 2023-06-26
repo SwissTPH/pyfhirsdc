@@ -155,7 +155,7 @@ def SetConditionMultiple(mode, profile, question_id, df_questions, *args):
         df_valueset = get_condition_valueset_df(df_questions)
     else:
         if len(args)!= 1:
-            logger.error('SetObservation must have 1 parameters')
+            logger.error('SetConditionMultiple must have 1 parameters')
             return None
         df_valueset = get_valueset_df(args[0], True) 
      

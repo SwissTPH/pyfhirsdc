@@ -83,16 +83,7 @@ def get_obs_value_rules(question_id, df_questions_item,none_name):
         expression="val where val.code != '{}' -> tgt.value = create('CodeableConcept') as cc, cc.coding = val, tgt.status = 'final'".format(none_name)
     )])])]
             
-    
-def SetObservationCodeObs(mode, profile, question_id,df_questions_item, *args):
-    if mode == 'groups':
-        none_name = args[0] if len(args)>1 else 'none'
-        code =  question_id
-        rule_name = clean_group_name(question_id)
-        return [set_generic_observation_v2( profile, rule_name, code, get_obs_value_rules(code,df_questions_item, none_name))]
-    elif mode == 'docs':
-        return get_base_obs_docs(question_id, 'Boolean', df_questions_item)    
-
+   
 
 
 
