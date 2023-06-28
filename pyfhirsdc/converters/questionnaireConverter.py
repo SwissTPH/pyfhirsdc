@@ -39,8 +39,10 @@ def generate_questionnaire( name ,df_questions) :
     logger.info('processing questionnaire {0}'.format(name))
     # read file content if it exists
     questionnaire = init_questionnaire(fullpath, name)
-    # clean the data frame
-    
+    # get title is any
+    title =     df_questions[df_questions.id == '{{title}}']
+    if len(title)>0:
+        questionnaire.title = title.iloc[0]['description']
     
     df_questions = inject_sub_questionnaires(df_questions)
     duplicates = df_questions[(df_questions.duplicated(subset=['id']) == True) & ~df_questions['id'].isin(get_value_set_additional_data_keyword())].dropna(axis=0, subset=['id'])
