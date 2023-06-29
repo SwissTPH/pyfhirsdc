@@ -12,7 +12,7 @@ dependencies = [
     "wheel",
     "pandas",
     "openpyxl",
-    "fhir.resources>=6.4",
+    "fhir.resources==6.4.0",
     "pydantic",
     "validators",
     "odfpy",
@@ -20,5 +20,6 @@ dependencies = [
     "requests-toolbelt",
     "jsonpath-ng",
     "textile",
-    "fhirpathpy"
+    "fhirpathpy",
+    "webcolors"
 ]
