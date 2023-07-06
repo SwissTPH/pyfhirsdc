@@ -229,7 +229,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
     obs_linkid = [x  for x in get_used_obs().keys()]
     obs_label = [x for x in get_used_obs().values()]
     changed = []
-    matches = re.findall(r'([ !=<>voc\.]+)?"(\w[^"\.]+)"',cql_exp)
+    matches = re.findall(r'([ !=<>voc\.]+)?"(\w[^"]+)"',cql_exp)
     out = cql_exp
     out = out.replace('HasCond', 'Base.HasCond')
     out = out.replace('HasObs', 'Base.HasObs')
