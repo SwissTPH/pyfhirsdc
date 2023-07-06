@@ -8,13 +8,22 @@ from fhir.resources.coding import Coding
 from fhir.resources.extension import Extension
 from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
 from fhirpathpy import compile, evaluate
-
+import  webcolors
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_fpath, get_resource_url,
                                         inject_config)
 
 logger = logging.getLogger("default")
+
+def get_background_color_style_ext(color_str):
+    if color_str in list(webcolors.CSS3_HEX_TO_NAMES.values()):
+        NAME_TO_HEX =  {v: k for k, v in webcolors.CSS3_HEX_TO_NAMES.items()}
+        hex_str = NAME_TO_HEX[color_str].upper()
+    else:
+        hex_str=color_str
+    
+    return get_rendering_style_ext(f"style::background-color: {hex_str};")
 
 def get_rendering_style_ext(style_str):
     return Extension( 

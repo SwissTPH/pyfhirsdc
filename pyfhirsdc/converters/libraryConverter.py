@@ -94,7 +94,7 @@ def generate_library(name, df_actions, type = 'pd', description = None):
         cql['backref'] = write_cql_action(
             'BackReference',
             'back reference to resource', 
-            """Reference {{reference: string {{ value: 'Questionnaire/{}'}}}}""".format(name), 
+            """Reference {{reference: string {{ value: 'Questionnaire/{}'}}}}""".format(clean_name(name)), 
             '')
     if len(cql)>1:
         output_lib_path = os.path.join(

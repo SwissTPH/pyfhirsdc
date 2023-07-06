@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 
 from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
-from pyfhirsdc.converters.extensionsConverter import (get_help_ext,
+from pyfhirsdc.converters.extensionsConverter import (get_help_ext, get_item_media_ext,
                                                       get_instruction_ext,
                                                       get_popup_ext,
                                                       get_variable_extension)
@@ -19,7 +19,7 @@ from pyfhirsdc.converters.questionnaireItemConverter import (
     get_question_fhir_data_type, get_question_repeats, get_question_valueset,
     get_timestamp_item, get_type_details)
 from pyfhirsdc.converters.utils import (clean_name, get_resource_url,
-                                        inject_sub_questionnaires)
+                                        inject_sub_questionnaires,get_media)
 from pyfhirsdc.converters.valueSetConverter import \
     get_value_set_additional_data_keyword
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
@@ -185,17 +185,23 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
                     text = html,
                     extension = [get_help_ext()],
             )
+            # IMAGE in help
+            #if "media" in question and pd.notna(question["media"]) and question["media"] !='':
+            #    type_media, url_media = get_media(question)
+            #    if type_media is not None:
+            #        help.extension.append(get_item_media_ext(type_media, url_media))
             if 'help-popup' in display:
                 help.extension.append(get_popup_ext())
             new_question.item.append(help)   
             # add instruction in case there is no text, sdc defect don't show the help if no text
             if new_question.text == None:
-                new_question.item.append( QuestionnaireItemSDC(
-                    linkId = question['id']+"-instruction",
-                    type= 'display',
-                    text = 'help',
-                    extension = [get_instruction_ext()],
-                ))   
+                new_question.text = ' '
+                #new_question.item.append( QuestionnaireItemSDC(
+                #    linkId = question['id']+"-instruction",
+                #    type= 'display',
+                #    text = '.',
+                #    extension = [get_instruction_ext()],
+                #))   
         #TODO  workarround for https://github.com/google/android-fhir/issues/1550
         #unit = get_unit(display)
         #if unit is not None:   

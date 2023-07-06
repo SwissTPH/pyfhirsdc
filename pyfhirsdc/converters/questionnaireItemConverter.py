@@ -27,7 +27,7 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_instruction_ext, get_item_media_ext, get_number_only_ext,
     get_open_choice_ext, get_popup_ext, get_radio_ext, get_regex_ext,
     get_rendering_style_ext, get_slider_ext, get_subquestionnaire_ext,
-    get_toggle_ext, get_unit_ext, get_variable_extension)
+    get_toggle_ext, get_unit_ext, get_variable_extension, get_background_color_style_ext)
 from pyfhirsdc.converters.utils import (get_custom_codesystem_url, get_media,
                                         get_resource_url)
 from pyfhirsdc.converters.valueSetConverter import (
@@ -76,7 +76,7 @@ def get_clean_html(txt):
     html = textile.textile(txt)
     if html.startswith('\t'):
         html = html[1:]
-    if html.startswith('<p>'):
+    if html.startswith('<p>') and len(re.findall(r"</p>", html))==1:
         html = html[3:-4]
     return html
     
@@ -160,7 +160,10 @@ def get_question_extension(question, question_id, df_questions = None ):
     if type == 'phone':
         extensions.append(get_regex_ext('^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$'))
         extensions.append(get_number_only_ext())
-    
+    color_str = get_bk_color(display)
+    if color_str is not None and len(color_str)>0:
+        extensions.append(get_background_color_style_ext(color_str))
+        
     if 'item-popup' in display:
         extensions.append(get_popup_ext())
     if type == 'boolean' or 'horizontal' in display and 'hidden' not in display :
@@ -204,7 +207,8 @@ def get_question_extension(question, question_id, df_questions = None ):
     elif "instruction" in display  and type in ["display","note"] :
         extensions.append(get_instruction_ext())
 
-    if "media" in question and pd.notna(question["media"]) and question["media"] !='':
+    if "media" in question and pd.notna(question["media"]) and question["media"] !='' and\
+        True: # media in help ('help' not in question or pd.isna(question['help'])):
         type_media, url_media = get_media(question)
         if type_media is not None:
             extensions.append(get_item_media_ext(type_media, url_media))
@@ -235,7 +239,11 @@ def get_style(display_arr):
         if display_elmts[0] == 'style' and len(display_elmts) == 2:
             return display_elmts[1]
         
-    
+def get_bk_color(display_arr):
+    for display_str in display_arr:
+        display_elmts = display_str.split('::')
+        if display_elmts[0] == 'background-color' and len(display_elmts) == 2:
+            return display_elmts[1]   
     
 
 

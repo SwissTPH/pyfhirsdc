@@ -28,7 +28,7 @@ def write_bundle(conf):
         for path, dirc, files in os.walk(folderdir):
             if "ext_ig" not in path and "tests" not in path:
                 for name in files:
-                    if name.endswith(ext):
+                    if name.endswith(ext) and not name.startswith("bundle"):
                         logger.debug('{}{}{}{}'.format(conf, path, dirc , name)) # printing file name
                         add_resource(path,name,bundle)        
                         
