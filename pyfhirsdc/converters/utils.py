@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+import validators
 
 import pandas as pd
 from fhir.resources.codeableconcept import CodeableConcept
@@ -93,7 +94,11 @@ def get_media(question):
     if display_str is not None:
         arr =  display_str.split('::')
         if len(arr)==2:
-            return arr[0], arr[1].replace('{{canonical_base}}',get_fhir_cfg().canonicalBase)
+            url = arr[1].replace('{{canonical_base}}',get_fhir_cfg().canonicalBase)
+            is_url = validators.url(url)
+            if not is_url:
+                url = get_fhir_cfg().canonicalBase + "Binary/" +arr[1]
+            return arr[0], url
         else:
             logger.error("Media must have 2 parameters type, url")
     return None, None
