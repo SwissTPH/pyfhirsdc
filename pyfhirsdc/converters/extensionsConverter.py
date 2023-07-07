@@ -253,8 +253,53 @@ def get_structure_map_extension(extensions, uri):
     return extensions
 # exp  expression::severity
 # message human::requirements
+def get_quantity(str_qty):
+    arr_qty = str_qty.split("'")
+    if len(arr_qty) !=3:
+        logger.error(f"quantity {str_qty} not parsable")
+        return None 
+    value = arr_qty[0].strip()
+    code = arr_qty[1].strip()
+    system = arr_qty[2].strip() 
+    
+    return QuantityType(
+        value = value,
+        system = system if system != '' else 'http://unitsofmeasure.org',
+        code = code
+        
+    )
+
 def get_constraint_exp_ext(id,expr, human,df_questions = None):
     expr_parts = expr.split('::')
+    expr = None
+    if expr_parts[0] == "MinMax":
+        df_q  =df_questions[df_questions.id == id]
+        if len(df_q)>0 and df_q.iloc[0]['type'] in ('decimal', 'integer','date', 'dateTime', 'time','quantity'):
+            q_type = df_q.iloc[0]['type']
+            min_max_exts = [Extension(
+                url = "http://hl7.org/fhir/StructureDefinition/minValue",
+                valueDecimal = expr_parts[1] if q_type == 'decimal' else None,
+                valueInteger = expr_parts[1] if q_type == 'integer' else None,
+                valueDate = expr_parts[1] if q_type == 'date' else None,
+                valueTime = expr_parts[1] if q_type == 'time' else None,
+                valueDateTime = expr_parts[1] if q_type == 'dateTime' else None,
+                valueQuantity = get_quantity(expr_parts[1])if q_type == 'quantity' else None,
+                
+            )]
+            if len(expr_parts)>1:
+              min_max_exts.append(Extension(
+                url = "http://hl7.org/fhir/StructureDefinition/maxValue",
+                valueDecimal = expr_parts[2] if q_type == 'decimal' else None,
+                valueInteger = expr_parts[2] if q_type == 'integer' else None,
+                valueDate = expr_parts[2] if q_type == 'date' else None,
+                valueTime = expr_parts[2] if q_type == 'time' else None,
+                valueDateTime = expr_parts[2] if q_type == 'dateTime' else None,
+                valueQuantity = get_quantity(expr_parts[2])if q_type == 'quantity' else None,
+                               ))
+            return min_max_exts
+        else:
+            expr = "answer.first() >= {} and answer.first() <= {}".format(expr_parts[1],expr_parts[2])
+            requirements = None
     human_parts = human.split('::')
     if len(human_parts)==2:
         human = human_parts[0]
@@ -262,31 +307,16 @@ def get_constraint_exp_ext(id,expr, human,df_questions = None):
     elif len(human_parts)==1:
         severity = 'error'
     else:
-        logger.error("missing constraint message")
-    if expr_parts[0] == "MinMax":
-        expr = "answer.first() >= {} and answer.first() <= {}".format(expr_parts[1],expr_parts[2])
-        requirements = None
-        #isDecimal = "." in expr_parts[1]
-        #min_max_exts = [Extension(
-        #    url = "http://hl7.org/fhir/StructureDefinition/minValue",
-        #    valueDecimal = expr_parts[1] if isDecimal else None,
-        #    valueInteger = expr_parts[1] if not isDecimal else None
-        #)]
-        #if len(expr_parts)>1:
-        #  min_max_exts.append(Extension(
-        #    url = "http://hl7.org/fhir/StructureDefinition/maxValue",
-        #    valueDecimal = expr_parts[2] if isDecimal else None,
-        #    valueInteger = expr_parts[2] if not isDecimal else None
-        #    ))
-        #return min_max_exts
-    
-    elif len(expr_parts)==2:
-        expr = expr_parts[0]
-        requirements = expr_parts[1]
-    elif len(expr_parts)==1:
-        requirements = None
-    else:
-        logger.error("missing constraint message")        
+        logger.error("missing constraint message")    
+
+    if expr is not None:
+        if len(expr_parts)==2:
+            expr = expr_parts[0]
+            requirements = expr_parts[1]
+        elif len(expr_parts)==1:
+            requirements = None
+        else:
+            logger.error("missing expresison")        
     
     ext =  Extension(
             url ="http://hl7.org/fhir/StructureDefinition/questionnaire-constraint",

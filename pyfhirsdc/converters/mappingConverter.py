@@ -9,7 +9,6 @@ from pyfhirsdc.converters.extensionsConverter import \
     get_structure_map_extension
 from pyfhirsdc.converters.mapHelpers.utils import (VAL_REGEX, generate_helper,
                                                    get_ans_rule,
-                                                   get_base_profile,
                                                    get_helper,
                                                    get_profiles_questions,
                                                    get_questions_profiles,
@@ -19,7 +18,7 @@ from pyfhirsdc.converters.mapHelpers.utils import (VAL_REGEX, generate_helper,
                                                    wrapin_first_answers_rules,
                                                    wrapin_fpath)
 from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
-                                        get_resource_url)
+                                        get_resource_url, get_base_profile)
 from pyfhirsdc.models.mapping import (Mapping, MappingGroup, MappingGroupIO,
                                       MappingIO, MappingRule)
 from pyfhirsdc.serializers.mappingSerializer import write_mapping_file

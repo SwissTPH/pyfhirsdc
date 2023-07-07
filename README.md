@@ -154,11 +154,37 @@ this sheet defined how the questionnaires are sequences using multiple plan defi
     - If this column is filled, the condition mapped with have stop as type
 
 #### constraintDescription
+    use to create http://hl7.org/fhir/StructureDefinition/questionnaire-constraint with constraintExpression if not MinMax
+    must have this structure
 
-    - Describes the input that is required for an action to take place
+    human::requirements
+
+    * human: string: A free text expression of the rule to display to the user if the rule is violated.
+    * requirements: string: An explanation of why this extension is required (for documentation purposes).
 
 #### constraintExpression
 
+    can be MinMax::min value::max value 
+        https://hl7.org/fhir/extensions/StructureDefinition-minValue.html
+        Simple Extension of type date, dateTime, time, decimal, integer, Quantity: The inclusive lower bound on the range of allowed values for the data element.
+        https://hl7.org/fhir/extensions/StructureDefinition-maxValue.html
+        Simple Extension of type date, dateTime, time, decimal, integer, Quantity: The inclusive upper bound on the range of allowed values for the data element.     
+    else it must have this structure:
+
+        expression::severity
+        
+        * severity: code: Indicates how serious violating the invariant is. (error or warning: http://hl7.org/fhir/R5/valueset-constraint-severity.html )
+        * expression: string: The FHIRPath expression of the rule for computable interpretation.
+
+        content in constraintDescription is mandatory 
+
+
+        it will create http://hl7.org/fhir/StructureDefinition/questionnaire-constraint
+
+        Complex Extension: An invariant that must be satisfied before responses to the questionnaire can be considered "complete".
+ 
+
+# message 
     - The action that will result
 
 #### trigger
@@ -333,6 +359,10 @@ the based profile will be deducted from the profile, this means that the profile
 if the base profile is Observation then the question code will be defined from the label in the {{scope}}observation library
 
 if the base profile is condition then the question code will be defined from the label in the {{scope}}condition library
+
+
+to avoid complex code in the XLSX, snippet/function could be defined in mapHelpers/custom
+[Mapping function](./mapHelpers/custom/README.md)
 
 #### add library:
 

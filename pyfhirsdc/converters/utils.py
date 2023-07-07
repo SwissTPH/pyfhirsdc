@@ -89,6 +89,22 @@ def get_code(system, code, display = None ):
                 code = code,
                 display = display
                 )
+    
+FHIR_BASE_PROFILES = [
+    "Patient",
+    "RelatedPerson",
+    "Encounter",
+    "Condition",
+    "Observation",
+    "QuestionnaireResponse",
+    "CommunicationRequest"
+]
+
+def get_base_profile(profile):
+    for base_profile in FHIR_BASE_PROFILES:
+        if base_profile.lower() in profile.lower():
+            return base_profile
+        
 def get_media(question):
     display_str = str(question["media"]) if "media" in question and pd.notna(question["media"]) else None
     if display_str is not None:

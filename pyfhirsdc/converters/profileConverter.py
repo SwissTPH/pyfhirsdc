@@ -13,11 +13,10 @@ from fhir.resources.structuredefinition import (
     StructureDefinition, StructureDefinitionDifferential)
 
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg
-from pyfhirsdc.converters.mappingConverter import get_base_profile
 from pyfhirsdc.converters.questionnaireItemConverter import (
     get_display, get_question_fhir_data_type)
 from pyfhirsdc.converters.utils import (clean_name, get_resource_name,
-                                        get_resource_url)
+                                        get_resource_url, get_base_profile, FHIR_BASE_PROFILES)
 
 logger = logging.getLogger("default")
 
@@ -105,12 +104,14 @@ def convert_df_to_profiles():
         all_questionnaires = all_questionnaires.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id')
         for idx, row in all_questionnaires.iterrows():
             #TODO exclude std resource
-            not_found = True
-            for profile in profiles:
-                if  row.map_profile.strip() in (profile.id, profile.title ):
-                    not_found = False                                                                                                               
-                    break
-            if not_found:
+            profile_type = row.map_profile.strip()
+            found = profile_type in FHIR_BASE_PROFILES
+            if not found:
+                for profile in profiles:
+                    if  profile_type in (profile.id, profile.title ):
+                        found = True                                                                                                               
+                        break
+            if not found:
                 logger.warning('Profile not found for %s', row.map_profile)
 
         return profiles

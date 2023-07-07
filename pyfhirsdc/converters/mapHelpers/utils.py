@@ -4,7 +4,7 @@ import os
 import pandas as pd
 
 from pyfhirsdc.converters.utils import (get_custom_codesystem_url, get_fpath,
-                                        get_resource_url, inject_config)
+                                        get_resource_url, inject_config, get_base_profile)
 from pyfhirsdc.converters.valueSetConverter import get_valueset_df
 from pyfhirsdc.models.mapping import MappingRule
 
@@ -25,15 +25,8 @@ def get_custom_helpers():
     return custFunc
 
 
-FHIR_BASE_PROFILES = [
-    "Patient",
-    "RelatedPerson",
-    "Encounter",
-    "Condition",
-    "Observation",
-    "QuestionnaireResponse",
-    "CommunicationRequest"
-]
+
+        
 
 FHIR_ONELINER_PROFILES = [
     "Condition",
@@ -89,11 +82,7 @@ def is_oneliner_profile(profile):
         return True
 
 
-def get_base_profile(profile):
-    for base_profile in FHIR_BASE_PROFILES:
-        if base_profile.lower() in profile.lower():
-            return base_profile
-        
+
 
 
 def get_questions_profiles(df_questions):
