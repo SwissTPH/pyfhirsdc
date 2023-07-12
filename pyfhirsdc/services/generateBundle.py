@@ -1,6 +1,8 @@
 import logging
 import os
 import shutil
+import ctypes
+kdll = ctypes.windll.LoadLibrary("kernel32.dll")
 
 
 from fhir.resources.bundle import Bundle, BundleEntry, BundleEntryRequest
@@ -37,7 +39,10 @@ def write_bundle(conf):
     write_resource(bundle_name, bundle)
     if os.path.lexists(std_name):
         os.remove(std_name)
-    os.symlink(bundle_name, std_name)
+    if os.name == 'nt':
+        kdll.CreateSymbolicLinkA(bundle_name, std_name, 0)
+    else:
+        os.symlink(bundle_name, std_name)
                     
 def add_resource(path,name,bundle):
     file_path = os.path.join(path,name)
