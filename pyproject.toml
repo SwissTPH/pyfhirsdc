@@ -20,6 +20,5 @@ dependencies = [
     "requests-toolbelt",
     "jsonpath-ng",
     "textile",
-    "fhirpathpy",
-    "webcolors"
+    "fhirpathpy"
 ]
