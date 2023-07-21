@@ -510,8 +510,8 @@ def get_patient_observation_codes(row):
                 codes.append(code)
     return codes
 
-def check_expression_keyword(row, keword):
+def check_expression_keyword(row, keyword):
     for name, exp in ROW_EXPRESSIONS.items():
-        if name in row and pd.notna(row[name]) and keword in row[name]:
+        if name in row and pd.notna(row[name]) and keyword in str(row[name]):
             return True
     

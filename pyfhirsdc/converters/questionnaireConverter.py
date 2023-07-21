@@ -17,9 +17,9 @@ from pyfhirsdc.converters.questionnaireItemConverter import (
     get_clean_html, get_disabled_display, get_display, get_initial_value,
     get_question_answeroption, get_question_definition, get_question_extension,
     get_question_fhir_data_type, get_question_repeats, get_question_valueset,
-    get_timestamp_item, get_type_details)
+    get_timestamp_item)
 from pyfhirsdc.converters.utils import (clean_name, get_resource_url,
-                                        inject_sub_questionnaires,get_media)
+                                        inject_sub_questionnaires,get_media,get_type_details)
 from pyfhirsdc.converters.valueSetConverter import \
     get_value_set_additional_data_keyword
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,

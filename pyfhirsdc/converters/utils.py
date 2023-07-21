@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timezone
 import validators
-
+import re
 import pandas as pd
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
@@ -99,6 +99,21 @@ FHIR_BASE_PROFILES = [
     "QuestionnaireResponse",
     "CommunicationRequest"
 ]
+
+def get_type_details(question):
+    # structure main_type detail_1::detail_2
+    if 'type' not in question or not isinstance(question['type'], str):
+        return None, None, None
+    type_arr = re.split(" +",question['type'])
+    # split each details
+    if len(type_arr)>1:
+        detail_arr = type_arr[1].split('::')
+        if len(detail_arr)>1:
+            return type_arr[0], detail_arr[0], detail_arr[1]
+        else:
+            return type_arr[0], detail_arr[0], None
+    else:
+        return type_arr[0], None, None
 
 def get_base_profile(profile):
     for base_profile in FHIR_BASE_PROFILES:

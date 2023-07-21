@@ -7,7 +7,7 @@ import pandas as pd
 
 from pyfhirsdc.converters.mapHelpers.utils import get_obs_meta_rule, get_rand_identifier_rule, get_timestamp_rule, wrapin_entry_create, wrapin_first_answers_rules
 from pyfhirsdc.converters.utils import (clean_group_name, 
-                                        get_custom_codesystem_url)
+                                        get_custom_codesystem_url, get_type_details)
 from pyfhirsdc.converters.valueSetConverter import (get_valueset_df)
 from pyfhirsdc.models.mapping import ( MappingGroup, MappingGroupIO,
                                        MappingRule)
@@ -208,11 +208,19 @@ def SetObservationMultipleConcat(mode, profile, question_id, df_questions, *args
     return SetObservationMultipleBase(mode, profile, question_id, df_questions, True, *args)
     
 def SetObservationMultipleBase(mode, profile, question_id, df_questions, concat, *args):   
-    if len(args)!= 1 and  len(args)!= 2 :
-        logger.error('SetObservation must have 1 or 2 parameters')
+    none_code = 'none'
+    if len(args)== 0:
+        question=df_questions[df_questions.id==question_id].iloc[0]
+        type, detail_1, detail_2 = get_type_details(question)
+        df_valueset = get_valueset_df(detail_1, True)        
+    elif  len(args) < 2:
+        df_valueset = get_valueset_df(args[0], True)
+        if  len(args) == 2:
+            none_code  = args[1]  
+    elif len(args)> 2 :
+        logger.error('SetObservationMultiple must have 0 to 2 parameters')
         return None
-    df_valueset = get_valueset_df(args[0], True)
-    none_code  = args[1] if  len(args) == 2 else None
+
     if mode == 'rules':
         return get_base_obs_muli_rules(profile, question_id,df_questions,df_valueset, none_code, concat)
     elif mode == 'groups':
@@ -245,11 +253,13 @@ def get_base_obs_muli_rules(profile, question_id,df_questions,df_valueset, none_
     rules = []
 
     for index, row in df_valueset.iterrows():
-        if "map" in row and   pd.notna(row["map"]) and row['map'].lower().startswith('obs'):
-            
-            row_id = row['code']
-            if none_code is None or  row_id !=  none_code:
-                code  =question_id+ "&" +  row_id if concat else row_id
+        #TODO: manage the concat differently
+        if "map" in row and   pd.notna(row["map"]) and row["map"].lower().startswith('obs'):
+        
+            if (row['code']!=none_code or none_code == None):
+        
+                row_id = row['code']
+                code  = question_id+ "&" +  row_id if concat else row_id
                 rule_name = clean_group_name( profile + code + 't')
                 rules.append(MappingRule(
                     expression = "src where src.item.where(linkId='{0}').answer.where(value.code = '{1}') ".format(question_id, row_id),
@@ -261,7 +271,10 @@ def get_base_obs_muli_rules(profile, question_id,df_questions,df_valueset, none_
                     expression = "src where src.item.where(linkId='{0}').exists() and src.item.where(linkId='{0}').answer.where(value.code = '{1}').empty()  ".format(question_id, row_id),
                     rules = [wrapin_entry_create(profile, question_id,df_questions, [MappingRule(expression = 'src then {}(src,tgt)'.format(rule_name) )])]
                 ))
-            
+        elif (row['code']!=none_code or none_code == None):
+            logger.warning(f"SetObservation multiple with code not map to Observation {row['code']}")
+                
+                
     return  rules
 
 

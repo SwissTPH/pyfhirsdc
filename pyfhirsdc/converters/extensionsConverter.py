@@ -5,10 +5,10 @@ from distutils.util import strtobool
 from fhir.resources.attachment import Attachment
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
+from pyfhirsdc.serializers.xkcd import XKCD
 from fhir.resources.extension import Extension
 from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
 from fhirpathpy import compile, evaluate
-import  webcolors
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_fpath, get_resource_url,
@@ -17,9 +17,8 @@ from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
 logger = logging.getLogger("default")
 
 def get_background_color_style_ext(color_str):
-    if color_str in list(webcolors.CSS3_HEX_TO_NAMES.values()):
-        NAME_TO_HEX =  {v: k for k, v in webcolors.CSS3_HEX_TO_NAMES.items()}
-        hex_str = NAME_TO_HEX[color_str].upper()
+    if color_str in list(XKCD):
+        hex_str = XKCD[color_str]
     else:
         hex_str=color_str
     
@@ -190,11 +189,12 @@ def get_open_choice_ext():
 
 
 def get_variable_extension(name,expression,df_questions):
+    language, expression = get_expression_language(expression)
     return Extension(
         url ="http://hl7.org/fhir/StructureDefinition/variable",
         valueExpression = ExpressionType(
                 name = name,
-                language = "text/fhirpath",
+                language = language ,
                 expression = convert_reference_to_fhirpath(expression, df_questions)))
 
 
@@ -286,7 +286,7 @@ def get_constraint_exp_ext(id,expr, human,df_questions = None):
                 valueQuantity = get_quantity(expr_parts[1])if q_type == 'quantity' else None,
                 
             )]
-            if len(expr_parts)>1:
+            if len(expr_parts)>2:
               min_max_exts.append(Extension(
                 url = "http://hl7.org/fhir/StructureDefinition/maxValue",
                 valueDecimal = expr_parts[2] if q_type == 'decimal' else None,
@@ -524,20 +524,37 @@ def get_enable_when_expression_ext(expression, df_questions, desc = None ):
                 language = "text/fhirpath",
                 expression = convert_reference_to_fhirpath(expression, df_questions)))
 
+CALCUALTED_EXPRESSION_LANGUAGE = {
+    
+    'fhirpath':'text/fhirpath',
+    'fhir-x-query':'application/x-fhir-query'
+}
+
+def get_expression_language(expression):
+    # find language
+    language = "fhirpath"
+    parts =  expression.split('::')
+    if len(parts)>1 and parts[0] in CALCUALTED_EXPRESSION_LANGUAGE:
+        language = CALCUALTED_EXPRESSION_LANGUAGE[parts[0]]
+        expression = "::".join(parts[1:]) 
+    return language, expression
+
 def get_calculated_expression_ext(expression, df_questions, desc = None ):
+    language, expression = get_expression_language(expression)
     return Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
         valueExpression = ExpressionType(
                 description = desc,
-                language = "text/fhirpath",
+                language = language,
                 expression = convert_reference_to_fhirpath(expression, df_questions)))
 
 def get_initial_expression_ext(expression, df_questions, desc = None ):
+    language, expression = get_expression_language(expression)
     return Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
         valueExpression = ExpressionType(
                 description = desc,
-                language = "text/fhirpath",
+                language = language,
                 expression = convert_reference_to_fhirpath(expression, df_questions)))
 
 

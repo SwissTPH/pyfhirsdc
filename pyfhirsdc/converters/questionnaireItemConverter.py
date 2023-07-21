@@ -29,7 +29,7 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_rendering_style_ext, get_slider_ext, get_subquestionnaire_ext,
     get_toggle_ext, get_unit_ext, get_variable_extension, get_background_color_style_ext)
 from pyfhirsdc.converters.utils import (get_custom_codesystem_url, get_media,
-                                        get_resource_url)
+                                        get_resource_url,get_type_details)
 from pyfhirsdc.converters.valueSetConverter import (
     get_condition_valueset_df, get_value_set_answer_options, get_valueset_df)
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
@@ -298,20 +298,7 @@ def get_question_definition(question):
     else:
         return None
 
-def get_type_details(question):
-    # structure main_type detail_1::detail_2
-    if 'type' not in question or not isinstance(question['type'], str):
-        return None, None, None
-    type_arr = re.split(" +",question['type'])
-    # split each details
-    if len(type_arr)>1:
-        detail_arr = type_arr[1].split('::')
-        if len(detail_arr)>1:
-            return type_arr[0], detail_arr[0], detail_arr[1]
-        else:
-            return type_arr[0], detail_arr[0], None
-    else:
-        return type_arr[0], None, None
+
 
 
 def validate_fhirpath(resource, elm = None, elm_root = "%resource"):
