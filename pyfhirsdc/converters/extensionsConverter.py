@@ -532,7 +532,7 @@ CALCUALTED_EXPRESSION_LANGUAGE = {
 
 def get_expression_language(expression):
     # find language
-    language = "fhirpath"
+    language = "text/fhirpath"
     parts =  expression.split('::')
     if len(parts)>1 and parts[0] in CALCUALTED_EXPRESSION_LANGUAGE:
         language = CALCUALTED_EXPRESSION_LANGUAGE[parts[0]]
