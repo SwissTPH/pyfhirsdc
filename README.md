@@ -1,5 +1,7 @@
 # Python FHIR SDC generator from XLS/ODS files
 
+<img src="https://i.imgur.com/UA4UPhD.png" />
+
 The goal of the project is to have tool like pyxform but for fhir structure data capture
 
 ## Installation
