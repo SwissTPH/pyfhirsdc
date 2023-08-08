@@ -28,8 +28,7 @@ def post_files(file_path, url):
     if response.status_code == 200 or response.status_code == 201 or response.status_code == 202:
         logger.debug(response.status_code)
     else:
-        logger.error(str(response.status_code))
-        logger.debug(response.text)
+        logger.error('%s: %s',str(response.status_code),response.text)
 
 def post_multipart(list, url):
     logger.debug("Sending the multipart to {0} and pasing multipart answer".format(url))

@@ -8,7 +8,7 @@ from fhir.resources.valueset import (ValueSetCompose, ValueSetComposeInclude,
 
 from pyfhirsdc.config import get_dict_df, get_processor_cfg, set_dict_df
 from pyfhirsdc.converters.extensionsConverter import get_item_media_ext
-from pyfhirsdc.converters.utils import get_custom_codesystem_url
+from pyfhirsdc.converters.utils import get_custom_codesystem_url, get_media
 
 
 def get_value_set_compose(compose, name, df_value_set_in):
@@ -27,7 +27,7 @@ def get_value_set_compose(compose, name, df_value_set_in):
 
 def get_condition_valueset_df(df_questions):
     df_classification = df_questions.dropna(axis=0,subset = ['map_profile'])
-    df_classification = df_classification[df_classification.map_profile.str.contains("Condition")]
+    df_classification = df_classification[df_classification.map_profile.str.contains("Condition") & (df_classification['type']!= 'select_condition') ]
     if len(df_classification)>0:
         df_classification.rename(columns = {'id':'code', 'display':'display_conf', 'label':'display', 'description':'definition'}, inplace = True)
         return df_classification      
@@ -52,8 +52,9 @@ def get_value_set_answer_options(df_value_set):
 
 def  get_value_set_extensions(line):
     extensions = []
-    if 'media' in line and pd.notna(line['media']) and line['media'] != '' and line['media'] is not None:
-        extensions.append(get_item_media_ext(line['media'], True))
+    media_type, media_url = get_media(line)
+    if media_type is not None:
+        extensions.append(get_item_media_ext(media_type, media_url, True))
     if len(extensions)>0:
         return extensions
 
@@ -169,13 +170,16 @@ def get_value_set_title(vs, line):
         vs.description = line['definition']
     return vs
 
+#TODO: check if it makes sense to have the valuset special id mixed with questionnaire/libs ones
 
 METADATA_CODES =  [
         '{{title}}',
         '{{exclude}}',
         '{{include}}',
         '{{choiceColumn}}',
-        '{{url}}'
+        '{{url}}',
+        '{{library}}',
+        '{{cql}}'
          ]
 
 def get_value_set_additional_data_keyword():

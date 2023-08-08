@@ -18,18 +18,18 @@ from fhir.resources.questionnaire import (QuestionnaireItemAnswerOption,
                                           QuestionnaireItemInitial)
 from fhirpathpy import evaluate
 
-from pyfhirsdc.config import  get_dict_df, get_processor_cfg
+from pyfhirsdc.config import get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.extensionsConverter import (
     get_calculated_expression_ext, get_candidate_expression_ext,
     get_checkbox_ext, get_choice_column_ext, get_constraint_exp_ext,
-    get_dropdown_ext, get_enable_when_expression_ext, 
-    get_hidden_ext, get_horizontal_ext, get_initial_expression_identifier_ext,
-    get_instruction_ext, get_item_media_ext, get_open_choice_ext,
-    get_radio_ext, get_rendering_style_ext,  get_slider_ext, get_subquestionnaire_ext,
-    get_toggle_ext, get_unit_ext, get_variable_extension,
-    get_popup_ext)
-from pyfhirsdc.converters.utils import ( get_custom_codesystem_url,
-                                        get_resource_url)
+    get_dropdown_ext, get_enable_when_expression_ext, get_hidden_ext,
+    get_horizontal_ext, get_initial_expression_identifier_ext,
+    get_instruction_ext, get_item_media_ext, get_number_only_ext,
+    get_open_choice_ext, get_popup_ext, get_radio_ext, get_regex_ext,
+    get_rendering_style_ext, get_slider_ext, get_subquestionnaire_ext,
+    get_toggle_ext, get_unit_ext, get_variable_extension, get_background_color_style_ext)
+from pyfhirsdc.converters.utils import (get_custom_codesystem_url, get_media,
+                                        get_resource_url,get_type_details)
 from pyfhirsdc.converters.valueSetConverter import (
     get_condition_valueset_df, get_value_set_answer_options, get_valueset_df)
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
@@ -76,7 +76,7 @@ def get_clean_html(txt):
     html = textile.textile(txt)
     if html.startswith('\t'):
         html = html[1:]
-    if html.startswith('<p>'):
+    if html.startswith('<p>') and len(re.findall(r"</p>", html))==1:
         html = html[3:-4]
     return html
     
@@ -105,7 +105,7 @@ QUESTION_TYPE_MAPPING = {
                 '{{cql}}':None,
                 'variable':None,
                 "checkbox" : "boolean",
-                "phone" : "integer",
+                "phone" : "string",
                 "text" : "text",
                 "string" : "string",
                 "boolean" : "boolean",
@@ -156,7 +156,14 @@ def get_question_extension(question, question_id, df_questions = None ):
     style_str = get_style(display)
     if style_str is not None and len(style_str)>0:
         extensions.append(get_rendering_style_ext(style_str))
-    
+        
+    if type == 'phone':
+        extensions.append(get_regex_ext('^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$'))
+        extensions.append(get_number_only_ext())
+    color_str = get_bk_color(display)
+    if color_str is not None and len(color_str)>0:
+        extensions.append(get_background_color_style_ext(color_str))
+        
     if 'item-popup' in display:
         extensions.append(get_popup_ext())
     if type == 'boolean' or 'horizontal' in display and 'hidden' not in display :
@@ -200,10 +207,11 @@ def get_question_extension(question, question_id, df_questions = None ):
     elif "instruction" in display  and type in ["display","note"] :
         extensions.append(get_instruction_ext())
 
-    if "media" in question and pd.notna(question["media"]) and question["media"] !='':
+    if "media" in question and pd.notna(question["media"]) and question["media"] !='' and\
+        True: # media in help ('help' not in question or pd.isna(question['help'])):
         type_media, url_media = get_media(question)
         if type_media is not None:
-            extensions.append(get_item_media_ext(question["media"]))
+            extensions.append(get_item_media_ext(type_media, url_media))
 
     if "enableWhenExpression" in question and pd.notna(question["enableWhenExpression"]) and question["enableWhenExpression"] !='':
         extensions.append(get_enable_when_expression_ext(question["enableWhenExpression"],df_questions))    
@@ -231,17 +239,13 @@ def get_style(display_arr):
         if display_elmts[0] == 'style' and len(display_elmts) == 2:
             return display_elmts[1]
         
+def get_bk_color(display_arr):
+    for display_str in display_arr:
+        display_elmts = display_str.split('::')
+        if display_elmts[0] == 'background-color' and len(display_elmts) == 2:
+            return display_elmts[1]   
     
-    
-def get_media(question):
-    display_str = str(question["media"]) if "media" in question and pd.notna(question["media"]) else None
-    if display_str is not None:
-        arr =  display_str.split('::')
-        if len(arr)==2:
-            return arr[0], arr[1]
-        else:
-            logger.error("Media must have 2 parameters type, url")
-    return None, None
+
 
 def get_question_valueset(question):
     # split question type and details
@@ -294,20 +298,7 @@ def get_question_definition(question):
     else:
         return None
 
-def get_type_details(question):
-    # structure main_type detail_1::detail_2
-    if 'type' not in question or not isinstance(question['type'], str):
-        return None, None, None
-    type_arr = re.split(" +",question['type'])
-    # split each details
-    if len(type_arr)>1:
-        detail_arr = type_arr[1].split('::')
-        if len(detail_arr)>1:
-            return type_arr[0], detail_arr[0], detail_arr[1]
-        else:
-            return type_arr[0], detail_arr[0], None
-    else:
-        return type_arr[0], None, None
+
 
 
 def validate_fhirpath(resource, elm = None, elm_root = "%resource"):

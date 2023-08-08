@@ -5,16 +5,24 @@ from distutils.util import strtobool
 from fhir.resources.attachment import Attachment
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
+from pyfhirsdc.serializers.xkcd import XKCD
 from fhir.resources.extension import Extension
 from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
 from fhirpathpy import compile, evaluate
-
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_fpath, get_resource_url,
                                         inject_config)
 
 logger = logging.getLogger("default")
+
+def get_background_color_style_ext(color_str):
+    if color_str in list(XKCD):
+        hex_str = XKCD[color_str]
+    else:
+        hex_str=color_str
+    
+    return get_rendering_style_ext(f"style::background-color: {hex_str};")
 
 def get_rendering_style_ext(style_str):
     return Extension( 
@@ -29,21 +37,29 @@ def get_horizontal_ext():
         valueCode= "horizontal"
         )
 
+def get_regex_ext(regex):
+    return Extension( 
+        url = "http://hl7.org/fhir/StructureDefinition/regex",
+        valueCode= "regex"
+        )
 
-def get_item_media_ext(media_data, option = False):
-    media_parts = media_data.split('::')
-    if len(media_parts)<2:
-        return None
-    media_type = media_parts[0]
-    media_url = media_parts[1]
-    
-    
-    
+def get_number_only_ext():
+ return Extension(
+    url ="http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+    valueCodeableConcept = CodeableConcept(
+            coding = [Coding( 
+                system = "http://hl7.org/fhir/questionnaire-item-control",
+                code = "number-only",
+                display = "Number Only")],
+            text ="Number Only")
+)
+
+def get_item_media_ext(media_type,media_url , option = False):
     # https://terminology.hl7.org/1.0.0/CodeSystem-v3-mediatypes.html
     if media_type == 'png':
-        media_type == 'image/png'
+        media_type = 'image/png'
     elif media_type == 'jpg' or media_type == 'jpeg':
-        media_type == 'image/jpeg'
+        media_type = 'image/jpeg'
         
     #TODO: #36 support, URL, FHIRBinaries, includedB64
     
@@ -173,11 +189,12 @@ def get_open_choice_ext():
 
 
 def get_variable_extension(name,expression,df_questions):
+    language, expression = get_expression_language(expression)
     return Extension(
         url ="http://hl7.org/fhir/StructureDefinition/variable",
         valueExpression = ExpressionType(
                 name = name,
-                language = "text/fhirpath",
+                language = language ,
                 expression = convert_reference_to_fhirpath(expression, df_questions)))
 
 
@@ -236,8 +253,53 @@ def get_structure_map_extension(extensions, uri):
     return extensions
 # exp  expression::severity
 # message human::requirements
+def get_quantity(str_qty):
+    arr_qty = str_qty.split("'")
+    if len(arr_qty) !=3:
+        logger.error(f"quantity {str_qty} not parsable")
+        return None 
+    value = arr_qty[0].strip()
+    code = arr_qty[1].strip()
+    system = arr_qty[2].strip() 
+    
+    return QuantityType(
+        value = value,
+        system = system if system != '' else 'http://unitsofmeasure.org',
+        code = code
+        
+    )
+
 def get_constraint_exp_ext(id,expr, human,df_questions = None):
     expr_parts = expr.split('::')
+    expr = None
+    if expr_parts[0] == "MinMax":
+        df_q  =df_questions[df_questions.id == id]
+        if len(df_q)>0 and df_q.iloc[0]['type'] in ('decimal', 'integer','date', 'dateTime', 'time','quantity'):
+            q_type = df_q.iloc[0]['type']
+            min_max_exts = [Extension(
+                url = "http://hl7.org/fhir/StructureDefinition/minValue",
+                valueDecimal = expr_parts[1] if q_type == 'decimal' else None,
+                valueInteger = expr_parts[1] if q_type == 'integer' else None,
+                valueDate = expr_parts[1] if q_type == 'date' else None,
+                valueTime = expr_parts[1] if q_type == 'time' else None,
+                valueDateTime = expr_parts[1] if q_type == 'dateTime' else None,
+                valueQuantity = get_quantity(expr_parts[1])if q_type == 'quantity' else None,
+                
+            )]
+            if len(expr_parts)>2:
+              min_max_exts.append(Extension(
+                url = "http://hl7.org/fhir/StructureDefinition/maxValue",
+                valueDecimal = expr_parts[2] if q_type == 'decimal' else None,
+                valueInteger = expr_parts[2] if q_type == 'integer' else None,
+                valueDate = expr_parts[2] if q_type == 'date' else None,
+                valueTime = expr_parts[2] if q_type == 'time' else None,
+                valueDateTime = expr_parts[2] if q_type == 'dateTime' else None,
+                valueQuantity = get_quantity(expr_parts[2])if q_type == 'quantity' else None,
+                               ))
+            return min_max_exts
+        else:
+            expr = "answer.first() >= {} and answer.first() <= {}".format(expr_parts[1],expr_parts[2])
+            requirements = None
     human_parts = human.split('::')
     if len(human_parts)==2:
         human = human_parts[0]
@@ -245,31 +307,16 @@ def get_constraint_exp_ext(id,expr, human,df_questions = None):
     elif len(human_parts)==1:
         severity = 'error'
     else:
-        logger.error("missing constraint message")
-    if expr_parts[0] == "MinMax":
-        expr = "answer.first() >= {} and answer.first() <= {}".format(expr_parts[1],expr_parts[2])
-        requirements = None
-        #isDecimal = "." in expr_parts[1]
-        #min_max_exts = [Extension(
-        #    url = "http://hl7.org/fhir/StructureDefinition/minValue",
-        #    valueDecimal = expr_parts[1] if isDecimal else None,
-        #    valueInteger = expr_parts[1] if not isDecimal else None
-        #)]
-        #if len(expr_parts)>1:
-        #  min_max_exts.append(Extension(
-        #    url = "http://hl7.org/fhir/StructureDefinition/maxValue",
-        #    valueDecimal = expr_parts[2] if isDecimal else None,
-        #    valueInteger = expr_parts[2] if not isDecimal else None
-        #    ))
-        #return min_max_exts
-    
-    elif len(expr_parts)==2:
-        expr = expr_parts[0]
-        requirements = expr_parts[1]
-    elif len(expr_parts)==1:
-        requirements = None
-    else:
-        logger.error("missing constraint message")        
+        logger.error("missing constraint message")    
+
+    if expr is not None:
+        if len(expr_parts)==2:
+            expr = expr_parts[0]
+            requirements = expr_parts[1]
+        elif len(expr_parts)==1:
+            requirements = None
+        else:
+            logger.error("missing expresison")        
     
     ext =  Extension(
             url ="http://hl7.org/fhir/StructureDefinition/questionnaire-constraint",
@@ -387,6 +434,7 @@ def convert_reference_to_fhirpath(expression, df_questions):
     matches = re.findall(pattern = r'(?P<op> *!?<< *| *!?= *)?"(?P<linkid>[^"]+)"(?:\.(?P<sufix>\w+))?(?P<op2> *!= *(?:true|false))?', string = str(expression))
     
     for match in matches:
+        null_or_path = None
         fpath = []
         path = ''
         Iscode = False
@@ -425,7 +473,6 @@ def convert_reference_to_fhirpath(expression, df_questions):
                 for elm in fpath:
                     path= ".repeat(item).where(linkId='{}')".format(elm) +path
                 path += ".answer"
-                null_or_path= None
                 if  len(null_or)>0:
                     null_or_path = path + ".empty() "
                 if sufix not in FHIRPATH_FUNCTION:
@@ -477,20 +524,37 @@ def get_enable_when_expression_ext(expression, df_questions, desc = None ):
                 language = "text/fhirpath",
                 expression = convert_reference_to_fhirpath(expression, df_questions)))
 
+CALCUALTED_EXPRESSION_LANGUAGE = {
+    
+    'fhirpath':'text/fhirpath',
+    'fhir-x-query':'application/x-fhir-query'
+}
+
+def get_expression_language(expression):
+    # find language
+    language = "text/fhirpath"
+    parts =  expression.split('::')
+    if len(parts)>1 and parts[0] in CALCUALTED_EXPRESSION_LANGUAGE:
+        language = CALCUALTED_EXPRESSION_LANGUAGE[parts[0]]
+        expression = "::".join(parts[1:]) 
+    return language, expression
+
 def get_calculated_expression_ext(expression, df_questions, desc = None ):
+    language, expression = get_expression_language(expression)
     return Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
         valueExpression = ExpressionType(
                 description = desc,
-                language = "text/fhirpath",
+                language = language,
                 expression = convert_reference_to_fhirpath(expression, df_questions)))
 
 def get_initial_expression_ext(expression, df_questions, desc = None ):
+    language, expression = get_expression_language(expression)
     return Extension(
         url ="http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
         valueExpression = ExpressionType(
                 description = desc,
-                language = "text/fhirpath",
+                language = language,
                 expression = convert_reference_to_fhirpath(expression, df_questions)))
 
 
@@ -507,8 +571,7 @@ def get_initial_expression_identifier_ext(quesiton_id, desc = None ):
         valueExpression = get_cql_epression(quesiton_id, desc)
     )
 def get_questionnaire_library(library):
-    if not re.search("$https?\:\/\/", library):
-        library = get_fhir_cfg().canonicalBase + "Library/{}".format(clean_name(library))
+
     return Extension(
         url ="http://hl7.org/fhir/StructureDefinition/cqf-library",
         valueCanonical  = library)

@@ -9,7 +9,7 @@ from fhir.resources.codesystem import CodeSystemConcept
 
 from pyfhirsdc.config import (append_used_obs_valueset, append_used_valueset,
                               get_processor_cfg)
-from pyfhirsdc.converters.mappingConverter import get_base_profile
+from pyfhirsdc.converters.utils import get_base_profile
 from pyfhirsdc.converters.valueSetConverter import \
     get_value_set_additional_data_keyword
 

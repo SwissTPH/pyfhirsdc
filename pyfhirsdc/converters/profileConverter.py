@@ -13,11 +13,10 @@ from fhir.resources.structuredefinition import (
     StructureDefinition, StructureDefinitionDifferential)
 
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg
-from pyfhirsdc.converters.mappingConverter import get_base_profile
 from pyfhirsdc.converters.questionnaireItemConverter import (
     get_display, get_question_fhir_data_type)
 from pyfhirsdc.converters.utils import (clean_name, get_resource_name,
-                                        get_resource_url)
+                                        get_resource_url, get_base_profile, FHIR_BASE_PROFILES)
 
 logger = logging.getLogger("default")
 
@@ -66,53 +65,56 @@ def convert_df_to_profiles():
     dfs_questionnaire = get_dict_df()['questionnaires']
     all_questionnaires = pd.concat(dfs_questionnaire, ignore_index=True)
     # get the valid line from the profile tabs,  profile and extensions
-    df_profile_all  = get_dict_df()['profile'].dropna(axis=0, subset=['id'])
-    # get only the line witout "profile" meaning it is the main line for the profile
-    df_profile = df_profile_all[df_profile_all.definitionType == 'resource']
-    
-    df_profile_ext  = df_profile_all[df_profile_all.definitionType == 'Extension']
-    
-    
-    #Grouping rows based on the profiles, so that we can go through the different groups and create
-    # the corresponding profiles with the right attributes
-
-    
-    #for key, item in grouped_profiles:
-    #    logger.info("Profile: ", key)
-    #    logger.info(grouped_profiles.get_group(key), "\n\n")
-    for idx, row in df_profile.iterrows():
-        profile = init_profile_def(row)
-    
-        # get the df for the profile extension
-        df_extensions = df_profile_ext[df_profile_ext.profile == profile.id]
-        profile = extend_profile(profile, df_extensions )
-        profiles.append(profile)
-    for idx, row in df_profile_ext.iterrows():
-        profile = init_profile_def(row)
-        profile_id = clean_name(row['id'])
-        profile.differential = StructureDefinitionDifferential(
-            element= get_extension_diferential(
-                row.id, 
-                row.description, 
-                row.type, 
-                get_resource_url('StructureDefinition', Id(profile_id)),
-                row.value)
-        )
-        profiles.append(profile)
+    if "profile" in get_dict_df():
+        df_profile_all  = get_dict_df()['profile'].dropna(axis=0, subset=['id'])
+        # get only the line witout "profile" meaning it is the main line for the profile
+        df_profile = df_profile_all[df_profile_all.definitionType == 'resource']
         
-    # check if there is misssing profiles    
-    all_questionnaires = all_questionnaires.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id')
-    for idx, row in all_questionnaires.iterrows():
-        #TODO exclude std resource
-        not_found = True
-        for profile in profiles:
-            if  row.map_profile.strip() in (profile.id, profile.title ):
-                not_found = False
-                break
-        if not_found:
-            logger.warning('Profile not found for %s', row.map_profile)
+        df_profile_ext  = df_profile_all[df_profile_all.definitionType == 'Extension']
+        
+        
+        #Grouping rows based on the profiles, so that we can go through the different groups and create
+        # the corresponding profiles with the right attributes
 
-    return profiles
+        
+        #for key, item in grouped_profiles:
+        #    logger.info("Profile: ", key)
+        #    logger.info(grouped_profiles.get_group(key), "\n\n")
+        for idx, row in df_profile.iterrows():
+            profile = init_profile_def(row)
+        
+            # get the df for the profile extension
+            df_extensions = df_profile_ext[df_profile_ext.profile == profile.id]
+            profile = extend_profile(profile, df_extensions )
+            profiles.append(profile)
+        for idx, row in df_profile_ext.iterrows():
+            profile = init_profile_def(row)
+            profile_id = clean_name(row['id'])
+            profile.differential = StructureDefinitionDifferential(
+                element= get_extension_diferential(
+                    row.id, 
+                    row.description, 
+                    row.type, 
+                    get_resource_url('StructureDefinition', Id(profile_id)),
+                    row.value)
+            )
+            profiles.append(profile)
+            
+        # check if there is misssing profiles    
+        all_questionnaires = all_questionnaires.dropna(axis=0, subset=['id']).dropna(axis=0, subset=['map_profile']).set_index('id')
+        for idx, row in all_questionnaires.iterrows():
+            #TODO exclude std resource
+            profile_type = row.map_profile.strip()
+            found = profile_type in FHIR_BASE_PROFILES
+            if not found:
+                for profile in profiles:
+                    if  profile_type in (profile.id, profile.title ):
+                        found = True                                                                                                               
+                        break
+            if not found:
+                logger.warning('Profile not found for %s', row.map_profile)
+
+        return profiles
 
 def init_profile_def(row):
     is_extension_definition = pd.notna(row.definitionType) and row.definitionType == 'Extension'

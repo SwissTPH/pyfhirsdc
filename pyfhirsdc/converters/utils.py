@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timezone
-
+import validators
+import re
 import pandas as pd
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coding import Coding
@@ -88,6 +89,50 @@ def get_code(system, code, display = None ):
                 code = code,
                 display = display
                 )
+    
+FHIR_BASE_PROFILES = [
+    "Patient",
+    "RelatedPerson",
+    "Encounter",
+    "Condition",
+    "Observation",
+    "QuestionnaireResponse",
+    "CommunicationRequest"
+]
+
+def get_type_details(question):
+    # structure main_type detail_1::detail_2
+    if 'type' not in question or not isinstance(question['type'], str):
+        return None, None, None
+    type_arr = re.split(" +",question['type'])
+    # split each details
+    if len(type_arr)>1:
+        detail_arr = type_arr[1].split('::')
+        if len(detail_arr)>1:
+            return type_arr[0], detail_arr[0], detail_arr[1]
+        else:
+            return type_arr[0], detail_arr[0], None
+    else:
+        return type_arr[0], None, None
+
+def get_base_profile(profile):
+    for base_profile in FHIR_BASE_PROFILES:
+        if base_profile.lower() in profile.lower():
+            return base_profile
+        
+def get_media(question):
+    display_str = str(question["media"]) if "media" in question and pd.notna(question["media"]) else None
+    if display_str is not None:
+        arr =  display_str.split('::')
+        if len(arr)==2:
+            url = arr[1].replace('{{canonical_base}}',get_fhir_cfg().canonicalBase)
+            is_url = validators.url(url)
+            if not is_url:
+                url = get_fhir_cfg().canonicalBase + "Binary/" +arr[1]
+            return arr[0], url
+        else:
+            logger.error("Media must have 2 parameters type, url")
+    return None, None
     
 def get_fpath(df_questions, linkid, fpath = [] ):
     # get the questions

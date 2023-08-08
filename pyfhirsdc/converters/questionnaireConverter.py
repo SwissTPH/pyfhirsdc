@@ -3,25 +3,31 @@ import json
 import logging
 
 import pandas as pd
-from pyfhirsdc.config import get_processor_cfg, get_defaut_fhir
 
-from pyfhirsdc.converters.mappingConverter import (get_questionnaire_mapping, add_mapping_url)
-from pyfhirsdc.converters.questionnaireItemConverter import (
-    get_clean_html, get_question_extension, get_question_fhir_data_type,get_question_valueset,get_question_answeroption,
-    get_question_repeats,get_question_definition, get_timestamp_item, get_display,
-    get_type_details, get_initial_value,get_disabled_display  )
-from pyfhirsdc.converters.utils import clean_name, get_resource_url, inject_sub_questionnaires
-from pyfhirsdc.serializers.http import post_files
+from pyfhirsdc.config import get_defaut_fhir, get_processor_cfg
+from pyfhirsdc.converters.extensionsConverter import (get_help_ext, get_item_media_ext,
+                                                      get_instruction_ext,
+                                                      get_popup_ext,
+                                                      get_variable_extension)
 from pyfhirsdc.converters.libraryConverter import generate_attached_library
-from pyfhirsdc.serializers.utils import get_resource_path, write_resource
-from pyfhirsdc.converters.extensionsConverter import (get_variable_extension,get_popup_ext,get_help_ext, get_instruction_ext)
+from pyfhirsdc.converters.mappingConverter import (add_mapping_url,
+                                                   get_outputs_docs,
+                                                   get_questionnaire_mapping)
+from pyfhirsdc.converters.questionnaireItemConverter import (
+    get_clean_html, get_disabled_display, get_display, get_initial_value,
+    get_question_answeroption, get_question_definition, get_question_extension,
+    get_question_fhir_data_type, get_question_repeats, get_question_valueset,
+    get_timestamp_item)
+from pyfhirsdc.converters.utils import (clean_name, get_resource_url,
+                                        inject_sub_questionnaires,get_media,get_type_details)
+from pyfhirsdc.converters.valueSetConverter import \
+    get_value_set_additional_data_keyword
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
-                                               QuestionnaireSDC)  
-
-from pyfhirsdc.converters.mappingConverter import get_outputs_docs
-
-from pyfhirsdc.serializers.docSerializer import get_doc_table, get_doc_title, write_docs
-
+                                               QuestionnaireSDC)
+from pyfhirsdc.serializers.docSerializer import (get_doc_table, get_doc_title,
+                                                 write_docs)
+from pyfhirsdc.serializers.http import post_files
+from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
 logger = logging.getLogger("default")
 
@@ -33,10 +39,16 @@ def generate_questionnaire( name ,df_questions) :
     logger.info('processing questionnaire {0}'.format(name))
     # read file content if it exists
     questionnaire = init_questionnaire(fullpath, name)
-    # clean the data frame
-    
+    # get title is any
+    title =     df_questions[df_questions.id == '{{title}}']
+    if len(title)>0:
+        questionnaire.title = title.iloc[0]['description']
     
     df_questions = inject_sub_questionnaires(df_questions)
+    duplicates = df_questions[(df_questions.duplicated(subset=['id']) == True) & ~df_questions['id'].isin(get_value_set_additional_data_keyword())].dropna(axis=0, subset=['id'])
+    if not duplicates.empty: 
+        for id, row in duplicates.iterrows():
+            logger.error("Duplicate id %s", row['id'])
     df_questions_item = df_questions[df_questions.type != 'mapping']
     df_questions_lib = df_questions
     # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
@@ -173,17 +185,23 @@ def process_quesitonnaire_line(resource, id, question, df_questions):
                     text = html,
                     extension = [get_help_ext()],
             )
+            # IMAGE in help
+            #if "media" in question and pd.notna(question["media"]) and question["media"] !='':
+            #    type_media, url_media = get_media(question)
+            #    if type_media is not None:
+            #        help.extension.append(get_item_media_ext(type_media, url_media))
             if 'help-popup' in display:
                 help.extension.append(get_popup_ext())
             new_question.item.append(help)   
             # add instruction in case there is no text, sdc defect don't show the help if no text
             if new_question.text == None:
-                new_question.item.append( QuestionnaireItemSDC(
-                    linkId = question['id']+"-instruction",
-                    type= 'display',
-                    text = 'help',
-                    extension = [get_instruction_ext()],
-                ))   
+                new_question.text = ' '
+                #new_question.item.append( QuestionnaireItemSDC(
+                #    linkId = question['id']+"-instruction",
+                #    type= 'display',
+                #    text = '.',
+                #    extension = [get_instruction_ext()],
+                #))   
         #TODO  workarround for https://github.com/google/android-fhir/issues/1550
         #unit = get_unit(display)
         #if unit is not None:   

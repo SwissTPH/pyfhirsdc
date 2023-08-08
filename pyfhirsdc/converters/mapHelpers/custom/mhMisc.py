@@ -61,7 +61,6 @@ def SetOfficalGivenName(mode, profile, question_id,df_questions_item, *args):
 ####### MapValueSetExtCode :  to avoid concept maps when the system is predefined ###### 
 #args[0]: valueset
 #args[1]: path to map
-#args[2] : coding /codeableConcept
 def MapValueSetExtCode(mode, profile,question_id,df_questions, *args):
     rule_name = clean_group_name(question_id)
     tgttype = args[2] if len(args) == 3 else None

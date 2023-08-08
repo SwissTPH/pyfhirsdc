@@ -51,13 +51,13 @@ def get_condtion_docs(profile,question_id,df_questions, nb_postcoordination= 0):
 
 def get_condition_conf_status_rules():
     return [
-        MappingRule(expression= "item.answer first as a where value.code = 'agree'",
+        MappingRule(expression= "item.answer first as a where value.code = 'agree' or value = true",
             rules = [
                 MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'active', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
                 MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'confirmed', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
             ]
         ),
-        MappingRule(expression= "item.answer first as a where value.code = 'disagree'",
+        MappingRule(expression= "item.answer first as a where value.code = 'disagree' or value = false",
             rules = [
                 MappingRule(expression = " a -> tgt.clinicalStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'inactive', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-clinical'"),
                 MappingRule(expression = " a -> tgt.verificationStatus = create('CodeableConcept') as cs, cs.coding = create('Coding') as ccs, ccs.code= 'refuted', ccs.system = 'http://terminology.hl7.org/CodeSystem/condition-ver-status'")
@@ -92,6 +92,9 @@ def get_post_coordination_rules(stem_code,df_questions, *args):
     rules = []
 
     for arg in args:
+        if arg == '':
+            logger.error("arg cannot be empty for %s",stem_code)
+        
         rules.append(wrapin_fpath([arg],
             df_questions,
             [
@@ -152,7 +155,7 @@ def SetConditionMultiple(mode, profile, question_id, df_questions, *args):
         df_valueset = get_condition_valueset_df(df_questions)
     else:
         if len(args)!= 1:
-            logger.error('SetObservation must have 1 parameters')
+            logger.error('SetConditionMultiple must have 1 parameters')
             return None
         df_valueset = get_valueset_df(args[0], True) 
      

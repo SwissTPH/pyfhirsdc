@@ -23,12 +23,14 @@ from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
                                         get_codableconcept_code,
                                         get_resource_url, inject_config)
 from pyfhirsdc.serializers.docSerializer import get_doc_table, write_docs
-from pyfhirsdc.serializers.librarySerializer import (GETOBS_FORMAT, GETOBSVALUE_FORMAT, write_cql_action,
+from pyfhirsdc.serializers.librarySerializer import (GETOBS_FORMAT,
+                                                     GETOBSCODE_FORMAT,
+                                                     GETOBSVALUE_FORMAT,
+                                                     VAL_FORMAT,
+                                                     write_cql_action,
                                                      write_cql_alias,
-                                                     write_library_CQL, 
-                                                     writeLibraryHeader,
-                                                     VAL_FORMAT,GETOBSCODE_FORMAT)
-
+                                                     write_library_CQL,
+                                                     writeLibraryHeader)
 from pyfhirsdc.serializers.utils import reindent, write_resource
 
 logger = logging.getLogger("default")
@@ -47,12 +49,15 @@ ROW_EXPRESSIONS = {
 def generate_attached_library(resource, df_actions, type = 'pd'):
     library = generate_library(resource.name, df_actions, type)
     if library is not None:
-        libraryCanonical = Canonical(library.url)
+        if  re.search(get_fhir_cfg().canonicalBase, library.url):
+            libraryCanonical = Canonical(library.url+"|"+get_fhir_cfg().lib_version)
+        else:
+            libraryCanonical = Canonical(library.url)
         if hasattr(resource, 'library') and resource.library is None: 
             resource.library = []    
             resource.library.append(libraryCanonical)
         else:
-            resource = add_library_extensions(resource, library.id)
+            resource = add_library_extensions(resource, libraryCanonical)
         return True
         
 def generate_library(name, df_actions, type = 'pd', description = None):
@@ -85,6 +90,12 @@ def generate_library(name, df_actions, type = 'pd', description = None):
     )
     
     cql, list_inputs =format_cql_df(library, df_actions, type)
+    if type == 'q':
+        cql['backref'] = write_cql_action(
+            'BackReference',
+            'back reference to resource', 
+            """Reference {{reference: string {{ value: 'Questionnaire/{}'}}}}""".format(clean_name(name)), 
+            '')
     if len(cql)>1:
         output_lib_path = os.path.join(
                 get_processor_cfg().outputPath,
@@ -218,7 +229,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
     obs_linkid = [x  for x in get_used_obs().keys()]
     obs_label = [x for x in get_used_obs().values()]
     changed = []
-    matches = re.findall(r'([ !=<>voc\.]+)?"(\w[^"\.]+)"',cql_exp)
+    matches = re.findall(r'([ !=<>voc\.]+)?"(\w[^"]+)"',cql_exp)
     out = cql_exp
     out = out.replace('HasCond', 'Base.HasCond')
     out = out.replace('HasObs', 'Base.HasObs')
@@ -313,7 +324,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
         replacement = GETOBSCODE_FORMAT.format(match[1],linkid)
         logger.debug('rework {0} = val."{1}" to  GetObsValueCode("{0}, "{2}")'.format(match[1],match[2],linkid ))
         #out = out.replace( match[0], replacement)
-        
+        x
         list_inputs[match[1]]['valueType'] = 'CodeableConcept'
     # support "dsfsdfs" !=true or Base.ASDFwsed('code')!=true
     matches = re.findall(r"(((?:[a-zA-Z][a-zA-Z'\(\)_\.]+)?(?:\"[^\"]+\")?) *!= *true)",out)
@@ -322,11 +333,18 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
         logger.debug('rework {0} != true to  Coalesce({0},false)!=true'.format(match[1]))
         out = out.replace( match[0], replacement)
         # support "dsfsdfs" !=true or Base.ASDFwsed('code')!=true
-    matches = re.findall(r"(ToInteger\( *((?:[a-zA-Z'_\.]+(\([^\)]+\))?|\"[^\"]+\")[^\)=!<>]*)\))",out)
+    matches = re.findall(r"(ToInteger\(((?: *(?:[a-zA-Z]+\.)?\"[^\"]+\" *[~=<>!]+ *(?:(?:[a-zA-Z]+\.)?(?:\"[^\"]+\")|[a-z]+) *(?:or|and)?)+)\))",out)
     for match in matches:
         replacement = "ToInteger(Coalesce({},false))".format(match[1])
         logger.debug('rework {0}  to  {1}'.format(match[0],replacement))
-        out = out.replace( match[0], replacement)
+        out = out.replace( match[0], replacement)    
+    matches = re.findall(r"= val\.",out)
+    
+    # ~ required to test code against codeableconcept
+    for match in matches:
+        replacement = "~ val."
+        logger.debug('rework = val to ~ val')
+        out = out.replace( match, replacement)
     return out
 
 def get_input(profile,code,valueType,desc=''):
@@ -369,7 +387,8 @@ def get_cql_raw_action(id, row, expression_column, df ):
         cql_exp_raw =reindent("({})\n and ({})\n".format(cql_exp_raw,sub),4)
     elif len(sub)>0:
         cql_exp_raw =reindent("{}\n".format(sub),4)
-
+    elif cql_exp_raw == '':
+        logger.debug('no CQL found {}'.format(id))
     # translation to CQL function
     return  cql_exp_raw
 
@@ -393,10 +412,6 @@ def format_cql_df(library, df_actions,  type):
                 'name':get_processor_cfg().scope.lower()+"base",
                 'version':get_fhir_cfg().lib_version,
                 'alias':"Base"
-            },{
-                'name':get_processor_cfg().scope.lower()+"observation",
-                'version':get_fhir_cfg().lib_version,
-                'alias':"obs"
             },{
                 'name':get_processor_cfg().scope.lower()+"valueset",
                 'version':get_fhir_cfg().lib_version,
@@ -450,6 +465,12 @@ def format_cql_df(library, df_actions,  type):
                 cql[oi] = inject_config(cql[oi])
                 oi+=1
 
+    if  any([l['type'] == "Observation" for l in list_inputs.values()]):
+        libs.append(    {
+                'name':get_processor_cfg().scope.lower()+"observation",
+                'version':get_fhir_cfg().lib_version,
+                'alias':"obs"
+            })
     
     cql['header'] = writeLibraryHeader(library, libs)
     cql['header'] += writeGetObs(list_inputs)
@@ -461,6 +482,8 @@ def writeGetObs(list_inputs):
         if input['type'] == "Observation":
             ret += write_cql_action(GETOBS_FORMAT.format(input['code'])[1:-1],'', GETOBSVALUE_FORMAT.format(input['code']), '',input['description'] if 'description'in input else '')
     return ret
+
+
 
 
 def get_cql_define(name, row, expression_column, df_actions, list_inputs):
@@ -487,8 +510,8 @@ def get_patient_observation_codes(row):
                 codes.append(code)
     return codes
 
-def check_expression_keyword(row, keword):
+def check_expression_keyword(row, keyword):
     for name, exp in ROW_EXPRESSIONS.items():
-        if name in row and pd.notna(row[name]) and keword in row[name]:
+        if name in row and pd.notna(row[name]) and keyword in str(row[name]):
             return True
     

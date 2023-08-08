@@ -95,7 +95,7 @@ def update_eml_content(multipart, id, ext):
                 jsonpath_expression = parse('$.library.annotation[*]')
                 match = jsonpath_expression.find(json_w_error)
                 for val in match:
-                    logger.info(val.value)
+                    logger.error(val.value)
                     
                 match.clear()
                 data.parts = ()
