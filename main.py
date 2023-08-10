@@ -6,7 +6,7 @@ from pyfhirsdc.services.generateBundle import write_bundle
 from pyfhirsdc.services.processInputFile import process_input_file
 from pyfhirsdc.services.processLibraries import process_libraries
 from pyfhirsdc.services.uploadFiles import upload_files
-
+from pyfhirsdc.services.processConf import updateBuildNumber
 
 def print_help():
     print('-c / --conf config_file_path')
@@ -70,6 +70,14 @@ if __name__ == "__main__":
             upload = True 
     #if anthro:
     #    generate_anthro_codesystems(conf)
+
+    # thorw an error when conf file is not provided 
+    # if conf file is provided update the conf file build number and library version
+    if not conf:
+        raise Exception("No configuration file provided")
+    else:
+        updateBuildNumber(conf)        
+
     if output:
         logger.info("Process input file")
         process_input_file(conf) # output is the default output directory
