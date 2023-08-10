@@ -15,11 +15,13 @@
         "encoding":"json",
         "generateElm" : true,
         "saveElm" : false,
-        "answerValueSet":false
+        "answerValueSet":false,
+        "build": 144,
+        "environment": "dev"
     },
     "fhir":{
         "version": "4.0.1",
-        "lib_version": "1.0.1.rc12.build.144",
+        "lib_version": "1.0.1+build.144",
         "canonicalBase" : "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/",
         "guideBase":"http://fhir.org/guides/who/emc-cds/",
         "activity":{
