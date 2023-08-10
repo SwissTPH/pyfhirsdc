@@ -11,7 +11,6 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "preLaunchTask":"update-build",
             "args": [
                 "-c",
                 "conf.json",
@@ -26,7 +25,6 @@
             "type": "python",
             "request": "launch",
             "program": "main.py",
-            "preLaunchTask":"update-build",
             "args": [
                 "-c",
                 "conf.json",
@@ -40,7 +38,6 @@
             "type": "python",
             "request": "launch",
             "program": "main.py",
-            "preLaunchTask":"update-build",
             "args": [
                 "-c",
                 "conf.json",
