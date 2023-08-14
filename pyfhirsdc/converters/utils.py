@@ -89,16 +89,25 @@ def get_code(system, code, display = None ):
                 code = code,
                 display = display
                 )
-    
-FHIR_BASE_PROFILES = [
-    "Patient",
-    "RelatedPerson",
-    "Encounter",
-    "Condition",
-    "Observation",
-    "QuestionnaireResponse",
-    "CommunicationRequest"
-]
+
+def get_resrouces(filePath):
+    with open(filePath) as f:
+        resources = f.read().splitlines()
+    return resources
+
+FHIR_BASE_PROFILES = get_resrouces('./pyfhirsdc/helpers/fhirResources.txt')
+
+# FHIR_BASE_PROFILES = [
+#     "Patient",
+#     "RelatedPerson",
+#     "Encounter",
+#     "Condition",
+#     "Observation",
+#     "QuestionnaireResponse",
+#     "CommunicationRequest",
+#     "Practitioner",
+#     "PractitionerRole"
+# ]
 
 def get_type_details(question):
     # structure main_type detail_1::detail_2
