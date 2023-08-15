@@ -1,5 +1,7 @@
 # Python FHIR SDC generator from XLS/ODS files
 
+<img src="https://i.imgur.com/UA4UPhD.png" />
+
 The goal of the project is to have tool like pyxform but for fhir structure data capture
 
 ## Installation
@@ -58,7 +60,8 @@ The config file is a json with two main section, the data within the JSON file w
         ],
         "scope":"EmCare",
         "encoding":"json",
-        "generateElm" : false
+        "generateElm" : false,
+        "environment": "dev"
     },
 
 ```
@@ -70,6 +73,8 @@ The config file is a json with two main section, the data within the JSON file w
 | outputPath | Output path of the generated IG content |
 | cql_translator | URL to cql translator |
 | mapping_translator | URL to mapping translator |
+| environment | Whether the current environment is development or production, accepted values `dev` or `prod` | 
+
 
 
 ### FHIR:
