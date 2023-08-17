@@ -131,7 +131,8 @@ def init_profile_def(row):
         context = get_context(get_base_profile(row.profile)) if is_extension_definition else None,
         url = get_resource_url('StructureDefinition', Id(profile_id)),
         baseDefinition = Uri('http://hl7.org/fhir/StructureDefinition/Extension')  if  is_extension_definition else  Uri(row['baseProfile']),
-        derivation = "constraint" if is_extension_definition else  "specialization",
+        # derivation = "constraint" if is_extension_definition else  "specialization",
+        derivation = "constraint", #set to be complient with R5
         experimental = False,
         fhirVersion = get_fhir_cfg().version,
         description = row['description'] if pd.notna(row['description']) else None
