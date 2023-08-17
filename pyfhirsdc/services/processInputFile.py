@@ -13,6 +13,7 @@ from pyfhirsdc.services.generateValueSet import generate_value_sets
 from .generatePlanDefinitions import generate_plandefinitions
 from .generateProfiles import generate_profiles
 from .generateQuestionnaires import generate_questionnaires
+from .generateChanges import generateChagnes
 
 
 def process_input_file(conf):
@@ -25,16 +26,13 @@ def process_input_file(conf):
         if input_file is not None:
             parse_sheets(input_file, get_processor_cfg().excudedWorksheets)        
             input_file.close()
-            
+
             # generate the CodeSystem
             generate_custom_code_system()  
             # generate questionnaire
             generate_questionnaires()
+            # generate libraries
             generate_libraries()
-
- 
-
-            
             # generate the valueSet
             generate_value_sets()
             # generate profiles
@@ -53,6 +51,8 @@ def process_input_file(conf):
             generate_activities()
             # generate carePlan
 
+            # generate changes
+            generateChagnes() 
             # Bundle https://github.com/jkiddo/ember
 
 
