@@ -13,12 +13,13 @@ dependencies = [
     "pandas",
     "openpyxl",
     "fhir.resources==6.4.0",
-    "pydantic",
+    "pydantic==1.10.12",
     "validators",
     "odfpy",
     "ocldev",
     "requests-toolbelt",
     "jsonpath-ng",
     "textile",
-    "fhirpathpy"
+    "fhirpathpy",
+    "semantic-version"
 ]
