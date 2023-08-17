@@ -76,6 +76,7 @@ The config file is a json with two main section, the data within the JSON file w
 | environment | Whether the current environment is development or production, accepted values `dev` or `prod` | 
 
 
+
 ### FHIR:
 
 ```
@@ -253,7 +254,7 @@ will follow the structure [type] [option]
 
 ##### option
 
-- [valueSetUrl] valueSet defined in the valueSet tab
+- [valueSet] valueSet defined in the valueSet tab
 - url::[valueSetUrl] link to a remote value set
 - candidateExpression::<x-fhir-query> will fetch the result via the <x-fhir-query>, then will display the result based on the data attached to the <candidateExpressionName> in the choiceColum sheet
 
@@ -269,9 +270,11 @@ can be a list separated by || (double pipe)
 
 - checkbox: only for select_multiple
 
-- horizonal: show answers in an horizontal manner
+- horizonal: show answers in an horizontal manner (automatically added for boolean)
 
-- sytle: define a Css style
+- sytle: define a Css style (no yet supported by android)
+
+- background-color: with xkcd color name or color code #ff00ff 
 
 - Choice only for select_one
 
