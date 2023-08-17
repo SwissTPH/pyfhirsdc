@@ -59,7 +59,7 @@ def write_page_content(filePath, pagetitle, content, encoding=None):
 
     try: 
         output = open(filePath, 'w', encoding=encoding)
-        output.write("#" + pagetitle + "\n\n")
+        output.write("# " + pagetitle + "\n\n")
         output.write(content)
         output.close()
     except: 

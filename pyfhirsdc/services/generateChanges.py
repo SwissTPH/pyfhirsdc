@@ -18,7 +18,7 @@ def generateChagnes():
         fileContent = []
         for row in changes.itertuples():
             logger.info("Saving changes for %s", row[1])
-            new_line = "##" + row[1] + " " + row[2]
+            new_line = "## " + row[1] + " " + row[2]
             new_line += "\n\n" + row[3]
             fileContent.append(new_line)
         
