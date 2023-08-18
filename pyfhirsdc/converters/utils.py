@@ -126,9 +126,25 @@ def get_type_details(question):
 
 def get_base_profile(profile):
     for base_profile in FHIR_BASE_PROFILES:
-        if base_profile.lower() in profile.lower():
+        if base_profile.lower() == profile.lower():
             return base_profile
-        
+        elif base_profile.lower() in profile.lower():
+            return base_profile
+
+def get_exact_match_profile(profile: str):
+    base_profiles_to_lower = [x.lower() for x in FHIR_BASE_PROFILES]
+    base_profiles_to_lower_set = set(base_profiles_to_lower)
+    parse_profile = profile.split("-") if "-" in profile else profile.split()
+    parse_profile = [x.lower() for x in parse_profile]
+    parse_profile_set = set(parse_profile)
+    match = base_profiles_to_lower_set & parse_profile_set
+    if len(match) > 0:
+        pop = match.pop()
+        index = [i for i,x in enumerate(base_profiles_to_lower) if x == pop]
+        return FHIR_BASE_PROFILES[index[0]]
+    else: 
+        raise Exception("No match found for profile " + profile)
+
 def get_media(question):
     display_str = str(question["media"]) if "media" in question and pd.notna(question["media"]) else None
     if display_str is not None:
