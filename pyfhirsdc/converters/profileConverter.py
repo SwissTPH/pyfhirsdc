@@ -25,7 +25,7 @@ Id.configure_constraints(max_length=128)
 
 
 def get_extension_diferential(name, desc, ext_type, ext_url, value):
-    return [ElementDefinition(
+    element_defenitions = [ElementDefinition(
                 id = "Extension",
                 path = "Extension",
                 short = name,
@@ -44,19 +44,38 @@ def get_extension_diferential(name, desc, ext_type, ext_url, value):
                 path = "Extension.url",
                 fixedUri = Uri(ext_url),
             ), 
-            ElementDefinition(
-                id =  "Extension.value",
-                path =  "Extension.value" + ext_type[0].capitalize()+ext_type[1:],
-                short = name,
-                definition = desc,
-                type = [ElementDefinitionType(
-                    code = ext_type ,
-                )],
-                binding = get_extension_binding(ext_type , value) ,
-                min = 1,
-                max = 1
-            )
         ]
+
+    if (ext_type.lower() == "reference"):
+        element_defenitions.append(
+            ElementDefinition(
+            id =  "Extension.value",
+            path =  "Extension.value" + ext_type[0].capitalize()+ext_type[1:],
+            short = name,
+            definition = desc,
+            type = [ElementDefinitionType(
+                code = ext_type,
+                targetProfile = [value]
+            )],
+            binding = get_extension_binding(ext_type , value) ,
+            min = 1,
+            max = 1
+        ))
+    else:
+        element_defenitions.append(
+            ElementDefinition(
+            id =  "Extension.value",
+            path =  "Extension.value" + ext_type[0].capitalize()+ext_type[1:],
+            short = name,
+            definition = desc,
+            type = [ElementDefinitionType(
+                code = ext_type,
+            )],
+            binding = get_extension_binding(ext_type , value) ,
+            min = 1,
+            max = 1
+        ))
+    return element_defenitions
 
 def convert_df_to_profiles():
     profiles = []
