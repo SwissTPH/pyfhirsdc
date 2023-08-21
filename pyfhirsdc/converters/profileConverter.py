@@ -15,7 +15,7 @@ from fhir.resources.structuredefinition import (
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg
 from pyfhirsdc.converters.questionnaireItemConverter import (
     get_display, get_question_fhir_data_type)
-from pyfhirsdc.converters.utils import (clean_name, get_resource_name,
+from pyfhirsdc.converters.utils import (clean_name, get_resource_name, get_exact_match_profile,
                                         get_resource_url, get_base_profile, FHIR_BASE_PROFILES)
 
 logger = logging.getLogger("default")
@@ -25,7 +25,7 @@ Id.configure_constraints(max_length=128)
 
 
 def get_extension_diferential(name, desc, ext_type, ext_url, value):
-    return [ElementDefinition(
+    element_defenitions = [ElementDefinition(
                 id = "Extension",
                 path = "Extension",
                 short = name,
@@ -44,19 +44,38 @@ def get_extension_diferential(name, desc, ext_type, ext_url, value):
                 path = "Extension.url",
                 fixedUri = Uri(ext_url),
             ), 
-            ElementDefinition(
-                id =  "Extension.value",
-                path =  "Extension.value" + ext_type[0].capitalize()+ext_type[1:],
-                short = name,
-                definition = desc,
-                type = [ElementDefinitionType(
-                    code = ext_type ,
-                )],
-                binding = get_extension_binding(ext_type , value) ,
-                min = 1,
-                max = 1
-            )
         ]
+
+    if (ext_type.lower() == "reference"):
+        element_defenitions.append(
+            ElementDefinition(
+            id =  "Extension.value",
+            path =  "Extension.value" + ext_type[0].capitalize()+ext_type[1:],
+            short = name,
+            definition = desc,
+            type = [ElementDefinitionType(
+                code = ext_type,
+                targetProfile = [value]
+            )],
+            binding = get_extension_binding(ext_type , value) ,
+            min = 1,
+            max = 1
+        ))
+    else:
+        element_defenitions.append(
+            ElementDefinition(
+            id =  "Extension.value",
+            path =  "Extension.value" + ext_type[0].capitalize()+ext_type[1:],
+            short = name,
+            definition = desc,
+            type = [ElementDefinitionType(
+                code = ext_type,
+            )],
+            binding = get_extension_binding(ext_type , value) ,
+            min = 1,
+            max = 1
+        ))
+    return element_defenitions
 
 def convert_df_to_profiles():
     profiles = []
@@ -127,11 +146,12 @@ def init_profile_def(row):
         name = row['title'],
         abstract = False,
         status = Code('active'),
-        type = 'Extension' if is_extension_definition else get_base_profile(row['title']),
+        type = 'Extension' if is_extension_definition else get_exact_match_profile(row['title']),
         context = get_context(get_base_profile(row.profile)) if is_extension_definition else None,
         url = get_resource_url('StructureDefinition', Id(profile_id)),
         baseDefinition = Uri('http://hl7.org/fhir/StructureDefinition/Extension')  if  is_extension_definition else  Uri(row['baseProfile']),
-        derivation = "constraint" if is_extension_definition else  "specialization",
+        # derivation = "constraint" if is_extension_definition else  "specialization",
+        derivation = "constraint", #set to be complient with R5
         experimental = False,
         fhirVersion = get_fhir_cfg().version,
         description = row['description'] if pd.notna(row['description']) else None
@@ -150,7 +170,8 @@ def get_extension_binding(type , value):
 
     
 def extend_profile(profile, df_extensions):
-    base_profile = get_base_profile(profile.id)
+    # base_profile = get_base_profile(profile.id)
+    base_profile = get_exact_match_profile(profile.id)
     # first diferential element of a resource must be this simple element
     differential_elements = [ElementDefinition(
         id = base_profile,

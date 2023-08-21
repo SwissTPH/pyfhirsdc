@@ -1,6 +1,9 @@
 import json
 import os
+import sys 
+
 from pathlib import Path
+
 
 from pyfhirsdc.config import get_defaut_path, get_processor_cfg
 from pyfhirsdc.converters.utils import get_resource_name
@@ -39,6 +42,28 @@ def get_resource_path(resource_type, name, encoding = None, generateName = True 
             filename =  name + "." + encoding
         fullpath = os.path.join(path, filename)
         return fullpath
+
+def get_page_content_path(path, fileName, encoding = None):
+    if encoding is None:
+        encoding = sys.getdefaultencoding()
+    if path is not None and fileName is not None:
+        path = get_defaut_path(fileName, "pagecontent/" + fileName.lower())
+    fullpath = os.path.join(path)
+    return fullpath
+
+def write_page_content(filePath, pagetitle, content, encoding=None):
+    if encoding is None:
+        encoding = sys.getdefaultencoding()
+    if not os.path.exists(Path(filePath).parent):
+        os.mkdirs(Path(filePath).parent)
+
+    try: 
+        output = open(filePath, 'w', encoding=encoding)
+        output.write("# " + pagetitle + "\n\n")
+        output.write(content)
+        output.close()
+    except: 
+        raise ValueError("Error writing page content: " + filePath)
 
 def get_resources_files(resource_type):
     path = get_defaut_path(resource_type, "resources/"+ resource_type.lower())

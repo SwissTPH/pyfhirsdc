@@ -33,6 +33,7 @@ def parse_sheets(input_file, excudedWorksheets):
     df_value_set = None
     df_profile = None
     df_extension = None
+    df_changes = None
     dfs_cql = {}
     for worksheet in sheets:
         logger.info("loading sheet {0}".format( worksheet))
@@ -71,13 +72,20 @@ def parse_sheets(input_file, excudedWorksheets):
                     dfs_cql[worksheet[2:]] = df
                 else:
                     break
+            elif worksheet == "changes":
+                if validate_changes_sheet(df):
+                    df_changes = df
+                else: 
+                    break
+
     set_dict_df({
         "questionnaires" : dfs_questionnaire,
         "decisions_tables" : dfs_decision_table,
         "valueset" : df_value_set,
         "profile" : df_profile,
         "extension" : df_extension,
-        "libraries" : dfs_cql
+        "libraries" : dfs_cql,
+        "changes": df_changes
     })
 
 
@@ -93,6 +101,8 @@ def validate_choice_column_sheet(df):
 def validate_value_set_sheet(df):
     return True
 
-
 def validate_cql_sheet(df):
+    return True
+
+def validate_changes_sheet(df): 
     return True

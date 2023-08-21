@@ -1,3 +1,7 @@
+#### 21-08-2023
+
+- When there is a reference resource linked in a profile, `targetProfile` element will now be populated and will be linked in the generated IG
+
 #### 11-08-2023
 
 - The build number and the `lib_version` in the `conf.json` will not be updated via bash script and instead from the pyfhirsdc itself.
