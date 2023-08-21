@@ -106,6 +106,7 @@ def convert_df_to_profiles():
             df_extensions = df_profile_ext[df_profile_ext.profile == profile.id]
             profile = extend_profile(profile, df_extensions )
             profiles.append(profile)
+
         for idx, row in df_profile_ext.iterrows():
             profile = init_profile_def(row)
             profile_id = clean_name(row['id'])
@@ -190,8 +191,7 @@ def extend_profile(profile, df_extensions):
         )
     return profile
 
-
-def init_element_definition(row ):
+def bind_cardinality(row):
     cardinality = row['cardinality'].split('::')
     if  len(cardinality) == 2 :
         if '*' in cardinality[0]:
@@ -206,6 +206,11 @@ def init_element_definition(row ):
     else:
         cardinality = None
     
+    return cardinality
+
+def init_element_definition(row):
+
+    cardinality = bind_cardinality(row)    
     path = row['map_path'] +".extension" if  pd.notna(row['map_path']) else get_base_profile(row.id)
 
     return ElementDefinition(
