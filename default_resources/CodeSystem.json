@@ -1,8 +1,8 @@
 {
     "resourceType": "CodeSystem",
-    "id": "emcare-custom-codes",
-    "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/emcare-custom-codes",
-    "name": "emc-custom-codes",
+    "id": "che-custom-codes",
+    "url": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/che-custom-codes",
+    "name": "che-custom-codes",
     "title": "Extended Codes CodeSystem",
     "status": "draft",
     "experimental": false,
