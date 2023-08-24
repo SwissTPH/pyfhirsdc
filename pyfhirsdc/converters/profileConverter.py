@@ -90,8 +90,8 @@ def convert_df_to_profiles():
         df_profile = df_profile_all[df_profile_all.definitionType == 'resource']
         
         df_profile_ext  = df_profile_all[df_profile_all.definitionType == 'Extension']
-        
-        
+        df_profile_elements = df_profile_all[df_profile_all.definitionType == 'element']
+ 
         #Grouping rows based on the profiles, so that we can go through the different groups and create
         # the corresponding profiles with the right attributes
 
@@ -104,7 +104,7 @@ def convert_df_to_profiles():
         
             # get the df for the profile extension
             df_extensions = df_profile_ext[df_profile_ext.profile == profile.id]
-            profile = extend_profile(profile, df_extensions )
+            profile = extend_profile(profile, df_extensions, df_profile_elements )
             profiles.append(profile)
 
         for idx, row in df_profile_ext.iterrows():
@@ -170,7 +170,7 @@ def get_extension_binding(type , value):
         else: logger.error("Missing value for Extension %s:%s with CodableConcept type", type , value)
 
     
-def extend_profile(profile, df_extensions):
+def extend_profile(profile, df_extensions, df_elements):
     # base_profile = get_base_profile(profile.id)
     base_profile = get_exact_match_profile(profile.id)
     # first diferential element of a resource must be this simple element
@@ -181,11 +181,17 @@ def extend_profile(profile, df_extensions):
     logger.debug("extending profile %s", profile.id)
     for idx, row in df_extensions.iterrows():
         logger.debug("adding %s to profile %s", row.id, profile.id)
-
-        extension_def = init_element_definition(row)
+        extension_def = init_extension_definition(row)
         differential_elements.append(extension_def)
-        
+
+    for idx, row in df_elements.iterrows():
+        if row['id'].lower() != profile.id.lower():
+            break
+        elements = init_element_defenition(row)
+        differential_elements.append(elements)
+
     if len(differential_elements) > 0:
+        differential_elements = [x for x in differential_elements if x is not None]
         profile.differential = StructureDefinitionDifferential(
             element= differential_elements
         )
@@ -208,7 +214,40 @@ def bind_cardinality(row):
     
     return cardinality
 
-def init_element_definition(row):
+def init_element_defenition(row):
+    cardinality = bind_cardinality(row)
+    element_split = row['element'].split("::")
+
+
+    path = row['map_path'] + "." + element_split[0] if pd.notna(row['map_path']) else get_exact_match_profile(row['profile'])
+    element_defenition = None
+    print(element_split[0])
+    #TODO: Move the element definition to a sepeare function like get_extention_differential. If neccessary
+    if (row['type'] == 'CodeableConcept' and element_split[0] == 'code' and element_split[1] == 'binding'):
+        element_defenition = ElementDefinition(
+            id = path,
+            path = path,
+            min = cardinality[0] if cardinality is not None else None,
+            max = cardinality[1] if cardinality is not None else None,
+            binding = get_extension_binding(row['type'], row['value'])
+        )
+    elif (row['type'].lower() == 'reference'):
+        element_defenition = ElementDefinition(
+            id = path,
+            path = path, 
+            min = cardinality[0] if not None else None,
+            max = cardinality[1] if not None else None,
+            type = [ElementDefinitionType(
+                code = row['type'],
+                targetProfile = [get_resource_url('StructureDefinition', row['value'])]
+            )]
+        )
+    if element_defenition is not None:
+        return element_defenition
+    else: 
+        return None
+
+def init_extension_definition(row):
 
     cardinality = bind_cardinality(row)    
     path = row['map_path'] +".extension" if  pd.notna(row['map_path']) else get_base_profile(row.id)
