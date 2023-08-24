@@ -16,8 +16,8 @@ from pyfhirsdc.serializers.utils import write_resource
 logger = logging.getLogger("default")    
     
 def write_bundle(conf):
-    #TODO: Set the bundle name dynamically loaded from the config file
-    bundle = Bundle( identifier = Identifier(value = 'CHEBundle'),
+    scope = get_processor_cfg().scope if get_processor_cfg().scope is not None else "Unknown"
+    bundle = Bundle( identifier = Identifier(value = scope + "Bundle"),
                 type  = 'batch', entry = [])
     # Read the config file
     config_obj = read_config_file(conf)
