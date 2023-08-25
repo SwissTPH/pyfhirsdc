@@ -128,7 +128,13 @@ take a quantity answer code and save it with a value = true and status active if
 
 ### SetObservationCodeBoolean
 
-take a quantity answer code and save it with a value = true and status active if answer true else value=false, status=inactive 
+
+optionnal 3 arguments
+    - arg[0] yes/true code / default question id
+    - arg[1] no/false code 
+    - arg[2] unknown code
+
+Yes and No are maped like a booleans but unknown is mapped to status = 'registered' without any value
 
 
 ### SetObservationMultiple

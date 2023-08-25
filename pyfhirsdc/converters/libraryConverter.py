@@ -252,7 +252,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
                 elif match  in ("No"):
                     out = out.replace('"{}"'.format(match), 'false'.format(match) )
                     changed.append(match)
-                # for valueset attached converted in obs
+                # for valueset  converted in obs
                 elif match in obs_valueset_linkid and (prefix == 'v' or (prefix != 'o'  and operator == True)):
                     changed.append(match)
                     out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), GETOBS_FORMAT.format(match) )

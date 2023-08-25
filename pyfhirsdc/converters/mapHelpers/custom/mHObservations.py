@@ -13,6 +13,8 @@ from pyfhirsdc.models.mapping import ( MappingGroup, MappingGroupIO,
                                        MappingRule)
 
 logger = logging.getLogger("default")
+
+
 def SetObservationValueSetStr(mode, profile, question_id, df_questions, *args):
     #row = df_questions[df_questions.id == question_id].head(1)
     rule_name = clean_group_name(profile + question_id ) 
@@ -64,6 +66,8 @@ def get_obs_code_str_rules(question_id, df_questions_item):
  #args[0]: question name
  #args[1]: none name
  # 
+ 
+ 
 def SetObservationCode(mode, profile, question_id,df_questions_item, *args):
     if mode == 'groups':
         none_name = args[0] if len(args)>1 else 'none'
@@ -195,22 +199,41 @@ def get_obs_bool_rules(question_id, df_questions_item):
     )])]
 
  ####### SetObservationBoolean :  set an  observation from boolean, false result in obs beeing cancelled  ###### 
- #args[0]: question name
+    #arg[0] yes code / default question id
+    #arg[1] no code 
+    #arg[2] unknown code
 def SetObservationCodeBoolean(mode, profile, question_id,df_questions_item, *args):
     if mode == 'groups':
         code =  question_id
         rule_name = clean_group_name(question_id)
-        return [set_generic_observation_v2( profile, rule_name, code,get_obs_bool_code_rules(code, df_questions_item))]
+        return [set_generic_observation_v2( profile, rule_name, code,get_obs_bool_code_rules(code, df_questions_item, *args))]
     elif mode == 'docs':
         return get_base_obs_docs(question_id, 'boolean', df_questions_item)
     
-def get_obs_bool_code_rules(question_id, df_questions_item):
+def get_obs_bool_code_rules(question_id, df_questions_item, *args ):
+    #arg[0] yes code
+    #arg[1] no code 
+    #arg[2] unknown code
+    rules = [
+        MappingRule(
+        expression = "val where val.code = '{}' -> tgt.status = 'final',tgt.value = true ".format(args[0] if len(args)>0  else question_id),
+        )
+    ]
+    if len(args)>1:
+        rules.append( MappingRule(
+            expression = f"a  where a.value ~ '{args[1]}'  -> tgt.status = 'cancelled', tgt.value = false",
+            name = 'notfound-{}'.format(rule_name)
+        ))
+    if len(args)==3:
+        rules.append( MappingRule(
+        expression = f"a  where a.value ~ '{args[2]}'  -> tgt.status = 'registered'",
+        name = 'unknown-{}'.format(rule_name)
+        ))
+    
     rule_name = clean_group_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
         expression = "a.value as val",
-    rules = [MappingRule(
-        expression = "val where val.code = '{}' -> tgt.status = 'final',tgt.value = true ".format(question_id),
-    )])])]
+    rules =  rules)])]
             
 
  ####### SetObservationMultiple :  works only with valueset, will generate an obs for all, cancelled is not selected but for the one with value none   ###### 
