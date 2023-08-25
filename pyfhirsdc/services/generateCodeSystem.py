@@ -8,9 +8,9 @@ import json
 import logging
 import os
 
-from fhir.resources.attachment import Attachment
-from fhir.resources.codesystem import CodeSystem
-from fhir.resources.library import Library
+from fhir.resources.R4B.attachment import Attachment
+from fhir.resources.R4B.codesystem import CodeSystem
+from fhir.resources.R4B.library import Library
 
 from pyfhirsdc.config import (get_defaut_fhir, get_defaut_path, get_dict_df, get_fhir_cfg,
                               get_processor_cfg)

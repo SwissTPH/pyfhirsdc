@@ -89,7 +89,21 @@ def get_obs_value_rules(question_id, df_questions_item,none_name):
 
 
 def SetObservation(mode,  profile, question_id,df_questions_item, *args):
-    return SetObservationQuantity(mode,  profile, question_id,df_questions_item, *args)   
+    
+    question=df_questions_item[df_questions_item.id==question_id].iloc[0]
+    q_type, d1,d2 = get_type_details(question)
+    if q_type == 'select_one':
+        return SetObservationCode(mode,  profile, question_id,df_questions_item, *args) 
+    elif q_type in ('quantity','string','text','decimal','integer', 'note'):
+        return SetObservationQuantity(mode,  profile, question_id,df_questions_item, *args) 
+    elif q_type == 'boolean':
+        return SetObservationBoolean(mode,  profile, question_id,df_questions_item, *args)
+    elif q_type == 'select_boolean':
+        return SetObservationCodeBoolean(mode,  profile, question_id,df_questions_item, *args)
+    elif q_type == 'select_multiple':
+        return SetObservationMultiple(mode,  profile, question_id,df_questions_item, *args)
+    else:
+        logger.error("No default mapping helper know for the type {} of the quesiton {}".format(q_type, question_id))
 ####### SetObservationQuantity :  set the value of an observation, obs will never be cancelled; Same
 ####### SetObservation but now accounting that the answer won't be the value itself
 ####### but will hold the value in the field value of Quantity  ###### 

@@ -1,10 +1,10 @@
 import json
 
-from fhir.resources.activitydefinition import (ActivityDefinition,
+from fhir.resources.R4B.activitydefinition import (ActivityDefinition,
                                                ActivityDefinitionDynamicValue)
-from fhir.resources.expression import Expression
-from fhir.resources.extension import Extension
-from fhir.resources.fhirtypes import Canonical
+from fhir.resources.R4B.expression import Expression
+from fhir.resources.R4B.extension import Extension
+from fhir.resources.R4B.fhirtypes import Canonical
 
 from pyfhirsdc.config import get_defaut_fhir, get_fhir_cfg
 from pyfhirsdc.converters.utils import (clean_group_name, clean_name,

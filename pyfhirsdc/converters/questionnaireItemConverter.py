@@ -13,8 +13,8 @@ import re
 import numpy
 import pandas as pd
 import textile
-from fhir.resources.coding import Coding
-from fhir.resources.questionnaire import (QuestionnaireItemAnswerOption,
+from fhir.resources.R4B.coding import Coding
+from fhir.resources.R4B.questionnaire import (QuestionnaireItemAnswerOption,
                                           QuestionnaireItemInitial)
 from fhirpathpy import evaluate
 

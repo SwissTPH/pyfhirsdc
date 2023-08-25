@@ -4,12 +4,12 @@ from importlib.resources import path
 
 import pandas as pd
 import validators
-from fhir.resources.elementdefinition import (ElementDefinition,
+from fhir.resources.R4B.elementdefinition import (ElementDefinition,
                                               ElementDefinitionBinding,
                                               ElementDefinitionType)
-from fhir.resources.fhirtypes import (Canonical, Code, Id,
+from fhir.resources.R4B.fhirtypes import (Canonical, Code, Id,
                                       StructureDefinitionContextType, Uri)
-from fhir.resources.structuredefinition import (
+from fhir.resources.R4B.structuredefinition import (
     StructureDefinition, StructureDefinitionDifferential)
 
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg

@@ -11,9 +11,9 @@ import logging
 import os
 import re
 
-from fhir.resources.attachment import Attachment
-from fhir.resources.library import Library
-from fhir.resources.relatedartifact import RelatedArtifact
+from fhir.resources.R4B.attachment import Attachment
+from fhir.resources.R4B.library import Library
+from fhir.resources.R4B.relatedartifact import RelatedArtifact
 
 from pyfhirsdc.config import (get_defaut_path, get_fhir_cfg, get_processor_cfg,
                               read_config_file)

@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 import validators
 import re
 import pandas as pd
-from fhir.resources.codeableconcept import CodeableConcept
-from fhir.resources.coding import Coding
+from fhir.resources.R4B.codeableconcept import CodeableConcept
+from fhir.resources.R4B.coding import Coding
 
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg, get_processor_cfg
 

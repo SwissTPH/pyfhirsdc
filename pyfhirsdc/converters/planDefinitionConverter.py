@@ -2,13 +2,13 @@
 import logging
 
 import pandas as pd
-from fhir.resources.expression import Expression
-from fhir.resources.fhirtypes import Canonical, Code
-from fhir.resources.plandefinition import (PlanDefinitionAction,
+from fhir.resources.R4B.expression import Expression
+from fhir.resources.R4B.fhirtypes import Canonical, Code
+from fhir.resources.R4B.plandefinition import (PlanDefinitionAction,
                                            PlanDefinitionActionCondition,
                                            PlanDefinitionActionRelatedAction)
-from fhir.resources.relatedartifact import RelatedArtifact
-from fhir.resources.triggerdefinition import TriggerDefinition
+from fhir.resources.R4B.relatedartifact import RelatedArtifact
+from fhir.resources.R4B.triggerdefinition import TriggerDefinition
 
 from pyfhirsdc.config import get_fhir_cfg
 from pyfhirsdc.converters.extensionsConverter import (

@@ -5,8 +5,8 @@ import ctypes
     
 
 
-from fhir.resources.bundle import Bundle, BundleEntry, BundleEntryRequest
-from fhir.resources.identifier import Identifier
+from fhir.resources.R4B.bundle import Bundle, BundleEntry, BundleEntryRequest
+from fhir.resources.R4B.identifier import Identifier
 
 from pyfhirsdc.config import get_fhir_cfg, get_processor_cfg, read_config_file
 from pyfhirsdc.models.questionnaireSDC import QuestionnaireSDC

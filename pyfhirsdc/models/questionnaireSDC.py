@@ -4,13 +4,13 @@ Release: R4
 Version: 4.0.1
 """
 'Union[StrBytes, dict, Path, FHIRAbstractModel]'
-from fhir.resources.questionnaire import Questionnaire, QuestionnaireItem
+from fhir.resources.R4B.questionnaire import Questionnaire, QuestionnaireItem
 from pydantic import Field, root_validator 
 from pydantic.types import StrBytes
 from pathlib import Path
-from fhir.resources import fhirtypes, fhirtypesvalidators
-from fhir.resources.core.fhirabstractmodel import FHIRAbstractModel
-from fhir.resources.fhirtypesvalidators import MODEL_CLASSES, fhir_model_validator
+from fhir.resources.R4B import fhirtypes, fhirtypesvalidators
+from fhir.resources.R4B import FHIRAbstractModel
+from fhir.resources.R4B.fhirtypesvalidators import MODEL_CLASSES, fhir_model_validator
 import typing
 from typing import Union
 from pydantic.error_wrappers import ErrorWrapper, ValidationError
@@ -61,7 +61,7 @@ class QuestionnaireSDC(Questionnaire):
         # if property is element of this resource.
         element_property=True,
     )
-    #https://github.com/nazrulworld/fhir.resources/fhir/resources/questionnaire.py
+    #https://github.com/nazrulworld/fhir.resources.R4B/fhir/resources/questionnaire.py
     @root_validator(pre=True, allow_reuse=True)
     def questionnairesdc_validator( cls, values: typing.Dict[str, typing.Any]
     ) -> typing.Dict[str, typing.Any]:

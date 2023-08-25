@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
-from fhir.resources.bundle import Bundle, BundleEntry, BundleEntryRequest
-from fhir.resources.identifier import Identifier
+from fhir.resources.R4B.bundle import Bundle, BundleEntry, BundleEntryRequest
+from fhir.resources.R4B.identifier import Identifier
 
 
 def add_resource(path,name,bundle):

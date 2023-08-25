@@ -4,9 +4,9 @@ import json
 import logging
 import os
 
-from fhir.resources.identifier import Identifier
-from fhir.resources.meta import Meta
-from fhir.resources.plandefinition import PlanDefinition
+from fhir.resources.R4B.identifier import Identifier
+from fhir.resources.R4B.meta import Meta
+from fhir.resources.R4B.plandefinition import PlanDefinition
 
 from pyfhirsdc.config import (get_defaut_fhir, get_dict_df, get_fhir_cfg,
                               get_processor_cfg)

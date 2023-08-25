@@ -1,5 +1,5 @@
-from fhir.resources.conceptmap import ConceptMap
-from fhir.resources.fhirtypes import Code
+from fhir.resources.R4B.conceptmap import ConceptMap
+from fhir.resources.R4B.fhirtypes import Code
 
 
 # Given a code system, will create a concept map for that code system
