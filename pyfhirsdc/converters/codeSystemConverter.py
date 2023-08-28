@@ -5,7 +5,7 @@
 import logging
 
 import pandas as pd
-from fhir.resources.codesystem import CodeSystemConcept
+from fhir.resources.R4B.codesystem import CodeSystemConcept
 
 from pyfhirsdc.config import (append_used_obs_valueset, append_used_valueset,
                               get_processor_cfg)

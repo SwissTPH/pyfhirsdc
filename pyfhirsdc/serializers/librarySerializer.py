@@ -3,7 +3,7 @@ import logging
 import os
 
 import pandas as pd
-from fhir.resources.identifier import Identifier
+from fhir.resources.R4B.identifier import Identifier
 
 from pyfhirsdc.config import append_used_obs, get_fhir_cfg, get_processor_cfg
 from pyfhirsdc.converters.utils import get_custom_codesystem_url

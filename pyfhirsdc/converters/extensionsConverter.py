@@ -2,12 +2,12 @@ import logging
 import re
 from distutils.util import strtobool
 
-from fhir.resources.attachment import Attachment
-from fhir.resources.codeableconcept import CodeableConcept
-from fhir.resources.coding import Coding
+from fhir.resources.R4B.attachment import Attachment
+from fhir.resources.R4B.codeableconcept import CodeableConcept
+from fhir.resources.R4B.coding import Coding
 from pyfhirsdc.serializers.xkcd import XKCD
-from fhir.resources.extension import Extension
-from fhir.resources.fhirtypes import Canonical, ExpressionType, QuantityType
+from fhir.resources.R4B.extension import Extension
+from fhir.resources.R4B.fhirtypes import Canonical, ExpressionType, QuantityType
 from fhirpathpy import compile, evaluate
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,

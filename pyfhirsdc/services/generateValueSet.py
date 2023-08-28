@@ -4,7 +4,7 @@
 import json
 import logging
 
-from fhir.resources.valueset import ValueSet
+from fhir.resources.R4B.valueset import ValueSet
 
 from pyfhirsdc.config import get_defaut_fhir, get_dict_df, get_processor_cfg
 from pyfhirsdc.converters.utils import (clean_name, get_resource_name,

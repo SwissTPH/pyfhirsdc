@@ -1,8 +1,8 @@
 import pandas as pd
-from fhir.resources.coding import Coding
-from fhir.resources.fhirtypes import Code, Uri
-from fhir.resources.questionnaire import QuestionnaireItemAnswerOption
-from fhir.resources.valueset import (ValueSetCompose, ValueSetComposeInclude,
+from fhir.resources.R4B.coding import Coding
+from fhir.resources.R4B.fhirtypes import Code, Uri
+from fhir.resources.R4B.questionnaire import QuestionnaireItemAnswerOption
+from fhir.resources.R4B.valueset import (ValueSetCompose, ValueSetComposeInclude,
                                      ValueSetComposeIncludeConcept,
                                      ValueSetComposeIncludeConceptDesignation)
 

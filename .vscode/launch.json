@@ -6,72 +6,49 @@
     "configurations": [
 
         {
-            "name": "Python: O l b ",
+            "name": "Global",
             "type": "python",
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
             "args": [
                 "-c",
-                "conf.json",
+                "conf-global.json",
+                "-o",
+                "-l",
+                "-b"
+            ],
+            "justMyCode": true
+        },        {
+            "name": "IRAK",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-c",
+                "conf-iraq.json",
+                "-o",
+                "-l",
+                "-b"
+            ],
+            "justMyCode": true
+        },        {
+            "name": "Cameroon",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-c",
+                "conf-cmr.json",
                 "-o",
                 "-l",
                 "-b"
             ],
             "justMyCode": true
         },
-        {
-            "name": "Python: output",
-            "type": "python",
-            "request": "launch",
-            "program": "main.py",
-            "args": [
-                "-c",
-                "conf.json",
-                "-o"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: Library",
-            "type": "python",
-            "request": "launch",
-            "program": "main.py",
-            "args": [
-                "-c",
-                "conf.json",
-                "-l"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: Bundle",
-            "type": "python",
-            "request": "launch",
-            "program": "main.py",
-            "args": [
-                "-c",
-                "conf.json",
-                "-b"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: Upload",
-            "type": "python",
-            "request": "launch",
-            "program": "main.py",
-            "args": [
-                "-c",
-                "conf.json",
-                "-u"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
+      
         {
             "name": "Python: Anthro",
             "type": "python",

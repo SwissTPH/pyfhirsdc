@@ -2,7 +2,7 @@ import json
 import logging
 
 import requests
-from fhir.resources.structuremap import StructureMap
+from fhir.resources.R4B.structuremap import StructureMap
 
 from pyfhirsdc.serializers.http import check_internet
 from pyfhirsdc.serializers.utils import reindent, write_resource

@@ -5,13 +5,13 @@ import re
 from xmlrpc.client import boolean
 
 import pandas as pd
-from fhir.resources.attachment import Attachment
-from fhir.resources.datarequirement import (DataRequirement,
+from fhir.resources.R4B.attachment import Attachment
+from fhir.resources.R4B.datarequirement import (DataRequirement,
                                             DataRequirementCodeFilter)
-from fhir.resources.fhirtypes import Canonical
-from fhir.resources.identifier import Identifier
-from fhir.resources.library import Library
-from fhir.resources.parameterdefinition import ParameterDefinition
+from fhir.resources.R4B.fhirtypes import Canonical
+from fhir.resources.R4B.identifier import Identifier
+from fhir.resources.R4B.library import Library
+from fhir.resources.R4B.parameterdefinition import ParameterDefinition
 
 from pyfhirsdc.config import (get_defaut_path, get_fhir_cfg, get_processor_cfg,
                               get_used_obs, get_used_obs_valueset,
@@ -252,7 +252,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
                 elif match  in ("No"):
                     out = out.replace('"{}"'.format(match), 'false'.format(match) )
                     changed.append(match)
-                # for valueset attached converted in obs
+                # for valueset  converted in obs
                 elif match in obs_valueset_linkid and (prefix == 'v' or (prefix != 'o'  and operator == True)):
                     changed.append(match)
                     out = out.replace('{0}"{1}"'.format(prefix if prefix == 'v' else '',match), GETOBS_FORMAT.format(match) )

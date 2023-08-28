@@ -36,10 +36,10 @@ FHIR_ONELINER_PROFILES = [
 
 VAL_REGEX = "[ =]*val(?:[^\w]|$)"
 
-def wrapin_entry_create(profile,question_id,df_questions_item, rules):
+def wrapin_entry_create(profile,question_id,df_questions_item, rules, condition = ''):
     base_profile = get_base_profile(profile)
     return wrapin_fpath(["{0}".format(question_id)],df_questions_item,[
-                    MappingRule(expression = "src -> bundle.entry as entry ",
+                    MappingRule(expression = f"src{condition} -> bundle.entry as entry ",
                     rules = [
                         MappingRule(expression = "src -> entry.request as request, request.method = 'POST' , uuid() as uuid, request.url = append('/{}/', uuid)".format(base_profile)),
                         MappingRule(
