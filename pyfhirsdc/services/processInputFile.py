@@ -14,7 +14,7 @@ from .generatePlanDefinitions import generate_plandefinitions
 from .generateProfiles import generate_profiles
 from .generateQuestionnaires import generate_questionnaires
 from .generateChanges import generateChagnes
-from .generateDataDictionary import generate_data_dictionary_page
+from .excelToMd import generate_page_from_excel
 from .excelToJson import excel_to_json
 
 
@@ -63,4 +63,10 @@ def process_data_dictionary_file(conf = None):
     data_dictionary_file = read_input_file(get_processor_cfg().data_dictionary_file)
     # Generate the data dictionary page using the data dictionary excel file of the dak
     data_dictionary_worksheets = parse_excel_sheets(data_dictionary_file, get_processor_cfg().data_dictionary_exclude_workSheets)
-    generate_data_dictionary_page(data_dictionary_worksheets, data_dictionary_file)
+    generate_page_from_excel(data_dictionary_worksheets, data_dictionary_file, "dictionary.md", "Data Dictionary", 3)
+
+def process_decision_support_logic_file(conf = None):
+    decision_support_logic_file = read_input_file(get_processor_cfg().decision_support_logic_file)
+    # Generate the decision support logic page in IG using the dsl excel file
+    decision_support_logic_worksheets = parse_excel_sheets(decision_support_logic_file, get_processor_cfg().decision_support_logic_exclude_workSheets)
+    generate_page_from_excel(decision_support_logic_worksheets, decision_support_logic_file, "decision-logic.md", "Decision Support Logic" ,5)

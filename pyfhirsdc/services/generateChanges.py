@@ -3,7 +3,6 @@ import pandas as pd
 from pathlib import Path
 
 from pyfhirsdc.config import get_dict_df
-from pyfhirsdc.converters.changes import convert_df_to_changes
 from pyfhirsdc.serializers.utils import get_page_content_path, write_page_content
 
 logger = logging.getLogger("default")
@@ -12,9 +11,12 @@ logger = logging.getLogger("default")
 def generateChagnes():
     logger.info("processing changes................")
 
-    changes = convert_df_to_changes().iloc[1:]
+    changes = []
+    dfs_changes = get_dict_df()["changes"]
+    dfs_changes.reset_index()
+    dfs_changes.iloc[1:]
 
-    if len(changes.index > 0):
+    if len(dfs_changes.index > 0):
         fileContent = []
         for row in changes.itertuples():
             logger.info("Saving changes for %s", row[1])
