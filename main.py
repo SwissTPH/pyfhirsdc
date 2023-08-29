@@ -3,7 +3,7 @@ import logging
 import sys
 
 from pyfhirsdc.services.generateBundle import write_bundle
-from pyfhirsdc.services.processInputFile import process_input_file
+from pyfhirsdc.services.processInputFile import process_input_file, process_data_dictionary_file
 from pyfhirsdc.services.processLibraries import process_libraries
 from pyfhirsdc.services.uploadFiles import upload_files
 from pyfhirsdc.services.processConf import updateBuildNumber
@@ -81,6 +81,8 @@ if __name__ == "__main__":
     if output:
         logger.info("Process input file")
         process_input_file(conf) # output is the default output directory
+        logger.info("Process data dictionary file")
+        process_data_dictionary_file(conf)
     if library:
         # compress CQL
         logger.info("Process libraries")

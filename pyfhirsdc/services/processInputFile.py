@@ -59,4 +59,8 @@ def process_input_file(conf):
             # Generate the l2 excel file in json
             excel_to_json(input_file_sheets, input_file)
 
-
+def process_data_dictionary_file(conf = None):
+    data_dictionary_file = read_input_file(get_processor_cfg().data_dictionary_file)
+    # Generate the data dictionary page using the data dictionary excel file of the dak
+    data_dictionary_worksheets = parse_excel_sheets(data_dictionary_file, get_processor_cfg().data_dictionary_exclude_workSheets)
+    generate_data_dictionary_page(data_dictionary_worksheets, data_dictionary_file)
