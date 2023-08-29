@@ -2,7 +2,8 @@
 
 - BREAKING base library (pyfhirsdc) move inside the project because there are required, it means pfsdc. should be used instead of Base. import type: include pyfhirsdc version '1.0.0' alias pfsdc
 - Version of will follow the module version
-
+- add Author to the processor config
+- add param to each library
 
 #### 21-08-2023
 
