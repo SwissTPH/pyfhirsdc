@@ -156,5 +156,6 @@ cython_debug/
 
 bundle.json
 conf.json
+conf-*.json
 .~*
 build.txt
