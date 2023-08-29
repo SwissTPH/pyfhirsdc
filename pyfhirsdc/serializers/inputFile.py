@@ -24,10 +24,17 @@ def read_input_file(input_file_path):
     return file
 
 
-
+def parse_excel_sheets(data_dictionary_file, excludedWorksheets):
+    worksheets = data_dictionary_file.sheet_names
+    filtered_sheets = []
+    for worksheet in worksheets:
+        logger.info("loading sheet {0}".format(worksheet).replace("\u2265", " "))
+        if worksheet.lower() not in excludedWorksheets:
+            filtered_sheets.append(worksheet)
+    return filtered_sheets
 
 def parse_sheets(input_file, excudedWorksheets):
-    sheets = input_file.sheet_names
+    worksheets = input_file.sheet_names
     dfs_questionnaire = {}
     dfs_decision_table = {}
     df_value_set = None
@@ -35,7 +42,7 @@ def parse_sheets(input_file, excudedWorksheets):
     df_extension = None
     df_changes = None
     dfs_cql = {}
-    for worksheet in sheets:
+    for worksheet in worksheets:
         logger.info("loading sheet {0}".format( worksheet))
         if excudedWorksheets is None or worksheet not in excudedWorksheets:
             df = input_file.parse(worksheet)
@@ -87,7 +94,6 @@ def parse_sheets(input_file, excudedWorksheets):
         "libraries" : dfs_cql,
         "changes": df_changes
     })
-
 
 def validate_questionnaire_sheet(df):
     return True

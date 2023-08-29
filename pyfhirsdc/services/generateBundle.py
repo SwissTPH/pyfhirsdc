@@ -16,7 +16,10 @@ from pyfhirsdc.serializers.utils import write_resource
 logger = logging.getLogger("default")    
     
 def write_bundle(conf):
-    bundle = Bundle( identifier = Identifier(value = 'EmCareBundle'),
+    exclude_folders = get_processor_cfg().bundle_exclude_paths
+
+    scope = get_processor_cfg().scope if get_processor_cfg().scope is not None else "Unknown"
+    bundle = Bundle( identifier = Identifier(value = scope + "Bundle"),
                 type  = 'batch', entry = [])
     # Read the config file
     config_obj = read_config_file(conf)
@@ -27,12 +30,16 @@ def write_bundle(conf):
         # giving file extensions
         ext = ('.json')
         # iterating over directory and subdirectory to get desired result
-        for path, dirc, files in os.walk(folderdir):
-            if "ext_ig" not in path and "tests" not in path:
-                for name in files:
-                    if name.endswith(ext) and not name.startswith("bundle"):
-                        logger.debug('{}{}{}{}'.format(conf, path, dirc , name)) # printing file name
-                        add_resource(path,name,bundle)        
+        dirs = []  
+        for path, dirc, files in os.walk(folderdir, topdown=True):
+            dirs[:] = [d for d in dirc if d not in exclude_folders]
+
+#TODO: Find a workaround to remove the nested for loops if it is possible 
+        for path, dirs, files in dirs:
+            for name in files:
+                if name.endswith(ext) and not name.startswith("bundle"):
+                    logger.debug('{}{}{}{}'.format(conf, path, dirc , name)) # printing file name
+                    add_resource(path,name,bundle)        
                         
     bundle_name = os.path.join(folderdir,'bundle-{}.json'.format(get_fhir_cfg().lib_version))
     std_name = os.path.join(folderdir,'bundle.json')

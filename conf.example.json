@@ -6,6 +6,11 @@
         "cql_translator": "https://fhir.cql-translator.dk.swisstph-mis.ch/cql/translator",
         "mapping_translator": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureMap",
         "fhirpath_validator":"https://fhirpath.dk.swisstph-mis.ch/validate",
+        "data_dictionary_path": "./data_dictionary.xlsx",
+        "decision_support_logic_file": "./decisions_support_logic_file.xlsx",
+        "decision_support_logic_exclude_workSheets": [],
+        "bundle_exclude_paths": ["l2"],
+        "data_dictionary_excludeWorkSheets": [],
         "default_resource_path":"./default_resources",
         "excudedWorksheets":[
         ],

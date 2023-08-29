@@ -30,7 +30,7 @@ VAL_FORMAT='val."{0}"'
 # parameters [{name,type}]
 def writeLibraryHeader(library, libs = [], other_header='context Patient'):
     return f"""/*
-@author: {get_fhir_cfg().author}
+@author: {get_processor_cfg().author}
 @description: This library is part of the project {get_processor_cfg().scope}
 */
 library {library.name} version '{get_fhir_cfg().lib_version}'
