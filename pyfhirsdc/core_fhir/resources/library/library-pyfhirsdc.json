@@ -1,0 +1,62 @@
+{
+    "resourceType": "Library",
+    "id": "pyfhirsdc",
+    "url": "https://fhir.swisstph.ch/Library/pyfhirsdc",
+    "version": "{{pyfhirsdc_version}}",
+    "name": "pyfhirsdc",
+    "title": "pyfhirsdc Core",
+    "status": "active",
+    "type": {
+        "coding": [
+            {
+                "system": "http://hl7.org/fhir/ValueSet/library-type",
+                "code": "logic-library"
+            }
+        ]
+    },
+    "relatedArtifact": [
+        {
+            "type": "depends-on",
+            "resource": "http://fhir.org/guides/who/anc-cds/Library/FHIRHelpers"
+        }
+    ],
+    "parameter":[
+        {
+            "type": "string",
+            "use": "in",
+            "name":"encounterid"
+
+        },        {
+            "type": "string",
+            "use": "in",
+            "name":"cannonical_base"
+
+        },        {
+            "type": "string",
+            "use": "in",
+            "name":"custom_code_system"
+
+        }
+    ],
+    "dataRequirement": [
+        {
+            "type": "Patient",
+            "profile": [
+                "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+        },
+        {
+            "type": "Encounter",
+            "profile": [
+                "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+        }
+    ],
+    "content": [
+        {
+            "id": "ig-loader-chebase.cql",
+            "contentType": "text/cql"
+        }
+        
+    ]
+}

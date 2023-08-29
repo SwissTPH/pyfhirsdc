@@ -19,9 +19,9 @@ def getIdentifierFirstRep(planDef):
     return planDef.identifier[0]  
 
 
-GETOBSVALUE_FORMAT = "Base.GetObsValue('{0}')"
+GETOBSVALUE_FORMAT = "pfsdc.GetObsValue('{0}')"
 GETOBS_FORMAT = '"OBSdefine.{}"'
-GETOBSCODE_FORMAT = "Base.HasObsValueCode('{}', '{}')"
+GETOBSCODE_FORMAT = "pfsdc.HasObsValueCode('{}', '{}')"
 VAL_FORMAT='val."{0}"'
 
 
