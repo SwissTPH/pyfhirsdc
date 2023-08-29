@@ -3,6 +3,7 @@ import logging
 import os
 import re
 from xmlrpc.client import boolean
+from pyfhirsdc.version import __version__
 
 import pandas as pd
 from fhir.resources.R4B.attachment import Attachment
@@ -231,9 +232,9 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
     changed = []
     matches = re.findall(r'([ !=<>voc\.]+)?"(\w[^"]+)"',cql_exp)
     out = cql_exp
-    out = out.replace('HasCond', 'Base.HasCond')
-    out = out.replace('HasObs', 'Base.HasObs')
-    out = out.replace('GetObsValue', 'Base.GetObsValue')
+    out = out.replace('HasCond', 'pfsdc.HasCond')
+    out = out.replace('HasObs', 'pfsdc.HasObs')
+    out = out.replace('GetObsValue', 'pfsdc.GetObsValue')
 
 
     for matching in matches:
@@ -412,6 +413,10 @@ def format_cql_df(library, df_actions,  type):
                 'name':get_processor_cfg().scope.lower()+"base",
                 'version':get_fhir_cfg().lib_version,
                 'alias':"Base"
+            },{
+                'name':"pyfhirsdc",
+                'version': __version__,
+                'alias':"pfsdc"
             },{
                 'name':get_processor_cfg().scope.lower()+"valueset",
                 'version':get_fhir_cfg().lib_version,

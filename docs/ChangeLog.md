@@ -1,3 +1,9 @@
+#### 29-08-2023
+
+- BREAKING base library (pyfhirsdc) move inside the project because there are required, it means pfsdc. should be used instead of Base. import type: include pyfhirsdc version '1.0.0' alias pfsdc
+- Version of will follow the module version
+
+
 #### 21-08-2023
 
 - When there is a reference resource linked in a profile, `targetProfile` element will now be populated and will be linked in the generated IG

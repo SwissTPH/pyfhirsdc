@@ -23,3 +23,24 @@ dependencies = [
     "semantic-version",
     "py-markdown-table"
 ]
+authors = [
+    {name ="Patrick Delcroix", email = "patrick.delcroix@swisstph.ch"},
+    {name ="Marco Peirera", email = "Marco.Peirera@swisstph.ch"},
+    {name ="Rukshan Ranatunge", email = "Rukshan.Ranatunge@swisstph.ch"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+keywords = ["FHIR", "SMART", "SDC", "CPG", "CQL"]
+readme = "README.md"
+
+requires-python = ">=3.6"
+[project.urls]
+"Bug Tracker" = "https://github.com/SwissTPH/pyfhirsdc/issues"
+changelog= "https://github.com/SwissTPH/pyfhirsdc/docs/changeLog.md"
+repository = "https://github.com/SwissTPH/pyfhirsdc"
+
+[tool.setuptools.packages]
+find = {where = ["pyfhirsdc"]}

@@ -19,7 +19,7 @@ from pyfhirsdc.config import (get_defaut_path, get_fhir_cfg, get_processor_cfg,
                               read_config_file)
 from pyfhirsdc.serializers.http import check_internet, post_multipart
 from pyfhirsdc.serializers.json import read_file, read_resource
-
+from pyfhirsdc.version import __version__
 from ..converters.utils import get_custom_codesystem_url, get_resource_url
 
 logger = logging.getLogger("default")
@@ -166,6 +166,24 @@ def refresh_library(filepath):
         with open(filepath, 'w') as json_file:
             json_file.write(lib.json( indent=4))
 
+def add_manual_content(manual_lib_path,lib_path, cql_lib_path, cql_path ):
+    if os.path.exists(manual_lib_path) and os.path.exists(cql_lib_path):
+
+        arr_lib_file_path = os.listdir(manual_lib_path)
+        for file in arr_lib_file_path:
+            if file.endswith(".json") :
+                update_lib_version(
+                    os.path.join(manual_lib_path, file),
+                    os.path.join(lib_path, file)
+                )
+        arr_lib_file_path = os.listdir(cql_lib_path)
+        for file in arr_lib_file_path:
+            if file.endswith(".json") or file.endswith(".cql"):
+                update_lib_version(
+                    os.path.join(cql_lib_path, file),
+                    os.path.join(cql_path, file)
+                )          
+
 def process_libraries(conf):
     # Read the config file
     config_obj = read_config_file(conf)
@@ -175,26 +193,15 @@ def process_libraries(conf):
     else:
     # copy the manual libs
     #TODO dynamic path
+        core_cql =  os.path.join(os.path.dirname(__file__),  "../core_fhir/cql")
+        core_lib =  os.path.join(os.path.dirname(__file__),  "../core_fhir/resources/library")
+    
         lib_path = get_defaut_path('Library', 'ressources/library')
         cql_path = get_defaut_path('CQL', 'cql')
         manual_lib_path = os.path.join(get_processor_cfg().manual_content,"resources/library")
         cql_lib_path = os.path.join(get_processor_cfg().manual_content,"cql")
-        if os.path.exists(manual_lib_path) and os.path.exists(cql_lib_path):
-
-            arr_lib_file_path = os.listdir(manual_lib_path)
-            for file in arr_lib_file_path:
-                if file.endswith(".json") :
-                    update_lib_version(
-                        os.path.join(manual_lib_path, file),
-                        os.path.join(lib_path, file)
-                    )
-            arr_lib_file_path = os.listdir(cql_lib_path)
-            for file in arr_lib_file_path:
-                if file.endswith(".json") or file.endswith(".cql"):
-                    update_lib_version(
-                        os.path.join(cql_lib_path, file),
-                        os.path.join(cql_path, file)
-                    )          
+        add_manual_content(core_lib,lib_path, core_cql, cql_path )
+        add_manual_content(manual_lib_path,lib_path, cql_lib_path, cql_path )
         
         arr_lib_file_path = os.listdir(lib_path)
         for file in arr_lib_file_path:
@@ -211,7 +218,9 @@ def update_lib_version(src,dst):
     filedata = filedata.replace("{{LIB_VERSION}}",get_fhir_cfg().lib_version)\
         .replace("{{cs_url}}",get_custom_codesystem_url())\
         .replace("{{FHIR_VERSION}}",get_fhir_cfg().version)\
-        .replace("{{canonical_base}}",get_fhir_cfg().canonicalBase)
+        .replace("{{canonical_base}}",get_fhir_cfg().canonicalBase)\
+        .replace("{{pyfhirsdc_version}}",__version__)
+    
 
     # Write the file out 
     with open(dst, 'w') as file:
