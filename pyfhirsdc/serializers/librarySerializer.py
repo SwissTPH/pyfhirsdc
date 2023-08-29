@@ -29,28 +29,22 @@ VAL_FORMAT='val."{0}"'
 # libs [{name,version,alias}]
 # parameters [{name,type}]
 def writeLibraryHeader(library, libs = [], other_header='context Patient'):
-    return """/*
-@author: Patrick Delcroix
-@description: This library is part of the project {3}
+    return f"""/*
+@author: {get_fhir_cfg().author}
+@description: This library is part of the project {get_processor_cfg().scope}
 */
-library {1} version '{2}'
-using FHIR version '{0}'
-include FHIRHelpers version '{0}' called FHIRHelpers 
-{4}
+library {library.name} version '{get_fhir_cfg().lib_version}'
+using FHIR version '{get_fhir_cfg().version}'
+include FHIRHelpers version '{get_fhir_cfg().version}' called FHIRHelpers 
+{get_include_lib(libs, library)}
 
-{5}
+parameter "cannonical_base" String default '{get_fhir_cfg().canonicalBase}'
+parameter "custom_code_system" String default '{get_custom_codesystem_url()}' 
+{get_include_parameters(library.parameter)}
 
-{6}
+{other_header}
 
-""".format(
-    get_fhir_cfg().version, 
-    library.name, 
-    get_fhir_cfg().lib_version, 
-    get_processor_cfg().scope,
-    get_include_lib(libs, library),
-    get_include_parameters(library.parameter),
-    other_header)
-
+"""
 
 # libs is a list {name='', version='', alias = ''}
 def get_include_lib(libs, library = None):

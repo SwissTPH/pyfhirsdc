@@ -17,7 +17,8 @@
         "saveElm" : false,
         "answerValueSet":false,
         "build": 144,
-        "environment": "dev"
+        "environment": "dev",
+        "author": "SwissTPH - SCIH - DHU"
     },
     "fhir":{
         "version": "4.0.1",
