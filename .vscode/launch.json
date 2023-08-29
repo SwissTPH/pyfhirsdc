@@ -13,7 +13,7 @@
             "console": "integratedTerminal",
             "args": [
                 "-c",
-                "conf-global.json",
+                "conf.json",
                 "-o",
                 "-l",
                 "-b"

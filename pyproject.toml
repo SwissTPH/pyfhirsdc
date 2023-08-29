@@ -20,7 +20,8 @@ dependencies = [
     "jsonpath-ng",
     "textile",
     "fhirpathpy",
-    "semantic-version"
+    "semantic-version",
+    "py-markdown-table"
 ]
 authors = [
     {name ="Patrick Delcroix", email = "patrick.delcroix@swisstph.ch"},

@@ -15,12 +15,12 @@
         "generateElm": true,
         "saveElm": false,
         "answerValueSet": false,
-        "build": 404,
+        "build": 405,
         "environment": "dev"
     },
     "fhir": {
         "version": "4.0.1",
-        "lib_version": "1.0.107+build.404",
+        "lib_version": "1.0.108+build.405",
         "canonicalBase": "https://fhir.dk.swisstph-mis.ch/matchbox/fhir/",
         "guideBase": "http://fhir.org/guides/who/emc-cds/",
         "activity": {

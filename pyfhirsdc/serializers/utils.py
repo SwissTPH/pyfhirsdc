@@ -43,11 +43,14 @@ def get_resource_path(resource_type, name, encoding = None, generateName = True 
         fullpath = os.path.join(path, filename)
         return fullpath
 
-def get_page_content_path(path, fileName, encoding = None):
+#TODO: Change page_content_path to get_file_content_path
+def get_page_content_path(path, fileName, folder_name = None ,encoding = None):
+    if folder_name is None:
+        folder_name = "pagecontent/"
     if encoding is None:
         encoding = sys.getdefaultencoding()
     if path is not None and fileName is not None:
-        path = get_defaut_path(fileName, "pagecontent/" + fileName.lower())
+        path = get_defaut_path(fileName, folder_name + fileName.lower())
     fullpath = os.path.join(path)
     return fullpath
 
@@ -58,7 +61,7 @@ def write_page_content(filePath, pagetitle, content, encoding=None):
         os.mkdirs(Path(filePath).parent)
 
     try: 
-        output = open(filePath, 'w', encoding=encoding)
+        output = open(filePath, 'w', encoding='UTF-8')
         output.write("# " + pagetitle + "\n\n")
         output.write(content)
         output.close()
