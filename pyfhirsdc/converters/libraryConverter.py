@@ -410,10 +410,6 @@ def write_action_condition(action):
 def format_cql_df(library, df_actions,  type):
     cql = {}
     libs = [{
-                'name':get_processor_cfg().scope.lower()+"base",
-                'version':get_fhir_cfg().lib_version,
-                'alias':"Base"
-            },{
                 'name':"pyfhirsdc",
                 'version': __version__,
                 'alias':"pfsdc"
@@ -422,7 +418,11 @@ def format_cql_df(library, df_actions,  type):
                 'version':get_fhir_cfg().lib_version,
                 'alias':"val"
             }]
-        
+#{
+#                'name':get_processor_cfg().scope.lower()+"base",
+#                'version':get_fhir_cfg().lib_version,
+#                'alias':"Base"
+#            },        
     i = 0
     oi = i
     list_inputs = {}
