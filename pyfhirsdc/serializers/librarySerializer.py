@@ -113,8 +113,10 @@ def get_code_cql_from_concepts(concepts, lib, add_to_valueset,low_case = False):
                             concept_lc.display = concept_lc.display.lower()
                             cql[i] = write_code(concept_lc)
                             i = i+1
-            else:
-                logger.warning("{} :{} is defined multiple times".format(lib.name,concept.display))
+            
+            elif any([ c.display == concept.display and  c.code != concept.code for c in concepts]):
+                logger.warning("{} :{} is defined multiple times with different id than {}".format(lib.name,concept.display, concept.code))
+                
     return cql    
 
   
