@@ -16,7 +16,7 @@ from pyfhirsdc.serializers.utils import write_resource
 logger = logging.getLogger("default")    
     
 def write_bundle(conf):
-    exclude_folders = get_processor_cfg().bundle_exclude_paths
+    exclude_folders = get_processor_cfg().bundle_exclude_paths if hasattr(get_processor_cfg(), 'bundle_exclude_paths') else []
 
     scope = get_processor_cfg().scope if get_processor_cfg().scope is not None else "Unknown"
     bundle = Bundle( identifier = Identifier(value = scope + "Bundle"),
