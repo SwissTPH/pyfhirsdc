@@ -1,5 +1,5 @@
 /*nter"
-@author: Patrick Delcroix
+@author: SwissTPH/SCIH/DHU
 @description: This library is a core library for the SMART projects, it is used to simplify feching of observation
 */
 
@@ -9,6 +9,8 @@ using FHIR version '4.0.1'
 
 include FHIRHelpers version '4.0.1'
 
+codesystem "LocationTypeCodeSystem" : 'http://terminology.hl7.org/CodeSystem/location-physical-type'
+code "Juridiction": 'jdn' from "LocationTypeCodeSystem"
 
 // the encouter id is use the retieve Observation and Condition of a given encounter
 parameter "encounterid" String
@@ -17,6 +19,9 @@ parameter "cannonical_base" String
 
 parameter "custom_code_system" String
 
+
+
+
 context Patient
 
 /*
@@ -24,12 +29,26 @@ context Patient
     @return true is the reference have the same id as encounterid
 */
 define function IsInEncounter(ref FHIR.Reference):
-    case
-    when encounterid = ref.id then true
-    when encounterid = Last(Split(ref.reference, '/')) then true
-   // when ref.identifier is not null and id = ref.identifier.id then true
-    else false
-end
+  checkReference(getEncounter, ref)
+
+
+define function checkReference(R Resource, ref Reference):
+    R.id = ref.id or R.id = Last(Split(ref.reference, '/'))
+
+
+
+/*
+get the encounter with the id
+*/
+define getEncounters:
+    [Encounter] E 
+      where E.id = "encounterid"
+        return E
+/*
+get singleton of the encounter with the id
+*/
+define getEncounter:
+    singleton from getEncounters
 
 
 // *****   functions to retrieve extension define in the IG for different resources *****
@@ -54,6 +73,27 @@ define function GetExtensions(element Encounter, id String):
   element.extension E
       where E.url = ("cannonical_base" + 'StructureDefinition/' + id)
       return E
+/*
+    @param  element Location resource on which to look for extension
+    @param  id String, id of the extension to look for
+    @return List<Extension> with the right id
+*/
+define function GetExtensions(element Location, id String):
+  element.extension E
+      where E.url = ("cannonical_base" + 'StructureDefinition/' + id)
+      return E
+
+
+/*
+Get singleton of the extension with the right id (meaning the extension should not be set twice on the same resource)
+    @param  element Location resource on which to look for extension
+    @param  id String, id of the extension to look for
+    @return Extension 
+*/
+
+define function GetExtension(element Location, id String):
+  singleton from GetExtensions(element, id)
+
 
 
 /*
@@ -300,6 +340,7 @@ define function coding(s FHIR.code, url System.String):
                 system:  url 
             }
 
+//to do support url codesystem/code to SystemCode
 define function coding(s System.String):
   System.Code {
                 code:  s ,
@@ -428,3 +469,31 @@ define function HasCondHistory(id System.String, nbdays Integer):
   (GetHistoricCondition(coding(id),  nbdays)) is not null
 
 
+/*************************** Location access *******************************************/
+
+//define function getEncounterLocationExtentsion(extention String):
+//    getExtentionFromLocations(getEncounter.location, extention)
+
+//define function getExtentionFromLocations(locations List<FHIR.Encounter.Location>, extention String):
+//  if Count(locations) = 1 then getExtentionFromLocationHiearchy(getExtentionFromLocationReference(First(locations).location), extention)
+//  else Coalesce(getExtentionFromLocationHiearchy(getExtentionFromLocationReference(First(locations).location), extention), getExtentionFromLocations(Tail(locations), extention String))
+
+
+define function getExtentionFromLocationReference(ref Reference):
+    First([Location] l where l.id = ref.id or l.id = Last(Split(ref.reference, '/')))
+
+
+
+/*
+function that get the intersection of the location managed by the ServiceProvider and part of the encounter as Site physicalType, Encounter location can be ingnored
+
+*/
+define getEncounterJuridiction:
+    First(
+      [Location] l 
+        where  Exists(
+          getEncounter.location el where el.physicalType ~ "Juridiction" and checkReference(l,el.location) 
+        ))
+    
+define getEncounterServiceProvider:
+    First([Organization] O where checkReference(O, getEncounter.serviceProvider))
