@@ -13,16 +13,18 @@ def generateChagnes():
 
     changes = []
     dfs_changes = get_dict_df()["changes"]
-    dfs_changes.reset_index()
-    dfs_changes.iloc[1:]
+    #dfs_changes.reset_index()
+    #dfs_changes.iloc[1:]
 
     if len(dfs_changes.index > 0):
         fileContent = []
-        for row in changes.itertuples():
+        for index, row in dfs_changes.iterrows():
             logger.info("Saving changes for %s", row[1])
-            new_line = "## " + row[1] + " " + row[2]
-            new_line += "\n\n" + row[3]
-            fileContent.append(new_line)
+            fileContent.append(f"""
+## {row['date']} - {row['version']}
+
+{row['change']}
+                               """)
         
         changes_file_path = get_page_content_path("/", "changes.md")
         write_page_content(changes_file_path, "Changes", "\n".join(fileContent))
