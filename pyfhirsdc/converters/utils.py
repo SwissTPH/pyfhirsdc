@@ -41,8 +41,9 @@ def inject_sub_questionnaire(df_questions, questionnaire_name):
 
     # find the questionnaire
     dict_questionnaire_df = get_dict_df()['questionnaires']
-    if questionnaire_name in dict_questionnaire_df:
-        sub_questionnaire = dict_questionnaire_df[questionnaire_name].copy()
+    # there is limitation to 31 char in the tab names
+    if questionnaire_name[:29] in dict_questionnaire_df:
+        sub_questionnaire = dict_questionnaire_df[questionnaire_name[:29]].copy()
         load_sub_questionnaire = sub_questionnaire[pd.notna(sub_questionnaire.initialExpression) | (sub_questionnaire.id=="{{library}}")]
         sub_questionnaire=sub_questionnaire[pd.isna(sub_questionnaire.initialExpression) & (sub_questionnaire.id!="{{library}}")]
         
@@ -68,6 +69,8 @@ def inject_sub_questionnaire(df_questions, questionnaire_name):
                 df_questions.loc[len(df_questions.index)]=s_row
                 #df_questions.append(s_row)
     # inject the questionnaire questions as child quesiton
+    else:
+        logger.error(f"Reference to quesitonnaire {questionnaire_name} not found (neither {questionnaire_name[:29]})")
     return df_questions
     
 def init_resource_meta(resource):

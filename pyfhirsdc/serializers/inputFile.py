@@ -51,7 +51,7 @@ def parse_sheets(input_file, excudedWorksheets):
             df = df.dropna(how='all').applymap(lambda x: x.strip() if type(x)==str else x)
             if worksheet.startswith('q.'):
                 if validate_questionnaire_sheet(df):
-                    dfs_questionnaire[worksheet[2:]] = df
+                    dfs_questionnaire[worksheet[2:31]] = df
                 else:
                     break
             elif worksheet.startswith('pd.'):
@@ -76,7 +76,7 @@ def parse_sheets(input_file, excudedWorksheets):
                     break
             elif worksheet.startswith('l.'):
                 if validate_cql_sheet(df):
-                    dfs_cql[worksheet[2:]] = df
+                    dfs_cql[worksheet[2:31]] = df
                 else:
                     break
             elif worksheet == "changes":
