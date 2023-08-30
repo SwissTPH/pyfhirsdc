@@ -15,8 +15,8 @@ def dumper(obj):
 
 def updateBuildNumber(filePath):
     obj_conf = read_file(filePath)
-    new_build_number = obj_conf.processor.build + 1
-    obj_conf.processor.build = new_build_number
+    
+    
 
     # get build environment
     env =  obj_conf.processor.environment
@@ -26,13 +26,19 @@ def updateBuildNumber(filePath):
     # if mode is development increase patch version
     # if mode is production increase minor version
     if env == "dev":
+        new_build_number = obj_conf.processor.build + 1
+        new_v  = v
+    elif env == "staging":
         new_v = v.next_patch()
+        new_build_number = 0 
     elif env == "prod":
         new_v = v.next_minor()
+        new_build_number = 0
     else:
         new_v = v.next_major()
     # update the lib version to new version
-    obj_conf.fhir.lib_version = str(new_v) + "+build." + str(new_build_number) 
+    obj_conf.processor.build = new_build_number
+    obj_conf.fhir.lib_version = str(new_v) + ((".build." + str(new_build_number)) if new_build_number > 0 else '' ) 
 
     new_build_json = json.dumps(obj_conf, default=dumper, indent=4)
 
