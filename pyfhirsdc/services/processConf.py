@@ -25,20 +25,21 @@ def updateBuildNumber(filePath):
     v = semantic_version.Version.coerce(lib_version)
     # if mode is development increase patch version
     # if mode is production increase minor version
-    if env == "dev":
-        new_build_number = obj_conf.processor.build + 1
-        new_v  = v
-    elif env == "staging":
+    v.prerelease = []
+    if env == "staging":
         new_v = v.next_patch()
         new_build_number = 0 
+        
     elif env == "prod":
         new_v = v.next_minor()
         new_build_number = 0
-    else:
-        new_v = v.next_major()
+    else:#dev
+        new_build_number = obj_conf.processor.build + 1
+        new_v  = v
+        new_v.prerelease = ('alpha',str(new_build_number))
     # update the lib version to new version
     obj_conf.processor.build = new_build_number
-    obj_conf.fhir.lib_version = str(new_v) + ((".build." + str(new_build_number)) if new_build_number > 0 else '' ) 
+    obj_conf.fhir.lib_version = str(new_v)
 
     new_build_json = json.dumps(obj_conf, default=dumper, indent=4)
 
