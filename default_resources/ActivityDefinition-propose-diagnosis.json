@@ -1,0 +1,77 @@
+{
+    "resourceType" : "ActivityDefinition",
+    "id" : "cpg-activitydefinition-propose-diagnosis",
+    "url" : "http://hl7.org/fhir/uv/cpg/ActivityDefinition/cpg-activitydefinition-propose-diagnosis",
+    "identifier" : [{
+      "use" : "official",
+      "value" : "CPGProposeDiagnosisTaskActivityDefinition"
+    }],
+    "version" : "1.0.0",
+    "name" : "CPGProposeDiagnosisTaskActivityDefinition",
+    "status" : "active",
+    "experimental" : false,
+    "date" : "2023-08-10T22:40:03+00:00",
+    "publisher" : "HL7 International - Clinical Decision Support WG",
+    "contact" : [{
+      "name" : "HL7 International - Clinical Decision Support WG",
+      "telecom" : [{
+        "system" : "url",
+        "value" : "http://www.hl7.org/Special/committees/dss/index.cfm"
+      }]
+    }],
+    "description" : "Example Activity Definition for a recommendation to propose a diagnosis",
+    "jurisdiction" : [{
+      "coding" : [{
+        "system" : "http://unstats.un.org/unsd/methods/m49/m49.htm",
+        "code" : "001",
+        "display" : "World"
+      }]
+    }],
+    "kind" : "Task",
+    "profile" : "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-proposediagnosistask",
+    "code" : {
+      "coding" : [{
+        "system" : "http://hl7.org/fhir/uv/cpg/CodeSystem/cpg-activity-type-cs",
+        "code" : "propose-diagnosis",
+        "display" : "Propose a diagnosis"
+      }]
+    },
+    "intent" : "proposal",
+    "priority" : "routine",
+    "doNotPerform" : false,
+    "dynamicValue" : [{
+      "path" : "status",
+      "expression" : {
+        "language" : "text/fhirpath",
+        "expression" : "'draft'"
+      }
+    },
+    {
+      "path" : "for",
+      "expression" : {
+        "language" : "text/cql.identifier",
+        "expression" : "pfsdc.getPatientReference"
+      }
+    },
+    {
+      "path" : "encounter",
+      "expression" : {
+        "language" : "text/cql.identifier",
+        "expression" : "pfsdc.getEncounterReference"
+      }
+    },
+    {
+      "path" : "authoredOn",
+      "expression" : {
+        "language" : "text/cql.identifier",
+        "expression" : "pfsdc.Now"
+      }
+    },
+    {
+      "path" : "owner",
+      "expression" : {
+        "language" : "text/cql.identifier",
+        "expression" : "pfsdc.getPractitionerReference"
+      }
+    }]
+  }

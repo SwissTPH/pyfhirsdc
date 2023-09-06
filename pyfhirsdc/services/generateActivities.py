@@ -7,8 +7,7 @@
 import logging
 
 from pyfhirsdc.config import get_processor_cfg
-from pyfhirsdc.converters.activityConverter import (create_activity,
-                                                    init_activity)
+from pyfhirsdc.converters.activityConverter import (create_activity_collect_with)
 from pyfhirsdc.serializers.utils import (get_resource_path,
                                          get_resources_files, write_resource)
 
@@ -25,8 +24,7 @@ def generate_activity( questionnaire ) :
     fullpath = get_resource_path("ActivityDefinition", questionnaire["id"].lower())
     logger.info('processing activity {0}'.format(questionnaire["id"].lower()))
     # read file content if it exists
-    activity_definition = init_activity(fullpath, questionnaire["id"].lower())
         # add the fields based on the ID in linkID in items, overwrite based on the designNote (if contains status::draft)
-    activity_definition = create_activity(activity_definition,questionnaire)
+    activity_definition = create_activity_collect_with(questionnaire)
     # write file
     write_resource(fullpath, activity_definition, get_processor_cfg().encoding)
