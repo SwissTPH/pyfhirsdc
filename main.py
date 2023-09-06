@@ -1,5 +1,5 @@
 import getopt
-import logging
+import logging, coloredlogs
 import sys
 
 from pyfhirsdc.services.generateBundle import write_bundle
@@ -15,7 +15,9 @@ def print_help():
     print('-b to bundle the fhir ressource int the output path')
     print('-l to build the library with cql in base64')
     print('--anthro to generate the antro code system from tsv files (files can be found here https://github.com/WorldHealthOrganization/anthro/tree/master/data-raw/growthstandards)')
-    
+
+
+   
 def setup_logger(logger_name,
                  log_file, 
                  level=logging.INFO, 
@@ -25,21 +27,16 @@ def setup_logger(logger_name,
     formatter = logging.Formatter(formatting)
     file_handler = logging.FileHandler(log_file, mode='w')
     file_handler.setFormatter(formatter)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(formatter)
-
+    #stream_handler = logging.StreamHandler()
+    #stream_handler.setFormatter(formatter)
+    coloredlogs.install()
     l.setLevel(level)
     l.addHandler(file_handler)
+
+
 setup_logger('default', "debug.log", logging.DEBUG)
 logger = logging.getLogger('default')
-# set up logging to console
-console = logging.StreamHandler()
-console.setLevel(logging.INFO)
-# set a format which is simpler for console use
-formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-console.setFormatter(formatter)
-# add the handler to the root logger
-logging.getLogger('').addHandler(console)
+
 
 if __name__ == "__main__":
     bundle = False

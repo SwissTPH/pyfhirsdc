@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyfhirsdc"
-version = "0.1.0"
+version = "0.1.2"
 description = "A tool for FHIR structure data capture"
 dependencies = [
     "wheel",
@@ -16,6 +16,7 @@ dependencies = [
     "validators",
     "odfpy",
     "ocldev",
+    "coloredlogs",
     "requests-toolbelt",
     "jsonpath-ng",
     "textile",
@@ -30,7 +31,7 @@ authors = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GPL v3",
     "Operating System :: OS Independent"
 ]
 keywords = ["FHIR", "SMART", "SDC", "CPG", "CQL"]
