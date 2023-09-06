@@ -10,7 +10,20 @@ using FHIR version '4.0.1'
 include FHIRHelpers version '4.0.1'
 
 codesystem "LocationTypeCodeSystem" : 'http://terminology.hl7.org/CodeSystem/location-physical-type'
+codesystem "ParticipanType" : 'http://terminology.hl7.org/CodeSystem/v3-ParticipationType'
+codesystem "ClinicalStatus" : 'http://terminology.hl7.org/CodeSystem/condition-clinical'
+codesystem "VerificationStatus" :'http://terminology.hl7.org/CodeSystem/condition-ver-status'
 code "Juridiction": 'jdn' from "LocationTypeCodeSystem"
+code "Site": 'si' from "LocationTypeCodeSystem"
+code "Attender": 'ATND'  from "ParticipanType"
+
+
+code "Active": 'active' from "ClinicalStatus"
+
+
+code "Unconfirmed": 'unconfirmed' from "VerificationStatus"
+code "confirmed" : 'unconfirmed'from "VerificationStatus"
+code "Provisional": 'provisional' from "VerificationStatus"
 
 // the encouter id is use the retieve Observation and Condition of a given encounter
 parameter "encounterid" String
@@ -35,6 +48,12 @@ define function IsInEncounter(ref FHIR.Reference):
 define function checkReference(R Resource, ref Reference):
     R.id = ref.id or R.id = Last(Split(ref.reference, '/'))
 
+define function checkReference(ref1 Reference, ref2 Reference):
+    ref1.id = ref2.id or ref1.id = Last(Split(ref2.reference, '/')) or ref2.id = Last(Split(ref1.reference, '/')) or ref1.reference = ref2.reference
+
+ define "Now":
+      Now()
+
 
 
 /*
@@ -44,11 +63,51 @@ define getEncounters:
     [Encounter] E 
       where E.id = "encounterid"
         return E
+
+define getEncounterReference:
+    Reference {
+      type: uri {value: 'Encounter'},
+      reference: string {value:'Encounter/' + encounterid},
+      id: encounterid
+    }
+
+
+define getPatientReference:
+  Reference {
+        type: uri {value: 'Patient'},
+        reference: string {value:'Patient/' + Patient.id},
+        id: Patient.id
+      }
 /*
 get singleton of the encounter with the id
 */
 define getEncounter:
     singleton from getEncounters
+
+/*
+Get the Encounter main Practitioner 
+not compatible with R5:  individual -> actor
+*/
+define Practitioner:
+    if getPractitionerReference is not null then First([Practitioner] p where checkReference(p,getPractitionerReference))
+    else null
+      
+      
+
+define getPractitionerReferences:
+      getEncounter.participant p 
+          where exists(p.type t where t ~ "Attender") and p.individual.type = 'Practitioner' 
+          return p.individual
+
+
+// we expect only one
+define getPractitionerReference:
+      First(getPractitionerReferences)
+
+
+
+
+
 
 
 // *****   functions to retrieve extension define in the IG for different resources *****
@@ -59,30 +118,10 @@ define getEncounter:
 */
 
 
-define function GetExtensions(element Patient, id String):
+define function GetExtensions(element DomainResource, id String):
   element.extension E
       where E.url = ("cannonical_base" + 'StructureDefinition/' + id)
       return E
-
-/*
-    @param  element Encounter resource on which to look for extension
-    @param  id String, id of the extension to look for
-    @return List<Extension> with the right id
-*/
-define function GetExtensions(element Encounter, id String):
-  element.extension E
-      where E.url = ("cannonical_base" + 'StructureDefinition/' + id)
-      return E
-/*
-    @param  element Location resource on which to look for extension
-    @param  id String, id of the extension to look for
-    @return List<Extension> with the right id
-*/
-define function GetExtensions(element Location, id String):
-  element.extension E
-      where E.url = ("cannonical_base" + 'StructureDefinition/' + id)
-      return E
-
 
 /*
 Get singleton of the extension with the right id (meaning the extension should not be set twice on the same resource)
@@ -91,32 +130,9 @@ Get singleton of the extension with the right id (meaning the extension should n
     @return Extension 
 */
 
-define function GetExtension(element Location, id String):
+define function GetExtension(element DomainResource, id String):
   singleton from GetExtensions(element, id)
 
-
-
-/*
-Get singleton of the extension with the right id (meaning the extension should not be set twice on the same resource)
-    @param  element Patient resource on which to look for extension
-    @param  id String, id of the extension to look for
-    @return Extension 
-*/
-
-define function GetExtension(element Patient, id String):
-  singleton from GetExtensions(element, id)
-
-
-
-/*
-Get singleton of the extension with the right id (meaning the extension should not be set twice on the same resource)
-    @param  element Encounter resource on which to look for extension
-    @param  id String, id of the extension to look for
-    @return Extension 
-*/
-
-define function GetExtension(element Encounter, id String):
-  singleton from GetExtensions(element, id)
 
 /*
 check if the reference have the same id as encounterid
@@ -497,3 +513,43 @@ define getEncounterJuridiction:
     
 define getEncounterServiceProvider:
     First([Organization] O where checkReference(O, getEncounter.serviceProvider))
+
+define getEncouterSite:
+     First(
+      [Location] l 
+        where  Exists(
+          getEncounter.location el where el.physicalType ~ "Site" and checkReference(l,el.location) 
+        )) 
+
+/*
+find the service provided at the site by the same healtcareprovider
+
+*/
+
+define getEncouterSiteHealthCareService:
+      [HealthcareService] H 
+        where Exists( H.location l where checkReference(getEncouterSite,l) )
+
+define getEncounterServiceProviderHealthCareService:
+      [HealthcareService] H 
+        where Exists( H.location l where checkReference(getEncouterSite,l) )
+        and checkReference(getEncounter.serviceProvider,H.providedBy)
+
+define "EmCare.B23.DE32a":
+   true
+
+define "EmCare.B23.DE32b":
+    true
+
+define "getPostCordination_EmCare.B23.DE32":
+    if "EmCare.B23.DE32a" then { Extension {
+        url : uri {value: 'https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/postcoordination'},
+        value: FHIR.CodeableConcept {coding: { FHIR.Coding { system: FHIR.uri { value : 'https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/che-custom-codes' }, code: FHIR.code {value: 'EmCare.B23.DE32a' } } } }
+    } }
+    else null
+    |
+    if "EmCare.B23.DE32b" then { Extension {
+        url : uri {value: 'https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/postcoordination'},
+        value: FHIR.CodeableConcept {coding: { FHIR.Coding { system: FHIR.uri { value : 'https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/che-custom-codes' }, code: FHIR.code {value: 'EmCare.B23.DE32b' } } } }
+    } }
+    else null
