@@ -25,13 +25,15 @@ def generate_questionnaire_concept(df_questions):
         if question['scope'] == get_processor_cfg().scope and 'initialExpression' in question and pd.isna(question['initialExpression']):
             concept.append(
                 CodeSystemConcept(
-                    definition = question["description"] if pd.notna(question["description"]) else None,
+                    definition = get_description(question),
                     code = question['id'],
                     display =  question["label"] if pd.notna(question["label"]) else None
                 )
             )
     return concept
 
+def get_description(question):
+    return question["description"] if 'description' in question and pd.notna(question["description"]) else None
 
 def generate_observation_concept(df_questions):
     concept = []
@@ -45,7 +47,7 @@ def generate_observation_concept(df_questions):
         if base_profile == "Observation":
             concept.append(
                 CodeSystemConcept(
-                    definition =  question["description"] if pd.notna(question["description"]) else None,
+                    definition =  get_description(question),
                     code = id,
                     display =  question["label"] if pd.notna(question["label"]) else None
                 )
@@ -64,7 +66,7 @@ def generate_condition_concept(df_questions):
         if base_profile == "Condition":
             concept.append(
                 CodeSystemConcept(
-                    definition =  question["description"] if pd.notna(question["description"]) else None,
+                    definition =  get_description(question),
                     code = id,
                     display =  question["label"] if pd.notna(question["label"]) else None
                 )
@@ -83,7 +85,7 @@ def generate_diagnosis_concept(df_questions):
         if base_profile == "Diagnosis":
             concept.append(
                 CodeSystemConcept(
-                    definition =  question["description"] if pd.notna(question["description"]) else None,
+                    definition =  get_description(question),
                     code = id,
                     display =   question["label"] if pd.notna(question["label"]) else None
                 )
@@ -107,7 +109,7 @@ def generate_valueset_concept(df_value_set):
     # remove the line without id
     for code, question in value_set.items():
         concept = CodeSystemConcept(
-                definition =question["definition"] if pd.notna(question["definition"]) else None,
+                definition =get_description(question),
                 code = code,
                 display =  question["display"] if pd.notna(question["display"]) else None,
             )

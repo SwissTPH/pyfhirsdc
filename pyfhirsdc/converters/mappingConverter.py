@@ -17,7 +17,7 @@ from pyfhirsdc.converters.mapHelpers.utils import (VAL_REGEX, generate_helper,
                                                    wrapin_entry_create,
                                                    wrapin_first_answers_rules,
                                                    wrapin_fpath)
-from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
+from pyfhirsdc.converters.utils import (adv_clean_name, clean_name,
                                         get_resource_url, get_base_profile)
 from pyfhirsdc.models.mapping import (Mapping, MappingGroup, MappingGroupIO,
                                       MappingIO, MappingRule)
@@ -60,7 +60,7 @@ def get_questionnaire_mapping(questionnaire_name, df_questions_item):
             alias = base_profile
         ))
         mapping.products.append(MappingIO(
-            url = get_resource_url('StructureDefinition',clean_group_name(profile)),
+            url = get_resource_url('StructureDefinition',adv_clean_name(profile)),
             alias = profile
         ))
     # create the SM ressource from HAPI server response
@@ -135,7 +135,7 @@ def get_outputs_docs( df_questions_item):
 # this function create as many ressource as get_helper 'rules' function returns rules
 def get_post_oneliner_bundle_profile_rule(profile,question,df_questions_item):
     
-    rule_name = clean_group_name(profile+question['id'])
+    rule_name = adv_clean_name(profile+question['id'])
 
     main_rules = None
     helper_func, helper_args= get_helper(question)
@@ -163,7 +163,7 @@ def get_post_oneliner_bundle_profile_rule(profile,question,df_questions_item):
 
 
 def get_post_bundle_profile_rule(profile,df_questions_item):
-    rule_name = clean_group_name(profile)
+    rule_name = adv_clean_name(profile)
     base_profile = get_base_profile(profile)
     logger.debug("create mapping rule, expect to find %sid",rule_name)
     rule =   wrapin_fpath(["{0}id".format(rule_name)],df_questions_item,[
@@ -188,7 +188,7 @@ def get_test_fpaths(linkid,df_questions,rules):
 
 
 def get_put_bundle_profile_rule(profile,df_questions_item):
-    rule_name = clean_group_name(profile)
+    rule_name = adv_clean_name(profile)
     base_profile = get_base_profile(profile)
     
     rule =  MappingRule(
@@ -261,7 +261,7 @@ def get_mapping_group(profile, questionnaire_name, df_questions_item):
         groups = []
     
     groups.append( MappingGroup(
-            name = clean_group_name(profile),
+            name = adv_clean_name(profile),
             sources = [MappingGroupIO(
                 name = "src",
                 type = 'questionnaireResponse',
@@ -321,7 +321,7 @@ def get_mapping_detail(question_name, question, df_questions_item):
             groups  =  generate_helper(helper_func, 'groups', question['map_profile'], question_name,df_questions_item, *helper_args)
 
         else:
-            rule_name = clean_group_name(question_name)
+            rule_name = adv_clean_name(question_name)
             if question['map_resource'].strip()[-1:] == ";":
                 logger.warning("the map ressource must not end with ;")
 
@@ -361,7 +361,7 @@ def add_mapping_url(resource, mapping):
 
 def get_ref_groups(profile):
     base_profile = get_base_profile(profile)
-    rule_name= clean_group_name(profile)
+    rule_name= adv_clean_name(profile)
     return [
 
         MappingGroup(

@@ -12,7 +12,7 @@ from pyfhirsdc.config import (get_defaut_fhir, get_dict_df, get_fhir_cfg,
                               get_processor_cfg)
 from pyfhirsdc.converters.libraryConverter import generate_attached_library
 from pyfhirsdc.converters.planDefinitionConverter import process_decisiontable
-from pyfhirsdc.converters.utils import clean_group_name, get_resource_url
+from pyfhirsdc.converters.utils import adv_clean_name, clean_name, get_resource_url
 from pyfhirsdc.serializers.planDefinitionIndexSerializer import \
     write_plan_definition_index
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
@@ -54,7 +54,7 @@ def generate_plandefinition( name,df_actions):
     dict_actions = df_actions.to_dict('index')
 
     ## generate libraries, plandefinitions and libraries
-    planDefinitionId = clean_group_name(name)
+    planDefinitionId = clean_name(name)
     pd_df.title = planDefinitionId
     identifier = Identifier.construct()
     identifier.use = "official"

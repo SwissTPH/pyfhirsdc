@@ -16,13 +16,13 @@ from fhir.resources.R4B.parameterdefinition import ParameterDefinition
 
 from pyfhirsdc.config import (get_defaut_path, get_fhir_cfg, get_processor_cfg,
                               get_used_obs, get_used_obs_valueset,
-                              get_used_valueset)
+                              get_used_valueset, get_dict_df)
 from pyfhirsdc.converters.extensionsConverter import add_library_extensions
 from pyfhirsdc.converters.questionnaireItemConverter import \
     get_question_fhir_data_type
-from pyfhirsdc.converters.utils import (clean_group_name, clean_name,
-                                        get_codableconcept_code,
-                                        get_resource_url, inject_config)
+from pyfhirsdc.converters.utils import (adv_clean_name, clean_name,get_pyfhirsdc_lib_name,
+                                        get_codableconcept_code, get_custom_codesystem_url,
+                                        get_resource_url, inject_config,METADATA_CODES)
 from pyfhirsdc.serializers.docSerializer import get_doc_table, write_docs
 from pyfhirsdc.serializers.librarySerializer import (GETOBS_FORMAT,
                                                      GETOBSCODE_FORMAT,
@@ -42,15 +42,17 @@ ROW_EXPRESSIONS = {
     'stopExpressions':{'col':'stopExpressions', 'prefix':'stop::', 'kind':'stop'},
     'applicabilityExpressions':{'col':'applicabilityExpressions', 'prefix':'', 'kind':'applicability'},
     'initialExpression':{'col':'initialExpression', 'prefix':'', 'kind':''},
-    'id':{'col':'description', 'prefix':'', 'kind':''}
+    'id':{'col':'label', 'prefix':'', 'kind':''},
+    'enableWhenExpression':{'col':'enableWhenExpression', 'prefix':'', 'kind':'applicability'}
     
 }
 
+    
 
 def generate_attached_library(resource, df_actions, type = 'pd'):
     library = generate_library(resource.name, df_actions, type)
     if library is not None:
-        if  re.search(get_fhir_cfg().canonicalBase, library.url):
+        if  re.search(get_fhir_cfg().canonicalBase, library.url) and '|' not in library.url :
             libraryCanonical = Canonical(library.url+"|"+get_fhir_cfg().lib_version)
         else:
             libraryCanonical = Canonical(library.url)
@@ -63,16 +65,16 @@ def generate_attached_library(resource, df_actions, type = 'pd'):
         
 def generate_library(name, df_actions, type = 'pd', description = None):
 
-    id = clean_name(name)
+    id = get_pyfhirsdc_lib_name(name)
     logger.info("Generating library " + name + ".......")
-    lib_id =clean_group_name(id)
+    lib_id =adv_clean_name(id)
     library = Library(
         id = lib_id,
         status = 'active',
         name = lib_id,
         version = get_fhir_cfg().lib_version,
         title = name,
-        description = description, # FIXME add sope library
+        description = description, # FIXME add scope library
         url = get_resource_url('Library', lib_id),
         content = [Attachment(
             id = "ig-loader-" + lib_id + ".cql"
@@ -91,7 +93,7 @@ def generate_library(name, df_actions, type = 'pd', description = None):
     )
     
     cql, list_inputs =format_cql_df(library, df_actions, type)
-    if type == 'q':
+    if type in ('q','c','r'):
         cql['backref'] = write_cql_action(
             'BackReference',
             'back reference to resource', 
@@ -124,16 +126,16 @@ def get_lib_parameters_list(df_in, type = "pd"):
 
     
     for index, row in df.iterrows():
-        if type == "q":
+        if type in  ('q','c','r'):
             q_type = get_question_fhir_data_type(row['type'])
         else:
             q_type = 'boolean'
         name = row['id'] if 'id' in row else index
-        if name is not None and pd.notna(name) and '{{' not in name :
-            desc = row['label'].replace(u'\xa0', u' ').replace('  ',' ') if 'label' in row and pd.notna(row['label']) else\
-                row['description'].replace(u'\xa0', u' ').replace('  ',' ') if 'description' in row and pd.notna(row['description']) else None
+        if name is not None and pd.notna(name) and  name not in METADATA_CODES:
             parameters.append({'name': name, 'type':q_type, 'use': 'out'})
-            if row['description'] is not None and pd.notna(row['description']):
+            desc =get_description(row)
+            if desc is not None:
+                desc = desc.replace(u'\xa0', u' ').replace('  ',' ')
                 parameters.append({'name':desc, 'type':q_type, 'use': 'out'})
     #TODO add observation, condition and Zscore function parsing here   maybe using {{paramter}}  
 
@@ -172,9 +174,9 @@ def get_lib_parameters(df_in, type = "pd"):
         return parameters
     
 def filter_df(df_in,type):    
-    if type == "pd":
+    if type == 'pd':
         df = df_in[df_in.parentId != "{{library}}"]
-    elif type == "q":
+    elif type in ('q','c','r'):
         df = df_in[df_in.initialExpression.notna() ]
     return df
         
@@ -230,7 +232,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
     obs_linkid = [x  for x in get_used_obs().keys()]
     obs_label = [x for x in get_used_obs().values()]
     changed = []
-    matches = re.findall(r'([ !=<>voc\.]+)?"(\w[^"]+)"',cql_exp)
+    matches = re.findall(r'([ ~!=<>voc\.]+)?"(\w[^"]+)"',cql_exp)
     out = cql_exp
     out = out.replace('HasCond', 'pfsdc.HasCond')
     out = out.replace('HasObs', 'pfsdc.HasObs')
@@ -240,11 +242,11 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
     for matching in matches:
         prefix = matching[0][-1] if len(matching[0])>0  else ''
         if prefix != '.':
-            operator = bool(re.search('[!=<>]', matching[0]))
+            operator = bool(re.search('[~!=<>]', matching[0]))
             match = matching[1]
 
             if match not in changed:
-                if df is not None and (bool(re.search('[^a-zA-Z]', prefix)) or prefix == '') and  len(df[(df.id == match) | (df.label == match)]):
+                if df is not None and (bool(re.search('[^a-zA-Z]', prefix)) or prefix == '') and  len(df[(df.id == match) | ('label' in df and df.label == match)]):
                     # Localy define variable should NOT be converted but put in lower case
                     out = out.replace('"{}"'.format(match), '"{}"'.format(match) )
                 elif match  in ("Yes"):
@@ -279,7 +281,7 @@ def convert_reference_to_cql(cql_exp, df, list_inputs):
                     out = out.replace('{0}"{1}"'.format(prefix if prefix == 'o' else '',match), GETOBS_FORMAT.format(linkid) )
                     list_inputs[linkid]=get_input('Observation',linkid,'boolean/quantity',match)
                 else:
-                     logger.warning("string not translated {} {} ".format(prefix,match))
+                    logger.warning("string not translated {} {} ".format(prefix,match))
                     
     # quick fix remove the select multiple
     #matches = re.findall(r"(Base\.GetObsValue\('([^']+)'\) *= *Base\.GetObsValue\('([^']+)'\))",out)
@@ -396,6 +398,14 @@ def get_cql_raw_action(id, row, expression_column, df ):
 def get_intputs_docs( df_questions_item):
     pass
 
+def get_description(row):
+    if 'label' in row and pd.notna(row['label']):
+        return row['label']
+    elif 'description' in row and pd.notna(row['description']):
+        row['description']
+    else:
+        return None
+
 def write_action_condition(action):
     cql = ""
     if action.description is not None:
@@ -431,16 +441,21 @@ def format_cql_df(library, df_actions,  type):
         
         for index, row in df_main.iterrows():
             ref = row['id'] if 'id' in row else index 
+            
+            desc = get_description(row)
             if index == "{{library}}" or "id" in row and pd.notna(row['id']) and row['id'] == "{{library}}":
-                details =  row['description'].split("::")
-                name = details[0]
-                version = details[2] if len(details)>2 else None
-                alias = details[1] if len(details)>1 else None
-                libs.append({
-                    'name':name,
-                    'version':version,
-                    'alias':alias
-                })
+                if desc is not None:
+                    details =  desc.split("::")
+                    name = get_pyfhirsdc_lib_name(details[0])
+                    version = details[2] if len(details)>2 else None
+                    alias = details[1] if len(details)>1 else None
+                    libs.append({
+                        'name':name,
+                        'version':version,
+                        'alias':alias
+                    })
+                else:
+                    logger.error(f"Libray reference for {library.id} not set properly, should be in label with the format lib_id::alias::lib_version")
             # PlanDefinition CQL
             # applicability -> "id" : cql
             # start -> "start::id" : cql
@@ -456,8 +471,8 @@ def format_cql_df(library, df_actions,  type):
                 cql[i] = get_cql_define(ref, row,'applicabilityExpressions', df_actions,list_inputs)
                 i += 1
                 # add the wrapper name -> id
-                if pd.notna(row['description']):
-                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['applicabilityExpressions']['prefix'], row['description'],ref)
+                if pd.notna(desc):
+                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['applicabilityExpressions']['prefix'], desc,ref)
                     i += 1
             ## questionnaire initial expression in CQL, FIXMDe
             if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()) and row['type'] != '{{cql}}' :
@@ -466,6 +481,13 @@ def format_cql_df(library, df_actions,  type):
                 if pd.notna(row['label']):
                     cql[i] = write_cql_alias(ROW_EXPRESSIONS['initialExpression']['prefix'], row['label'],ref)
                     i += 1
+            if type == 'c' and 'enableWhenExpression' in row and pd.notna(row['enableWhenExpression']):
+                cql[i] = get_cql_define(ref, row,'enableWhenExpression',df_actions,list_inputs)
+                i += 1
+                if pd.notna(row['label']):
+                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['enableWhenExpression']['prefix'], row['label'],ref)
+                    i += 1
+                cql,i = get_postcoordinations_cql(row, cql,i,df_actions,list_inputs)
             while  i > oi :
                 cql[oi] = inject_config(cql[oi])
                 oi+=1
@@ -480,6 +502,31 @@ def format_cql_df(library, df_actions,  type):
     cql['header'] = writeLibraryHeader(library, libs)
     cql['header'] += writeGetObs(list_inputs)
     return cql, list_inputs
+
+def get_postcoordinations_cql(row, cql,i,df_actions,list_inputs):
+
+    postcoordinations = df_actions[(df_actions['parentId'] == row['id']) & (df_actions['type'] == 'postcoordination')]['id'].tolist()
+    if len(postcoordinations) > 0:  
+        cql_exp_raw = '|'.join(get_postcoordination_cql(postcoordinations))
+        cql_exp = convert_reference_to_cql(cql_exp_raw,df_actions, list_inputs)
+        cql[i] = write_cql_action(row['id'],cql_exp_raw, cql_exp, 'getPostCordination_',display=None)
+        i+=1
+    
+    return cql,i
+
+def get_postcoordination_cql(postcoordinations):
+    cql= []
+    for postcoordination in postcoordinations:
+        
+        cql.append( f"""
+if "{postcoordination}" then {{ Extension {{
+    url : uri {{value: '{get_fhir_cfg().canonicalBase + 'StructureDefinition/postcoordination'}'}},
+    value: FHIR.CodeableConcept {{coding: {{ FHIR.Coding {{ system: FHIR.uri {{ value : '{get_custom_codesystem_url()}' }}, code: FHIR.code {{value: '{postcoordination}' }} }} }} }}
+}} }}
+else null
+        """)
+    return cql
+
 
 def writeGetObs(list_inputs):
     ret = ""

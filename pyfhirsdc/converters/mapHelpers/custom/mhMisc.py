@@ -5,7 +5,7 @@ import re
 import pandas as pd
 from pyfhirsdc.converters.mapHelpers.utils import VAL_REGEX,  wrapin_first_answers_rules, wrapin_fpath
 
-from pyfhirsdc.converters.utils import (clean_group_name )
+from pyfhirsdc.converters.utils import (adv_clean_name )
 from pyfhirsdc.converters.valueSetConverter import (get_valueset_df)
 from pyfhirsdc.models.mapping import ( MappingGroup, MappingGroupIO,
                                        MappingRule)
@@ -18,7 +18,7 @@ logger = logging.getLogger("default")
 #args[1]: question name first
 #args[2]: question name mid
 def SetOfficalGivenName(mode, profile, question_id,df_questions_item, *args):
-    rule_name = clean_group_name(profile)
+    rule_name = adv_clean_name(profile)
     if len(args)< 2:
         logger.error('SetOfficalGivenName must have 2 or 3 parameters')
         return None
@@ -62,7 +62,7 @@ def SetOfficalGivenName(mode, profile, question_id,df_questions_item, *args):
 #args[0]: valueset
 #args[1]: path to map
 def MapValueSetExtCode(mode, profile,question_id,df_questions, *args):
-    rule_name = clean_group_name(question_id)
+    rule_name = adv_clean_name(question_id)
     tgttype = args[2] if len(args) == 3 else None
     if mode == 'rules':
         return [
@@ -140,7 +140,7 @@ def get_valueset_map_source(valueset_name, map_path, tgttype):
 def MapWalk(mode, profile, question_id,df_questions,*args):
     # TODO support slicing and create
     val_a = "val" if  re.search(VAL_REGEX,args[0]) else "a"
-    rule_name = clean_group_name(question_id)
+    rule_name = adv_clean_name(question_id)
     if mode == 'rules':
         rule = None
         if val_a == 'val':
