@@ -39,39 +39,33 @@
     "intent" : "proposal",
     "priority" : "routine",
     "doNotPerform" : false,
-    "dynamicValue" : [{
-      "path" : "status",
-      "expression" : {
-        "language" : "text/fhirpath",
-        "expression" : "'draft'"
-      }
-    },
+    "dynamicValue" : [
     {
       "path" : "for",
       "expression" : {
         "language" : "text/cql.identifier",
-        "expression" : "pfsdc.getPatientReference"
+        "expression" : "getPatientReference"
       }
     },
     {
       "path" : "encounter",
       "expression" : {
         "language" : "text/cql.identifier",
-        "expression" : "pfsdc.getEncounterReference"
+        "expression" : "getEncounterReference"
       }
     },
     {
       "path" : "authoredOn",
       "expression" : {
         "language" : "text/cql.identifier",
-        "expression" : "pfsdc.Now"
+        "expression" : "Now"
       }
     },
     {
       "path" : "owner",
       "expression" : {
         "language" : "text/cql.identifier",
-        "expression" : "pfsdc.getPractitionerReference"
+        "expression" : "getPractitionerReference"
       }
     }]
   }

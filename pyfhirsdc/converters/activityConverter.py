@@ -19,11 +19,12 @@ from .extensionsConverter import append_unique
 def create_activity_collect_with(questionnaire):
     #FIXME we should have {{context}} in questionnationnaire to define PATDOC or on the PD
     act_id = clean_name(questionnaire['id'])
-    activity_definition = ActivityDefinition.parse_raw(json.dumps(get_defaut_fhir('ActivityDefinition')))
+    activity_definition = ActivityDefinition.parse_raw(json.dumps(get_defaut_fhir('ActivityDefinition-collect-with')))
     activity_definition.url=get_resource_url('ActivityDefinition',act_id) 
     activity_definition.kind = 'Task'
     activity_definition.id = act_id
-    #TODO: have std approach for lif ref
+    activity_definition.name = questionnaire['name']
+    activity_definition.version=get_fhir_cfg().lib_version
     activity_definition.library = [Canonical(get_resource_url('Library', get_pyfhirsdc_lib_name(act_id),True))]
     #activity_definition.useContext = [
     #  UsageContext( 
@@ -40,40 +41,32 @@ def create_activity_collect_with(questionnaire):
     #  "collect-information",
     #  "Collect information")
     # could nbe splitted into input.code / input.value
-    activity_definition.dynamicValue = [ ActivityDefinitionDynamicValue(
-          path = "focus",
-          expression = Expression(
-              language = "text/cql-identifier",
-              expression = "BackReference"
-          )
-        )
-    ]
+#{
+#    "path" : "status",
+#    "expression" : {
+#      "language" : "text/fhirpath",
+#      "expression" : "'draft' as String"
+#    }
+#  }
+    
     new_ext = Extension(
         url = "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-collectWith",
         valueCanonical = questionnaire['url'])
-    #append_unique(activity_definition.extension, new_ext, True)
+    if activity_definition.extension is None:
+        activity_definition.extension = []
+    append_unique(activity_definition.extension, new_ext, True)
     return activity_definition
 
 
 def create_activity_propose_diagnosis(row,library):
     activity_definition = ActivityDefinition.parse_raw(json.dumps(get_defaut_fhir('ActivityDefinition-propose-diagnosis')))
+    activity_definition.version=get_fhir_cfg().lib_version
     activity_definition.dynamicValue.append(
         ActivityDefinitionDynamicValue(
-            path= "input:diagnosis",
+            path= "contained",
             expression= Expression(
             language = "text/cql-identifier",
-            expression = "TaskInput {"+
-                "type: 'propose-diagnosis',"+
-                'value: Condition {'+
-                    'clinicalStatus: pfsdc."Active",'
-                    'verificationStatus: pfsdc."Provisional",'
-                    f"code: [cond.\"{row['id']}\"],"+ 
-                    'subject: pfsdc.getPatientReference,'+ 
-                    'encounter: pfsdc.getEncounterReference,'+ 
-                    'onsetDateTime: Today(),'+
-                    f"extensions: getPostCordination_{row['id']}"+
-                "}"+
-            "}")
+            expression = f"generateCondition_{row['id']}")
         )
     )
     activity_definition.id= clean_name('propose-diagnosis-' + row['id'])

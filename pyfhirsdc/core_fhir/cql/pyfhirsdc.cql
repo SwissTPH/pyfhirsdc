@@ -13,6 +13,7 @@ codesystem "LocationTypeCodeSystem" : 'http://terminology.hl7.org/CodeSystem/loc
 codesystem "ParticipanType" : 'http://terminology.hl7.org/CodeSystem/v3-ParticipationType'
 codesystem "ClinicalStatus" : 'http://terminology.hl7.org/CodeSystem/condition-clinical'
 codesystem "VerificationStatus" :'http://terminology.hl7.org/CodeSystem/condition-ver-status'
+codesystem "ActivityType" : 'http://hl7.org/fhir/uv/cpg/CodeSystem/cpg-activity-type-cs'
 code "Juridiction": 'jdn' from "LocationTypeCodeSystem"
 code "Site": 'si' from "LocationTypeCodeSystem"
 code "Attender": 'ATND'  from "ParticipanType"
@@ -28,7 +29,7 @@ code "Provisional": 'provisional' from "VerificationStatus"
 // the encouter id is use the retieve Observation and Condition of a given encounter
 parameter "encounterid" String
 
-parameter "cannonical_base" String
+parameter "canonical_base" String
 
 parameter "custom_code_system" String
 
@@ -36,6 +37,11 @@ parameter "custom_code_system" String
 
 
 context Patient
+
+define Age:
+    if AgeInDays() is not null then 
+    System.Quantity { value: AgeInDays()  , unit: 'days'}
+    else null as System.Quantity
 
 /*
     @param  ref FHIR.Reference the check against the encounterid Library parameter
@@ -65,19 +71,23 @@ define getEncounters:
         return E
 
 define getEncounterReference:
+  if encounterid is not null then
     Reference {
       type: uri {value: 'Encounter'},
       reference: string {value:'Encounter/' + encounterid},
       id: encounterid
     }
-
+  else null
 
 define getPatientReference:
-  Reference {
+  if Patient is not null then
+    Reference {
         type: uri {value: 'Patient'},
         reference: string {value:'Patient/' + Patient.id},
         id: Patient.id
       }
+  else null
+
 /*
 get singleton of the encounter with the id
 */
@@ -120,7 +130,7 @@ define getPractitionerReference:
 
 define function GetExtensions(element DomainResource, id String):
   element.extension E
-      where E.url = ("cannonical_base" + 'StructureDefinition/' + id)
+      where E.url = ("canonical_base" + 'StructureDefinition/' + id)
       return E
 
 /*
@@ -143,7 +153,7 @@ check if the reference have the same id as encounterid
 
 define function getPostcordinationExtension(element Condition, postcordination List<String>):
   element.extension E
-      where E.url = ("cannonical_base" + 'StructureDefinition/postcordination' )
+      where E.url = ("canonical_base" + 'StructureDefinition/postcordination' )
       and E.value in postcordination
 
 
@@ -494,15 +504,19 @@ define function HasCondHistory(id System.String, nbdays Integer):
 //  if Count(locations) = 1 then getExtentionFromLocationHiearchy(getExtentionFromLocationReference(First(locations).location), extention)
 //  else Coalesce(getExtentionFromLocationHiearchy(getExtentionFromLocationReference(First(locations).location), extention), getExtentionFromLocations(Tail(locations), extention String))
 
-
+/*
+function that get a location from its reference
+@param ref Reference reference object toward the location, assumed that it is a Location type
+@return Location matching the reference
+*/
 define function getExtentionFromLocationReference(ref Reference):
     First([Location] l where l.id = ref.id or l.id = Last(Split(ref.reference, '/')))
 
 
 
 /*
-function that get the intersection of the location managed by the ServiceProvider and part of the encounter as Site physicalType, Encounter location can be ingnored
-
+code that get the intersection of the location managed by the ServiceProvider and part of the encounter as Site physicalType, Encounter location can be ingnored
+takes the assumption that it is saved as 'Juridiction' in the Encounter.location
 */
 define getEncounterJuridiction:
     First(
@@ -510,10 +524,18 @@ define getEncounterJuridiction:
         where  Exists(
           getEncounter.location el where el.physicalType ~ "Juridiction" and checkReference(l,el.location) 
         ))
-    
+/*
+  Code to get the Organisation acting as ServiceProvider
+  takes assumption that the Encounter.serviceProvider is set
+*/    
 define getEncounterServiceProvider:
     First([Organization] O where checkReference(O, getEncounter.serviceProvider))
 
+
+/*
+code to get the Location of the Encounter
+takes the assumption that it is saved as 'Site' in the Encounter.location
+*/
 define getEncouterSite:
      First(
       [Location] l 
@@ -535,21 +557,69 @@ define getEncounterServiceProviderHealthCareService:
         where Exists( H.location l where checkReference(getEncouterSite,l) )
         and checkReference(getEncounter.serviceProvider,H.providedBy)
 
-define "EmCare.B23.DE32a":
-   true
 
-define "EmCare.B23.DE32b":
-    true
+/*
+Generate the task input for the CPG collectWith Task
+@param canonical_url String url to the questionnaire, may contain version
+@return TaskInput 
+*/
+//Reference {reference: string { value: reference_str }}
 
-define "getPostCordination_EmCare.B23.DE32":
-    if "EmCare.B23.DE32a" then { Extension {
-        url : uri {value: 'https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/postcoordination'},
-        value: FHIR.CodeableConcept {coding: { FHIR.Coding { system: FHIR.uri { value : 'https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/che-custom-codes' }, code: FHIR.code {value: 'EmCare.B23.DE32a' } } } }
-    } }
-    else null
-    |
-    if "EmCare.B23.DE32b" then { Extension {
-        url : uri {value: 'https://fhir.dk.swisstph-mis.ch/matchbox/fhir/StructureDefinition/postcoordination'},
-        value: FHIR.CodeableConcept {coding: { FHIR.Coding { system: FHIR.uri { value : 'https://fhir.dk.swisstph-mis.ch/matchbox/fhir/CodeSystem/che-custom-codes' }, code: FHIR.code {value: 'EmCare.B23.DE32b' } } } }
-    } }
-    else null
+define function getTaskInputCollectWith(canonical_url System.String):
+  FHIR.Task.Input {
+    type: CodeableConcept {
+      coding: { Coding { 
+        system: FHIR.uri { value : "ActivityType".id }, 
+        code: code {value: 'collect-information' } 
+      }} 
+    },
+    value: FHIR.canonical {value:canonical_url}  }
+
+
+
+
+
+define function ToFHIR(in_type System.DateTime):
+    FHIR.dateTime {value: in_type}
+
+/*
+generate condition with postcordination
+@param stem FHIR.Coding, codign of the condition
+@param pc_list List<Tuple{id FHIR.Coding, value System.Boolean}> see generatePostcoordination
+@return Condition
+*/
+define function generateCond(stem FHIR.Coding, pc_list List<Tuple{id FHIR.Coding, value System.Boolean}>) returns Condition:
+  generateCondition(stem , generatePostcoordination(pc_list) )
+
+define function generateCondition(stem FHIR.Coding, pc_list List<Extension>) returns Condition:
+  FHIR.Condition {
+        clinicalStatus: FHIR.CodeableConcept {coding: {FHIR.Coding {system: FHIR.uri {value: "ClinicalStatus".id}, code: FHIR.code {value : 'active'}}}},
+        verificationStatus: FHIR.CodeableConcept {coding: {FHIR.Coding {system: FHIR.uri {value :"VerificationStatus".id} , code: FHIR.code {value : 'provisional'}}}},
+        code:  FHIR.CodeableConcept {coding: {stem}}, 
+        subject: getPatientReference,
+        encounter: getEncounterReference,
+        recordedDate:  ToFHIR(Now()),
+        extension: pc_list
+  }
+
+
+/*
+Generate the postcoordination Extension list base on a list of Coding of postcoordination and thier validitiy logic
+@param  List<Tuple{
+  id FHIR.Coding,  Coding of postcoordination
+  value System.Boolean validity logic for the postcoordination
+  }>
+@return List<Extension> 
+
+*/
+define function generatePostcoordination(pc_list List<Tuple{id FHIR.Coding, value System.Boolean}>) returns List<Extension>:
+    pc_list pc
+    aggregate ext starting (null as List<Extension>): ext union (
+      if pc.value then { Extension {
+        url : uri {value:  "canonical_base"+'StructureDefinition/postcoordination'},
+        value: FHIR.CodeableConcept {coding: { pc.id } }
+      } }
+      else List{} as List<Extension>
+    )
+
+

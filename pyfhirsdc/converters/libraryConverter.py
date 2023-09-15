@@ -95,10 +95,30 @@ def generate_library(name, df_actions, type = 'pd', description = None):
     cql, list_inputs =format_cql_df(library, df_actions, type)
     if type in ('q','c','r'):
         cql['backref'] = write_cql_action(
-            'BackReference',
-            'back reference to resource', 
-            """Reference {{reference: string {{ value: 'Questionnaire/{}'}}}}""".format(clean_name(name)), 
+            'TaskInputReference',
+            'generate a Task input including the canonical url to the questionnaire', 
+            f"pfsdc.getTaskInputCollectWith('Questionnaire/{clean_name(name)}')"
             '')
+        cql['eref'] = write_cql_action(
+            'getEncounterReference',
+            'pull Encounter ref', 
+            "pfsdc.getEncounterReference"
+            '')
+        cql['pref'] = write_cql_action(
+            'getPatientReference',
+            'pull Patient ref',
+            "pfsdc.getPatientReference"
+            '')
+        cql['now'] = write_cql_action(
+            'Now',
+            'execution time',
+            "Now()"
+            '')
+        cql['mdref'] = write_cql_action(
+            'getPractitionerReference',
+            'pull Practitioner ref',
+            "pfsdc.getPractitionerReference"
+            '')        
     if len(cql)>1:
         output_lib_path = os.path.join(
                 get_processor_cfg().outputPath,
@@ -487,7 +507,8 @@ def format_cql_df(library, df_actions,  type):
                 if pd.notna(row['label']):
                     cql[i] = write_cql_alias(ROW_EXPRESSIONS['enableWhenExpression']['prefix'], row['label'],ref)
                     i += 1
-                cql,i = get_postcoordinations_cql(row, cql,i,df_actions,list_inputs)
+                if     row['type'].strip().lower() == 'condition':
+                    cql,i = get_condition_cql(row, cql,i,df_actions,list_inputs)
             while  i > oi :
                 cql[oi] = inject_config(cql[oi])
                 oi+=1
@@ -503,29 +524,48 @@ def format_cql_df(library, df_actions,  type):
     cql['header'] += writeGetObs(list_inputs)
     return cql, list_inputs
 
-def get_postcoordinations_cql(row, cql,i,df_actions,list_inputs):
-
+def get_condition_cql(row, cql,i,df_actions,list_inputs):
+    #generateCondition(stem System.String, pc_list List<Tuple{de_id System.String, value System.Boolean}>)
     postcoordinations = df_actions[(df_actions['parentId'] == row['id']) & (df_actions['type'] == 'postcoordination')]['id'].tolist()
-    if len(postcoordinations) > 0:  
-        cql_exp_raw = '|'.join(get_postcoordination_cql(postcoordinations))
-        cql_exp = convert_reference_to_cql(cql_exp_raw,df_actions, list_inputs)
-        cql[i] = write_cql_action(row['id'],cql_exp_raw, cql_exp, 'getPostCordination_',display=None)
-        i+=1
-    
+    pc_list =  [f"""if Coalesce("{pc}", false) then {{
+            Extension {{ url : uri {{value:  "canonical_base"+'StructureDefinition/postcoordination'}},
+                value: FHIR.CodeableConcept {{coding: {{  FHIR.Coding {{system: FHIR.uri {{value :"canonical_base"}} , 
+                    code: FHIR.code {{value : '{pc}'}}
+            }} }} }} }}}}
+        else List{{}} as List<Extension>
+        """ for pc in postcoordinations ]
+    if len(pc_list) == 0:
+        pc_list = ['List{}']
+    cql_exp_raw = f"""
+    pfsdc.generateCondition(
+        FHIR.Coding {{
+            system: FHIR.uri {{value :\"custom_code_system\"}} , 
+            code: FHIR.code {{value : '{row['id']}' }}}}, 
+        ({'|'.join(pc_list)}) as List<Extension>)
+    """
+    cql[i] = write_cql_action(row['id'],f"Generate condition {row['label']}", cql_exp_raw, 'generateCondition_',display=None)
+    i+=1
     return cql,i
 
-def get_postcoordination_cql(postcoordinations):
-    cql= []
-    for postcoordination in postcoordinations:
-        
-        cql.append( f"""
-if "{postcoordination}" then {{ Extension {{
-    url : uri {{value: '{get_fhir_cfg().canonicalBase + 'StructureDefinition/postcoordination'}'}},
-    value: FHIR.CodeableConcept {{coding: {{ FHIR.Coding {{ system: FHIR.uri {{ value : '{get_custom_codesystem_url()}' }}, code: FHIR.code {{value: '{postcoordination}' }} }} }} }}
-}} }}
-else null
-        """)
-    return cql
+#def get_postcoordinations_cql(row, cql,i,df_actions,list_inputs):
+#    postcoordinations = df_actions[(df_actions['parentId'] == row['id']) & (df_actions['type'] == 'postcoordination')]['id'].tolist()
+#    if len(postcoordinations) > 0:  
+#        cql_exp = '|'.join(get_postcoordination_cql(postcoordinations))
+#        cql[i] = write_cql_action(row['id'],f"Generate postcoordination Extension {row['label']}", cql_exp, 'getPostCordination_',display=None)
+#        i+=1 
+#    return cql,i
+
+#def get_postcoordination_cql(postcoordinations):
+#    cql= []
+#    for postcoordination in postcoordinations:
+#        cql.append( f"""
+#if "{postcoordination}" then {{ Extension {{
+#    url : uri {{value: '{get_fhir_cfg().canonicalBase + 'StructureDefinition/postcoordination'}'}},
+#    value: FHIR.CodeableConcept {{coding: {{ FHIR.Coding {{ system: FHIR.uri {{ value : '{get_custom_codesystem_url()}' }}, code: FHIR.code {{value: '{postcoordination}' }} }} }} }}
+#}} }}
+#else null as List<Extension>
+#        """)
+#    return cql
 
 
 def writeGetObs(list_inputs):

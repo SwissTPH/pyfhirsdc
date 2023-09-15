@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyfhirsdc"
-version = "0.1.2"
+version = "0.1.3"
 description = "A tool for FHIR structure data capture"
 dependencies = [
     "wheel",

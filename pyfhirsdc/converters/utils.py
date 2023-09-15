@@ -63,13 +63,13 @@ def get_pyfhirsdc_lib_name(name, force=False):
         return adv_clean_name(LIBRARY_NAME.format(name))
     
     # resource use clean_name for their id while library use adv_clean_name, conflict should be avoided
-    elif any([clean_name(s)==name for s in [ *get_dict_df()['questionnaires'].keys(), 
+    elif any([clean_name(s)==adv_clean_name(name) for s in [ *get_dict_df()['questionnaires'].keys(), 
                    *get_dict_df()['libraries'].keys(), 
                    *get_dict_df()['conditions'].keys(),
                    *get_dict_df()['recommendations'].keys()]]):
         return adv_clean_name(LIBRARY_NAME.format(name))
     else:
-        return name
+        return adv_clean_name(name)
 
 def get_resource_name(resource_type, name):
     return resource_type.lower()+ "-"+ clean_name(name)

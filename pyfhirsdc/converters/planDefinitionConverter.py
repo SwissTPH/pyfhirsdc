@@ -98,12 +98,15 @@ def value_not_na(value):
 
 def get_triggers(row):
     raw_trigger = row["trigger"]
+    
     if pd.notna(raw_trigger):
-        trigger = TriggerDefinition.construct()
-        raw_trigger= raw_trigger.split(' ', 1)
-        trigger.type =raw_trigger[0]
-        trigger.name = raw_trigger[1]
-        return [trigger]
+        
+        raw_trigger= raw_trigger.split('::', 1)
+        if len(raw_trigger)>1:
+            trigger = TriggerDefinition.construct()
+            trigger.type =raw_trigger[0]
+            trigger.name = raw_trigger[1]
+            return [trigger]
 
         
 def get_conditions(row):
@@ -126,7 +129,9 @@ def process_decisiontable(planDefinition, df):
         get_fhir_cfg().PlanDefinition.planDefinitionType.Code
     )
     ## list all the actions with no parents
-    planDefinition.action = get_actions(None, df)
+    action_df = df[df['type'].str.startswith('action')]
+    #TODO remove the backward compatibility at some point
+    planDefinition.action = get_actions(None, action_df if len(action_df)>0 else df)
     return planDefinition
 
 def get_actions(parent_action_id, df):
