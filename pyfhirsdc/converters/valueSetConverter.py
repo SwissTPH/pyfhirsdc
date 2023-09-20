@@ -8,7 +8,7 @@ from fhir.resources.R4B.valueset import (ValueSetCompose, ValueSetComposeInclude
 
 from pyfhirsdc.config import get_dict_df, get_processor_cfg, set_dict_df
 from pyfhirsdc.converters.extensionsConverter import get_item_media_ext
-from pyfhirsdc.converters.utils import get_custom_codesystem_url, get_media
+from pyfhirsdc.converters.utils import get_custom_codesystem_url, get_media, METADATA_CODES
 
 
 def get_value_set_compose(compose, name, df_value_set_in):
@@ -172,15 +172,6 @@ def get_value_set_title(vs, line):
 
 #TODO: check if it makes sense to have the valuset special id mixed with questionnaire/libs ones
 
-METADATA_CODES =  [
-        '{{title}}',
-        '{{exclude}}',
-        '{{include}}',
-        '{{choiceColumn}}',
-        '{{url}}',
-        '{{library}}',
-        '{{cql}}'
-         ]
 
 def get_value_set_additional_data_keyword():
     return METADATA_CODES

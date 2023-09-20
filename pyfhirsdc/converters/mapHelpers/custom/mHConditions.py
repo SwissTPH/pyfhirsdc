@@ -8,7 +8,7 @@ from pyfhirsdc.converters.mapHelpers.utils import get_timestamp_rule, wrapin_ent
 from pyfhirsdc.config import get_defaut_path, get_fhir_cfg
 from pyfhirsdc.converters.mapHelpers.utils import wrapin_fpath
 
-from pyfhirsdc.converters.utils import (clean_group_name, 
+from pyfhirsdc.converters.utils import (adv_clean_name, 
                                         get_custom_codesystem_url)
 from pyfhirsdc.converters.valueSetConverter import (get_condition_valueset_df,
                                                     get_valueset_df)
@@ -21,7 +21,7 @@ logger = logging.getLogger("default")
 # args[x] post-coordination linkid under the item
 def SetCondition(mode, profile, question_id,df_questions,*args):
     #FIXME
-    rule_name = clean_group_name(profile+question_id)
+    rule_name = adv_clean_name(profile+question_id)
     if mode == 'rules':
         return [
             wrapin_fpath(
@@ -69,7 +69,7 @@ def get_condition_conf_status_rules():
 # args[x] post-coordination linkid under the item
 def SetConditionYesNo(mode, profile, question_id,df_questions,*args):
     #FIXME
-    rule_name = clean_group_name(profile+question_id)
+    rule_name = adv_clean_name(profile+question_id)
     if mode == 'rules':
         return [
             wrapin_fpath(
@@ -173,7 +173,7 @@ def get_base_cond_muli_rules(profile, question_id,df_questions,df_valueset):
     
     #src where src.item.where(linkId='EmCare.A.DE16').answer.exists(value.code = 'EmCare.A.DE17')=false -> tgt.gender = 'male' 'emcareade17';
     for index, row in df_valueset.iterrows():
-        rule_name = clean_group_name(profile + question_id + row['code']) 
+        rule_name = adv_clean_name(profile + question_id + row['code']) 
         code=row['code']
         rules.append(MappingRule(
             expression = "src where src.item.where(linkId='{0}').answer.where(value.code = '{1}') ".format(question_id, code),
@@ -187,6 +187,6 @@ def get_base_cond_muli_rules(profile, question_id,df_questions,df_valueset):
 def get_base_cond_muli_groups(profile, question_id,df):
     groups = []
     for index, row in df.iterrows():
-        rule_name = clean_group_name(profile + question_id + row['code']) 
+        rule_name = adv_clean_name(profile + question_id + row['code']) 
         groups.append(set_generic_condition(rule_name,row['code'],get_add_classification_status_rules()))
     return groups

@@ -1,14 +1,14 @@
 import logging
 
-from pyfhirsdc.converters.utils import clean_group_name
+from pyfhirsdc.converters.utils import adv_clean_name
 from pyfhirsdc.models.mapping import MappingGroup, MappingGroupIO, MappingRule
 
 logger = logging.getLogger("default")
 ### create related person
 # args[0] linkid for relatedPerson
 def SetCommunicationRequest(mode, profile, question_id,df_questions,*args):
-    rule_name = clean_group_name(profile+question_id)
-    id_prefix = clean_group_name(profile)
+    rule_name = adv_clean_name(profile+question_id)
+    id_prefix = adv_clean_name(profile)
     if mode == 'rules':
         return None
     elif mode == 'groups':

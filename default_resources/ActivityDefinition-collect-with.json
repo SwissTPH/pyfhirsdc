@@ -1,0 +1,67 @@
+{
+  "resourceType" : "ActivityDefinition",
+  "id" : "activity-example-collectinformation-ad",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-collectinformationactivity"]
+  },
+  "url" : "http://hl7.org/fhir/uv/cpg/ActivityDefinition/activity-example-collectinformation-ad",
+  "version" : "1.0.0",
+  "name" : "ActivityExampleCollectInformation",
+  "status" : "active",
+  "experimental" : true,
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "http://unstats.un.org/unsd/methods/m49/m49.htm",
+      "code" : "001",
+      "display" : "World"
+    }]
+  }],
+  "kind" : "Task",
+  "profile" : "http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-questionnairetask",
+  "code" : {
+    "coding" : [{
+      "system" : "http://hl7.org/fhir/uv/cpg/CodeSystem/cpg-activity-type-cs",
+      "code" : "collect-information",
+      "display" : "Collect information"
+    }]
+  },
+  "intent" : "proposal",
+  "priority" : "routine",
+  "doNotPerform" : false,
+  "dynamicValue" : [
+  {
+    "path" : "for",
+    "expression" : {
+      "language" : "text/cql.identifier",
+      "expression" : "getPatientReference"
+    }
+  },
+  {
+    "path" : "encounter",
+    "expression" : {
+      "language" : "text/cql.identifier",
+      "expression" : "getEncounterReference"
+    }
+  },
+  {
+    "path" : "authoredOn",
+    "expression" : {
+      "language" : "text/cql.identifier",
+      "expression" : "Now"
+    }
+  },
+  {
+    "path" : "owner",
+    "expression" : {
+      "language" : "text/cql.identifier",
+      "expression" : "getPractitionerReference"
+    }
+  },
+  {
+    "path" : "input",
+    "expression" : {
+      "language" : "text/cql.identifier",
+      "expression" : "TaskInputReferencee"
+    }
+  }]
+}

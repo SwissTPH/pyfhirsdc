@@ -6,7 +6,7 @@ import pandas as pd
 
 
 from pyfhirsdc.converters.mapHelpers.utils import get_obs_meta_rule, get_rand_identifier_rule, get_timestamp_rule, wrapin_entry_create, wrapin_first_answers_rules
-from pyfhirsdc.converters.utils import (clean_group_name, 
+from pyfhirsdc.converters.utils import (adv_clean_name, 
                                         get_custom_codesystem_url, get_type_details)
 from pyfhirsdc.converters.valueSetConverter import (get_valueset_df)
 from pyfhirsdc.models.mapping import ( MappingGroup, MappingGroupIO,
@@ -17,7 +17,7 @@ logger = logging.getLogger("default")
 
 def SetObservationValueSetStr(mode, profile, question_id, df_questions, *args):
     #row = df_questions[df_questions.id == question_id].head(1)
-    rule_name = clean_group_name(profile + question_id ) 
+    rule_name = adv_clean_name(profile + question_id ) 
     if len(args)!= 1:
         logger.error('SetObservation must have 1 parameters')
         return None
@@ -48,14 +48,14 @@ def get_generic_obs_cancelled_group():
 def SetObservationCodeStr(mode, profile, question_id,df_questions_item, *args):
     if mode == 'groups':
         code =  question_id
-        rule_name = clean_group_name(question_id)
+        rule_name = adv_clean_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_code_str_rules(code,df_questions_item))]
     elif mode == 'docs':
         return get_base_obs_docs(question_id, 'CodeableConcept', df_questions_item)
     
     
 def get_obs_code_str_rules(question_id, df_questions_item):
-    rule_name = clean_group_name(question_id)
+    rule_name = adv_clean_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
         expression = "a.value as val",
     rules = [ MappingRule(
@@ -72,13 +72,13 @@ def SetObservationCode(mode, profile, question_id,df_questions_item, *args):
     if mode == 'groups':
         none_name = args[0] if len(args)>1 else 'none'
         code =  question_id
-        rule_name = clean_group_name(question_id)
+        rule_name = adv_clean_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_value_rules(code,df_questions_item, none_name))]
     elif mode == 'docs':
         return get_base_obs_docs(question_id, 'CodeableConcept', df_questions_item)
     
 def get_obs_value_rules(question_id, df_questions_item,none_name):
-    rule_name = clean_group_name(question_id)
+    rule_name = adv_clean_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
         expression = "a.value as val",
     rules = [MappingRule(
@@ -116,7 +116,7 @@ def SetObservation(mode,  profile, question_id,df_questions_item, *args):
 def SetObservationQuantity(mode,  profile, question_id,df_questions_item, *args):
     if mode == 'groups':
         code = question_id
-        rule_name = clean_group_name(question_id)
+        rule_name = adv_clean_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_qty_value_rules(code,df_questions_item))]
     elif mode == 'docs':
         return get_base_obs_docs(question_id, 'Quantity', df_questions_item)
@@ -132,7 +132,7 @@ def get_base_obs_docs(question_id, valueType, df_questions_item):
         }
 
 def get_obs_qty_value_rules(question_id,df_questions_item):
-    rule_name = clean_group_name(question_id)
+    rule_name = adv_clean_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item, [MappingRule(
                 expression = "a.value as val -> tgt.value = val, tgt.status = 'final'"
             )])]
@@ -142,7 +142,7 @@ def get_obs_qty_value_rules(question_id,df_questions_item):
 def SetObservationNotFound(mode, profile, question_id,df_questions_item, *args):
     if mode == 'groups':
         code = question_id
-        rule_name = clean_group_name(question_id)
+        rule_name = adv_clean_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code,get_obs_value_rules(get_notfound_rules(code,question_id, df_questions_item)))]
     elif mode == 'docs':
         return get_base_obs_docs(question_id, 'boolean', df_questions_item)
@@ -162,13 +162,13 @@ def SetObservationYesNo(mode, profile, question_id,df_questions_item, *args):
 
     if mode == 'groups':
         code =  question_id
-        rule_name = clean_group_name(question_id)
+        rule_name = adv_clean_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code, get_obs_yes_no_rules(code,df_questions_item))]
     elif mode == 'docs':
         return get_base_obs_docs(question_id, 'boolean', df_questions_item)
     
 def get_obs_yes_no_rules(question_id,df_questions_item,):
-    rule_name = clean_group_name(question_id)
+    rule_name = adv_clean_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
         expression = "a  where a.value = 'yes' -> tgt.status = 'final', tgt.value = true ",
         name = 'final-{}'.format(rule_name)
@@ -183,13 +183,13 @@ def get_obs_yes_no_rules(question_id,df_questions_item,):
 def SetObservationBoolean(mode, profile, question_id,df_questions_item, *args):
     if mode == 'groups':
         code =  question_id
-        rule_name = clean_group_name(question_id)
+        rule_name = adv_clean_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code,get_obs_bool_rules(code, df_questions_item))]
     elif mode == 'docs':
         return get_base_obs_docs(question_id, 'boolean', df_questions_item)
     
 def get_obs_bool_rules(question_id, df_questions_item):
-    rule_name = clean_group_name(question_id)
+    rule_name = adv_clean_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
         expression = "a  where a.value = true -> tgt.status = 'final', tgt.value = true",
         name = 'final-{}'.format(rule_name)
@@ -205,7 +205,7 @@ def get_obs_bool_rules(question_id, df_questions_item):
 def SetObservationCodeBoolean(mode, profile, question_id,df_questions_item, *args):
     if mode == 'groups':
         code =  question_id
-        rule_name = clean_group_name(question_id)
+        rule_name = adv_clean_name(question_id)
         return [set_generic_observation_v2( profile, rule_name, code,get_obs_bool_code_rules(code, df_questions_item, *args))]
     elif mode == 'docs':
         return get_base_obs_docs(question_id, 'boolean', df_questions_item)
@@ -230,7 +230,7 @@ def get_obs_bool_code_rules(question_id, df_questions_item, *args ):
         name = 'unknown-{}'.format(rule_name)
         ))
     
-    rule_name = clean_group_name(question_id)
+    rule_name = adv_clean_name(question_id)
     return [ wrapin_first_answers_rules(rule_name, question_id, df_questions_item,[MappingRule(
         expression = "a.value as val",
     rules =  rules)])]
@@ -297,13 +297,13 @@ def get_base_obs_muli_rules(profile, question_id,df_questions,df_valueset, none_
         
                 row_id = row['code']
                 code  = question_id+ "&" +  row_id if concat else row_id
-                rule_name = clean_group_name( profile + code + 't')
+                rule_name = adv_clean_name( profile + code + 't')
                 rules.append(MappingRule(
                     expression = "src where src.item.where(linkId='{0}').answer.where(value.code = '{1}') ".format(question_id, row_id),
                     rules = [wrapin_entry_create( profile, question_id,df_questions,[MappingRule(expression = 'src then {}(src,tgt)'.format(rule_name) )])]
                 ))
                 
-                rule_name = clean_group_name( profile + code+ 'f')
+                rule_name = adv_clean_name( profile + code+ 'f')
                 rules.append(MappingRule(
                     expression = "src where src.item.where(linkId='{0}').exists() and src.item.where(linkId='{0}').answer.where(value.code = '{1}').empty()  ".format(question_id, row_id),
                     rules = [wrapin_entry_create(profile, question_id,df_questions, [MappingRule(expression = 'src then {}(src,tgt)'.format(rule_name) )])]
@@ -322,20 +322,20 @@ def get_base_obs_muli_groups(profile, question_id,df,none_code = None, concat = 
             row_id = row['code']
             if none_code is None or  row_id !=  none_code:
                 code  =question_id+ "&" +  row_id if concat else row_id
-                rule_name = clean_group_name( profile + code + 't')
+                rule_name = adv_clean_name( profile + code + 't')
                 groups.append(
                     set_generic_observation_v2(profile, rule_name, code, [MappingRule(expression = "src -> tgt.status = 'final', tgt.value = true")],'t')
                 )
-                rule_name = clean_group_name( profile + code+ 'f')
+                rule_name = adv_clean_name( profile + code+ 'f')
                 groups.append(
                     set_generic_observation_v2(profile, rule_name, code, [MappingRule(expression = "src -> tgt.status = 'cancelled',tgt.value = false",)],'f')
                 )
     return groups        
 
 def set_generic_observation_v2(profile, rule_name, code ,spe_rules, sufix = ''):
-    profile = clean_group_name(profile)
+    profile = adv_clean_name(profile)
     return MappingGroup (
-        name = clean_group_name(profile+code+sufix),
+        name = adv_clean_name(profile+code+sufix),
         sources = [
             MappingGroupIO(name = 'src'), # type questionnaireResponse
         ],

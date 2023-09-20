@@ -29,7 +29,7 @@
         },        {
             "type": "string",
             "use": "in",
-            "name":"cannonical_base"
+            "name":"canonical_base"
 
         },        {
             "type": "string",
@@ -54,7 +54,7 @@
     ],
     "content": [
         {
-            "id": "ig-loader-chebase.cql",
+            "id": "ig-loader-pyfhirsdc.cql",
             "contentType": "text/cql"
         }
         

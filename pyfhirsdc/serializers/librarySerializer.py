@@ -38,7 +38,7 @@ using FHIR version '{get_fhir_cfg().version}'
 include FHIRHelpers version '{get_fhir_cfg().version}' called FHIRHelpers 
 {get_include_lib(libs, library)}
 
-parameter "cannonical_base" String default '{get_fhir_cfg().canonicalBase}'
+parameter "canonical_base" String default '{get_fhir_cfg().canonicalBase}'
 parameter "custom_code_system" String default '{get_custom_codesystem_url()}' 
 {get_include_parameters(library.parameter)}
 
@@ -168,7 +168,7 @@ docs are list of this structure
 
 
 
-def write_cql_action(name,desc, cql_exp, prefix,display=None):
+def write_cql_action(name,desc, cql_exp, prefix=None,display=None):
 
     ret =   """
 /* 

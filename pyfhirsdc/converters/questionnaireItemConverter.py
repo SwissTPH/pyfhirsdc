@@ -29,7 +29,7 @@ from pyfhirsdc.converters.extensionsConverter import (
     get_rendering_style_ext, get_slider_ext, get_subquestionnaire_ext,
     get_toggle_ext, get_unit_ext, get_variable_extension, get_background_color_style_ext)
 from pyfhirsdc.converters.utils import (get_custom_codesystem_url, get_media,
-                                        get_resource_url,get_type_details)
+                                        get_resource_url,get_type_details,QUESTION_TYPE_MAPPING)
 from pyfhirsdc.converters.valueSetConverter import (
     get_condition_valueset_df, get_value_set_answer_options, get_valueset_df)
 from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
@@ -96,34 +96,7 @@ def get_initial_value(question): #TODO remove when uuid will be supported in cal
             )]
 
 
-QUESTION_TYPE_MAPPING = {
-                'select_one':'choice',
-                'select_multiple':'choice',
-                'select_boolean': 'choice',
-                'select_condition': 'choice',
-                'mapping': None,
-                '{{cql}}':None,
-                'variable':None,
-                "checkbox" : "boolean",
-                "phone" : "string",
-                "text" : "text",
-                "string" : "string",
-                "boolean" : "boolean",
-                "date" : "date",
-                "datetime" : "dateTime",
-                "time" : "time",
-                "decimal" :"decimal",
-                "display": "display",
-                "note":"display",
-                "quantity" :"quantity",
-                "integer" :"integer",
-                "number" :"integer",
-                "codeableconcept": "CodeableConcept",
-                "reference" : "Reference",
-                'group':'group',
-                'questionnaire':'group',
-                'choice':'choice'   
-}
+
 
 
 ## maps the type of the question e.g. checkbox, to its respective data
@@ -204,7 +177,7 @@ def get_question_extension(question, question_id, df_questions = None ):
         extensions = get_question_choice_column(extensions, detail_1)
     if "hidden"  in display:
         extensions.append(get_hidden_ext())
-    elif "instruction" in display  and type in ["display","note"] :
+    elif "instruction" in display  and type in ["display","note"]:
         extensions.append(get_instruction_ext())
 
     if "media" in question and pd.notna(question["media"]) and question["media"] !='' and\
