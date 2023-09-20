@@ -82,7 +82,7 @@ def update_eml_content(multipart, id, ext):
     # create the multipart payload
     # add dependencies recursivly
     logger.info("sending cql {}".format(id))
-    data = post_multipart(multipart, get_processor_cfg().cql_translator+"?format="+ext)
+    data = post_multipart(multipart, get_processor_cfg().cql_translator+('&' if '?' in get_processor_cfg().cql_translator else '?') +"format="+ext)
     if data is not None:
         
         for elm in data.parts:

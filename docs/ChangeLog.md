@@ -1,6 +1,14 @@
+#### 06-09-2023
+
+- version 0.1.2
+- METADATA should be put in label instead of decription for questionnaire, conditions, reauirement, library
+- description column replace by label in pd
+- add support of condition worksheet type (c.)
+
+
 #### 29-08-2023
 
-- BREAKING base library (pyfhirsdc) move inside the project because there are required, it means pfsdc. should be used instead of Base. import type: include pyfhirsdc version '1.0.0' alias pfsdc
+- BREAKING base library (pyfhirsdc) move inside the project because there are required, it means pfsdc. should be used instead of Base. import type: include pyfhirsdc version '{{pyfhirsdc_version}}' alias pfsdc
 - Version of will follow the module version
 - add Author to the processor config
 - add param to each library

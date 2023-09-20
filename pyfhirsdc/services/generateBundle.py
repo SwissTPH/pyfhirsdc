@@ -30,16 +30,17 @@ def write_bundle(conf):
         # giving file extensions
         ext = ('.json')
         # iterating over directory and subdirectory to get desired result
-        dirs = []  
+        tree = [{None}]  
         for path, dirc, files in os.walk(folderdir, topdown=True):
-            dirs[:] = [d for d in dirc if d not in exclude_folders]
+#            tree = [*tree,*[{path, d, files} for d in dirc if d not in exclude_folders]]
 
 #TODO: Find a workaround to remove the nested for loops if it is possible 
-        for path, dirs, files in dirs:
-            for name in files:
-                if name.endswith(ext) and not name.startswith("bundle"):
-                    logger.debug('{}{}{}{}'.format(conf, path, dirc , name)) # printing file name
-                    add_resource(path,name,bundle)        
+#        for path, dirs, files in tree:
+            if dirc not in exclude_folders:
+                for name in files:
+                    if name.endswith(ext) and not name.startswith("bundle"):
+                        logger.debug('{}{}{}{}'.format(conf, path, dirc , name)) # printing file name
+                        add_resource(path,name,bundle)        
                         
     bundle_name = os.path.join(folderdir,'bundle-{}.json'.format(get_fhir_cfg().lib_version))
     std_name = os.path.join(folderdir,'bundle.json')

@@ -22,6 +22,7 @@ def generate_conditions():
 def generate_conditions_activity_definition(name ,df_conditions,library):
     for index, row in df_conditions.iterrows():
         if ('map_profile' in row and pd.notna(row['map_profile']) and  'SetCondition' in row['map_profile'] )or (pd.notna(row['type'])  and row['type'].strip() == 'condition'):
+
             activity= create_activity_propose_diagnosis(row,library)
                 # write file
             fullpath = get_resource_path("ActivityDefinition",activity.id)

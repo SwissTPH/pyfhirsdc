@@ -6,6 +6,7 @@ import pandas as pd
 from pyfhirsdc.config import *
 from pyfhirsdc.serializers.inputFile import parse_sheets, read_input_file, parse_excel_sheets
 from pyfhirsdc.services.generateActivities import generate_activities
+from pyfhirsdc.services.generateConditions import generate_conditions
 from pyfhirsdc.services.generateCodeSystem import generate_custom_code_system
 from pyfhirsdc.services.generateLibraries import generate_libraries
 from pyfhirsdc.services.generateValueSet import generate_value_sets
@@ -33,12 +34,13 @@ def process_input_file(conf):
             generate_custom_code_system()  
             # generate questionnaire
             generate_questionnaires()
+            generate_conditions()
             # generate libraries
             generate_libraries()
             # generate the valueSet
             generate_value_sets()
             # generate profiles
-            generate_profiles()
+            #generate_profiles()
 
             # generate conceptMap
 

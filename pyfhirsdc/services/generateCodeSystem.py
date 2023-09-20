@@ -17,7 +17,7 @@ from pyfhirsdc.config import (get_defaut_fhir, get_defaut_path, get_dict_df, get
 from pyfhirsdc.converters.codeSystemConverter import (
     generate_condition_concept, generate_observation_concept,
     generate_questionnaire_concept, generate_valueset_concept)
-from pyfhirsdc.converters.utils import (clean_group_name,
+from pyfhirsdc.converters.utils import (adv_clean_name, get_pyfhirsdc_lib_name,
                                         get_codableconcept_code,
                                         get_custom_codesystem_url,
                                         get_resource_url)
@@ -85,12 +85,12 @@ def generate_other_valueset_libs(question_concepts,list_name,add_to_valueset = F
     
     if len(question_concepts)>0:    
         name_vs = get_processor_cfg().scope.lower() + list_name
-        lib_id = clean_group_name(name_vs)
+        lib_id = get_pyfhirsdc_lib_name(name_vs)
         lib = Library(
             status= 'active',
             id=lib_id,
             name=name_vs,
-            url = get_resource_url('Library', clean_group_name(name_vs)),
+            url = get_resource_url('Library', lib_id),
             version=get_fhir_cfg().lib_version,
             type = get_codableconcept_code( 
             "http://hl7.org/fhir/ValueSet/library-type", 

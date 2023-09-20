@@ -42,8 +42,10 @@ def generate_questionnaire( name ,df_questions) :
     # get title is any
     title =     df_questions[df_questions.id == '{{title}}']
     if len(title)>0:
-        questionnaire.title = title.iloc[0]['description']
-    
+        questionnaire.title = title.iloc[0]['label']
+    inline_id =     df_questions[df_questions.id == '{{id}}']
+    if len(inline_id)>0:
+        questionnaire.inline_id = title.iloc[0]['label']
     df_questions = inject_sub_questionnaires(df_questions)
     duplicates = df_questions[(df_questions.duplicated(subset=['id']) == True) & ~df_questions['id'].isin(get_value_set_additional_data_keyword())].dropna(axis=0, subset=['id'])
     if not duplicates.empty: 

@@ -14,7 +14,7 @@ from pyfhirsdc.config import get_fhir_cfg
 from pyfhirsdc.converters.extensionsConverter import (
     get_cql_epression, get_initial_expression_identifier_ext)
 from pyfhirsdc.converters.utils import (clean_name, get_codableconcept_code,
-                                        init_list, init_resource_meta)
+                                        init_list, init_resource_meta, METADATA_CODES, QUESTION_TYPE_MAPPING)
 
 from pyfhirsdc.converters.libraryConverter import ROW_EXPRESSIONS
 
@@ -22,11 +22,12 @@ logger = logging.getLogger("default")
 
 ## Goes through a row and maps it to FHIR action 
 def process_action(row):
-    if "{{" not in row["id"] and pd.notna(row["id"]) and row["id"] != '':
+    if row["id"] not in METADATA_CODES and pd.notna(row["id"]) and row["id"] != '' and row['type'] not in QUESTION_TYPE_MAPPING:
+        
         # Check if any of the rows has empty cells in the relevant columns, stop if so
         action = PlanDefinitionAction(
             id = clean_name(row["id"]),
-            description = value_not_na(row["description"]),
+            description = value_not_na(row["label"] if 'label' in row else row["description"]),
             definitionCanonical = Canonical(row["definitionCanonical"].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)) if pd.notna(row["definitionCanonical"]) else None,
             title = value_not_na(row["title"]),
             trigger = get_triggers(row),
@@ -61,7 +62,8 @@ CPG_COMMON_PROCESSES = [
 ]
 
 def get_cpg_comon_process_type(row):
-    if pd.notna(row["type"]) and row["type"] in CPG_COMMON_PROCESSES:
+    process_code = row["type"].split(' ')[-1:] if pd.notna(row["type"]) else None
+    if  process_code in CPG_COMMON_PROCESSES:
         return get_codableconcept_code(
             'http://hl7.org/fhir/uv/cpg/CodeSystem/cpg-common-process', 
             row["type"])
@@ -96,12 +98,15 @@ def value_not_na(value):
 
 def get_triggers(row):
     raw_trigger = row["trigger"]
+    
     if pd.notna(raw_trigger):
-        trigger = TriggerDefinition.construct()
-        raw_trigger= raw_trigger.split(' ', 1)
-        trigger.type =raw_trigger[0]
-        trigger.name = raw_trigger[1]
-        return [trigger]
+        
+        raw_trigger= raw_trigger.split('::', 1)
+        if len(raw_trigger)>1:
+            trigger = TriggerDefinition.construct()
+            trigger.type =raw_trigger[0]
+            trigger.name = raw_trigger[1]
+            return [trigger]
 
         
 def get_conditions(row):
@@ -124,7 +129,9 @@ def process_decisiontable(planDefinition, df):
         get_fhir_cfg().PlanDefinition.planDefinitionType.Code
     )
     ## list all the actions with no parents
-    planDefinition.action = get_actions(None, df)
+    action_df = df[df['type'].str.startswith('action')]
+    #TODO remove the backward compatibility at some point
+    planDefinition.action = get_actions(None, action_df if len(action_df)>0 else df)
     return planDefinition
 
 def get_actions(parent_action_id, df):

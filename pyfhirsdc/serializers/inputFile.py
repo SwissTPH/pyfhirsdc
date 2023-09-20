@@ -39,23 +39,23 @@ def parse_sheets(input_file, excudedWorksheets):
     dfs_decision_table = {}
     df_value_set = None
     df_profile = None
-    df_extension = None
     df_changes = None
+    dfs_conditions = {}
+    dfs_recommendations = {}
     dfs_cql = {}
     for worksheet in worksheets:
         logger.info("loading sheet {0}".format( worksheet))
         if excudedWorksheets is None or worksheet not in excudedWorksheets:
             df = input_file.parse(worksheet)
+
             worksheet= worksheet.replace("_", ".")
             # strip space
             df = df.dropna(how='all').applymap(lambda x: x.strip() if type(x)==str else x)
-            if worksheet.startswith('q.'):
-                if validate_questionnaire_sheet(df):
-                    dfs_questionnaire[worksheet[2:31]] = df
-                else:
-                    break
-            elif worksheet.startswith('pd.'):
+            if worksheet.startswith('pd.'):
+                
                 if validate_decision_tables_sheet(df):
+                    id_from_df = df[df['id']=='{{id}}']
+                    name = worksheet[2:31] if len(id_from_df)==0 else id_from_df.iloc[0]['label']
                     dfs_decision_table[worksheet[3:]] = df
                 else:
                     break
@@ -65,18 +65,8 @@ def parse_sheets(input_file, excudedWorksheets):
                 else:
                     break
             elif worksheet == "profile":
-                if validate_value_set_sheet(df):
+                if validate_profile_sheet(df):
                     df_profile = df
-                else:
-                    break
-            elif worksheet == "extension":
-                if validate_value_set_sheet(df):
-                    df_extension = df
-                else:
-                    break
-            elif worksheet.startswith('l.'):
-                if validate_cql_sheet(df):
-                    dfs_cql[worksheet[2:31]] = df
                 else:
                     break
             elif worksheet == "changes":
@@ -84,6 +74,39 @@ def parse_sheets(input_file, excudedWorksheets):
                     df_changes = df
                 else: 
                     break
+            elif worksheet.startswith(('q.','l.','c.','r.')):
+                df = df.dropna(axis=0,subset=['type'])
+                if worksheet.startswith('q.'):
+                    if validate_questionnaire_sheet(df):
+                        id_from_df = df[df['id']=='{{id}}']
+                        name = worksheet[2:31] if len(id_from_df)==0 else id_from_df.iloc[0]['label']
+                        dfs_questionnaire[name] = df
+                    else:
+                        break
+                elif worksheet.startswith('c.'):
+                    if validate_condition_sheet(df):
+                        id_from_df = df[df['id']=='{{id}}']
+                        name = worksheet[2:31] if len(id_from_df)==0 else id_from_df.iloc[0]['label']
+                        dfs_conditions[name] = df
+                    else:
+                        break
+                elif worksheet.startswith('r.'):
+                    if validate_condition_sheet(df):
+                        id_from_df = df[df['id']=='{{id}}']
+                        name = worksheet[2:31] if len(id_from_df)==0 else id_from_df.iloc[0]['label']
+                        dfs_recommendations[name] = df
+                    else:
+                        break
+                elif worksheet.startswith('l.'):
+                    if validate_library_sheet(df):
+                        id_from_df = df[df['id']=='{{id}}']
+                        name = worksheet[2:31] if len(id_from_df)==0 else id_from_df.iloc[0]['label']
+                        dfs_cql[worksheet[2:31]] = df
+                    else:
+                        break
+            else:
+                logger.warning(f" worksheet {worksheet} not parsed, need to be change, valueset or start with r., l., q., r.")
+
 
             elif worksheet.startswith(('q.','l.','c.','r.')):
                 df = df.dropna(axis=0,subset=['type'])
@@ -124,25 +147,57 @@ def parse_sheets(input_file, excudedWorksheets):
         "decisions_tables" : dfs_decision_table,
         "valueset" : df_value_set,
         "profile" : df_profile,
-        "extension" : df_extension,
         "libraries" : dfs_cql,
+        "conditions" : dfs_conditions,
+        "recommendations" : dfs_recommendations,
         "changes": df_changes
     })
+BASIC_COLUMN = {'id','type','label'}
+BASIC_VALUSET_COLUMN = {'scope','valueSet','code','display'}
+BASIC_CHANGE_COLUMN={'version',	'date',	'change'}
+BASIC_LIBRARY_COLUMN = {*BASIC_COLUMN,'initialExpression'}
 
 def validate_questionnaire_sheet(df):
-    return True
+    if BASIC_COLUMN.issubset(df.columns):
+        return True
+    else:
+        logger.warning(f"sheet {worksheet} does not have the mandatory column: {','.join(BASIC_COLUMN).values()}")
+        return False
 
+def validate_condition_sheet(df):
+    if BASIC_LIBRARY_COLUMN.issubset(df.columns):
+        return True
+    else:
+        logger.warning(f"sheet {worksheet} does not have the mandatory column: {','.join(BASIC_LIBRARY_COLUMN).values()}")
+        return False
+def validate_recommendation_sheet(df):
+    if BASIC_LIBRARY_COLUMN.issubset(df.columns):
+        return True
+    else:
+        logger.warning(f"sheet {worksheet} does not have the mandatory column: {','.join(BASIC_LIBRARY_COLUMN).values()}")
+        return False
+def validate_profile_sheet(df):
+    return True
 def validate_decision_tables_sheet(df):
     return True
 
-def validate_choice_column_sheet(df):
-    return True
 
 def validate_value_set_sheet(df):
-    return True
-
-def validate_cql_sheet(df):
-    return True
+    if BASIC_VALUSET_COLUMN.issubset(df.columns):
+        return True
+    else:
+        logger.warning(f"sheet {worksheet} does not have the mandatory column: {','.join(BASIC_VALUSET_COLUMN).values()}")
+        return False
+def validate_library_sheet(df):
+    if BASIC_LIBRARY_COLUMN.issubset(df.columns):
+        return True
+    else:
+        logger.warning(f"sheet {worksheet} does not have the mandatory column: {','.join(BASIC_LIBRARY_COLUMN).values()}")
+        return False
 
 def validate_changes_sheet(df): 
-    return True
+    if BASIC_CHANGE_COLUMN.issubset(df.columns):
+        return True
+    else:
+        logger.warning(f"sheet {worksheet} does not have the mandatory column: {','.join(BASIC_CHANGE_COLUMN).values()}")
+        return False
