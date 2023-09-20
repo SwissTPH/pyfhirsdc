@@ -8,7 +8,7 @@
 POST {{host}} HTTP/1.1
 Content-Type: application/json
 
-< ../bundle.json
+< {{rootemcare}}/input/bundle.json
 
 ### library post
 PUT {{host}}/Library/emcaredt01
@@ -187,7 +187,8 @@ GET {{host}}/Patient/{{patientid}}
 GET {{host}}/Encounter?subject={{patientid}}
 ###
 DELETE {{host}}/Encounter/encounter0
-
+####
+      "valueString": "({{id:FHIR.Coding {system: FHIR.uri {value :'https://fhir.ruler.dk.swisstph-mis.ch/fhir/cc'} ,code: FHIR.code {value : 'CHE.B23.DE76'}},value: true}, {id:FHIR.Coding {system: FHIR.uri {value :'https://fhir.ruler.dk.swisstph-mis.ch/fhir/cc'} ,code: FHIR.code {value : 'CHE.B23.DE77'}},value: false}, {id:FHIR.Coding {system: FHIR.uri {value :'https://fhir.ruler.dk.swisstph-mis.ch/fhir/cc'} ,code: FHIR.code {value : 'CHE.B23.DE78'}},value: false} })  pc aggregate ext starting (null as List<Extension>): ext union ( if pc.value then { Extension { url : uri {value: 'https://fhir.ruler.dk.swisstph-mis.ch/fhir/StructureDefinition/postcoordination'}, value: FHIR.CodeableConcept {coding: { pc.id } } } } else null as List<Extension> )"
 ###
 POST https://fhir.ruler.dk.swisstph-mis.ch/fhir/$cql
 content-type: application/json
@@ -197,9 +198,8 @@ content-type: application/json
   "parameter": [
     {
       "name": "expression",
-      "valueString": "First([Observation ] O where (difference in days between O.issued and Today()) < 10 sort by issued.value desc)"
-    },
-    {
+      "valueString": "(({'CHE.B23.DE76', 'CHE.B23.DE77'}) pc aggregate all ext starting (List{} as List<Extension>): ext union (  { FHIR.Extension { url : FHIR.uri {value: 'https://fhir.ruler.dk.swisstph-mis.ch/fhir/StructureDefinition/postcoordination'}, value: FHIR.CodeableConcept {coding:{FHIR.Coding {system: FHIR.uri {value :'https://fhir.ruler.dk.swisstph-mis.ch/fhir/cc'} ,code: FHIR.code {value : pc}}}}}}))"
+    },{
       "name":"data",
       "resource": {
         "resourceType": "Bundle",
