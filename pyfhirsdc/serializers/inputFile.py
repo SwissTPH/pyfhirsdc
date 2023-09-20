@@ -108,40 +108,6 @@ def parse_sheets(input_file, excudedWorksheets):
                 logger.warning(f" worksheet {worksheet} not parsed, need to be change, valueset or start with r., l., q., r.")
 
 
-            elif worksheet.startswith(('q.','l.','c.','r.')):
-                df = df.dropna(axis=0,subset=['type'])
-                if worksheet.startswith('q.'):
-                    if validate_questionnaire_sheet(df):
-                        id_from_df = df[df['id']=='{{id}}']
-                        name = worksheet[2:31] if len(id_from_df)==0 else id_from_df.iloc[0]['label']
-                        dfs_questionnaire[name] = df
-                    else:
-                        break
-                elif worksheet.startswith('c.'):
-                    if validate_condition_sheet(df):
-                        id_from_df = df[df['id']=='{{id}}']
-                        name = worksheet[2:31] if len(id_from_df)==0 else id_from_df.iloc[0]['label']
-                        dfs_conditions[name] = df
-                    else:
-                        break
-                elif worksheet.startswith('r.'):
-                    if validate_condition_sheet(df):
-                        id_from_df = df[df['id']=='{{id}}']
-                        name = worksheet[2:31] if len(id_from_df)==0 else id_from_df.iloc[0]['label']
-                        dfs_recommendations[name] = df
-                    else:
-                        break
-                elif worksheet.startswith('l.'):
-                    if validate_library_sheet(df):
-                        id_from_df = df[df['id']=='{{id}}']
-                        name = worksheet[2:31] if len(id_from_df)==0 else id_from_df.iloc[0]['label']
-                        dfs_cql[worksheet[2:31]] = df
-                    else:
-                        break
-            else:
-                logger.warning(f" worksheet {worksheet} not parsed, need to be change, valueset or start with c., l., q., r.")
-
-
     set_dict_df({
         "questionnaires" : dfs_questionnaire,
         "decisions_tables" : dfs_decision_table,
