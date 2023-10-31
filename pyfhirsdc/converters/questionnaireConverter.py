@@ -26,7 +26,7 @@ from pyfhirsdc.models.questionnaireSDC import (QuestionnaireItemSDC,
                                                QuestionnaireSDC)
 from pyfhirsdc.serializers.docSerializer import (get_doc_table, get_doc_title,
                                                  write_docs)
-from pyfhirsdc.serializers.http import post_files
+from pyfhirsdc.serializers.http import post_files, check_internet
 from pyfhirsdc.serializers.utils import get_resource_path, write_resource
 
 logger = logging.getLogger("default")
@@ -70,7 +70,7 @@ def generate_questionnaire( name ,df_questions) :
     # write file
     write_resource(fullpath, questionnaire, get_processor_cfg().encoding)
     #CQL files 
-    if get_processor_cfg().fhirpath_validator is not None:
+    if check_internet() and get_processor_cfg().fhirpath_validator is not None:
         post_files(fullpath, get_processor_cfg().fhirpath_validator)
 
     

@@ -5,6 +5,7 @@ import re
 import pandas as pd
 from fhir.resources.R4B.codeableconcept import CodeableConcept
 from fhir.resources.R4B.coding import Coding
+from pyfhirsdc.version import __version__
 
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg, get_processor_cfg
 
@@ -72,7 +73,11 @@ def get_pyfhirsdc_lib_name(name, force=False):
         return adv_clean_name(name)
 
 def get_resource_name(resource_type, name):
-    return resource_type.lower()+ "-"+ clean_name(name)
+    if get_processor_cfg().layoutMode != 'DIRECTORY': # TYPE_PREFIX
+        return resource_type + "-"+ clean_name(name)
+    else:
+        return  clean_name(name)
+
 
 def get_resource_url(resource_type, id, with_version = False):
     return str(get_fhir_cfg().canonicalBase +  resource_type + "/" + clean_name(id)) + ("|"+get_fhir_cfg().lib_version if with_version else '' )
@@ -249,6 +254,10 @@ def get_fpath(df_questions, linkid, fpath = [] ):
     else:
         return fpath
     # if yes recursive call until no parent or loop
-    
-def inject_config(value):
-    return value.replace('{{cs_url}}',  get_custom_codesystem_url()).replace('{{canonical_base}}',  get_fhir_cfg().canonicalBase)
+
+def inject_variables(str_in):
+    return str_in.replace("{{LIB_VERSION}}",get_fhir_cfg().lib_version)\
+        .replace("{{cs_url}}",get_custom_codesystem_url())\
+        .replace("{{FHIR_VERSION}}",get_fhir_cfg().version)\
+        .replace("{{canonical_base}}",get_fhir_cfg().canonicalBase)\
+        .replace("{{pyfhirsdc_version}}",__version__)

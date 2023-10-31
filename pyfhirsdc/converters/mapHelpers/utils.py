@@ -4,7 +4,7 @@ import os
 import pandas as pd
 
 from pyfhirsdc.converters.utils import (get_custom_codesystem_url, get_fpath,
-                                        get_resource_url, inject_config, get_base_profile)
+                                        get_resource_url, inject_variables, get_base_profile)
 from pyfhirsdc.converters.valueSetConverter import get_valueset_df
 from pyfhirsdc.models.mapping import MappingRule
 
@@ -130,13 +130,13 @@ def get_val_rule(rule_name, expression):
         expression  = "item.answer first as a",
         name = 'a'+rule_name,
         rules = [ MappingRule( 
-            expression  = "a.value as val -> {0}".format(inject_config(expression)),
+            expression  = "a.value as val -> {0}".format(inject_variables(expression)),
             name = 'a'+rule_name
         )]
     )
 def get_ans_rule(rule_name, expression):
     return MappingRule( 
-            expression  = "item.answer first as a -> {0}".format(inject_config(expression)),
+            expression  = "item.answer first as a -> {0}".format(inject_variables(expression)),
             name = 'a'+rule_name
     )
     

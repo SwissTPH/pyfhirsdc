@@ -20,7 +20,7 @@ from pyfhirsdc.config import (get_defaut_path, get_fhir_cfg, get_processor_cfg,
 from pyfhirsdc.serializers.http import check_internet, post_multipart
 from pyfhirsdc.serializers.json import read_file, read_resource
 from pyfhirsdc.version import __version__
-from ..converters.utils import get_custom_codesystem_url, get_resource_url
+from ..converters.utils import get_custom_codesystem_url, get_resource_url, inject_variables
 
 logger = logging.getLogger("default")
 def is_content_to_update(content, lib):
@@ -33,7 +33,7 @@ def refresh_content(lib):
     out_content = [x for x in lib.content if not is_content_to_update(x, lib)]
     if len (out_content) < len(lib.content):
         # get CQL file "ig-loader"
-        cql = read_file(os.path.join(get_defaut_path('CQL', 'cql'), lib.name + '.cql') ,'str')
+        cql = read_file(os.path.join(get_defaut_path('cql'), lib.name + '.cql') ,'str')
         out_content.append(get_cql_content(cql, lib.name))
         deps = get_cql_dependencies(cql,[])
         if get_processor_cfg().generateElm == True and check_internet(): # create the elm
@@ -119,7 +119,7 @@ def get_cql_dependencies(cql, cqls = []):
     matches = re.findall(pattern, cql, flags=0)
     for match in matches:
         if match not in get_cqls_ids(cqls):
-            file_path = os.path.join(get_defaut_path('CQL', 'cql'), match + '.cql')
+            file_path = os.path.join(get_defaut_path('cql'), match + '.cql')
             if os.path.exists(file_path):
                 sub_cql = read_file(file_path ,'str')
                 if sub_cql is not None:
@@ -196,8 +196,8 @@ def process_libraries(conf):
         core_cql =  os.path.join(os.path.dirname(__file__),  "../core_fhir/cql")
         core_lib =  os.path.join(os.path.dirname(__file__),  "../core_fhir/resources/library")
     
-        lib_path = get_defaut_path('Library', 'ressources/library')
-        cql_path = get_defaut_path('CQL', 'cql')
+        lib_path = get_defaut_path('Library')
+        cql_path = get_defaut_path('cql')
         manual_lib_path = os.path.join(get_processor_cfg().manual_content,"resources/library")
         cql_lib_path = os.path.join(get_processor_cfg().manual_content,"cql")
         add_manual_content(core_lib,lib_path, core_cql, cql_path )
@@ -215,11 +215,7 @@ def update_lib_version(src,dst):
         filedata = file.read()
 
     # Replace the target string
-    filedata = filedata.replace("{{LIB_VERSION}}",get_fhir_cfg().lib_version)\
-        .replace("{{cs_url}}",get_custom_codesystem_url())\
-        .replace("{{FHIR_VERSION}}",get_fhir_cfg().version)\
-        .replace("{{canonical_base}}",get_fhir_cfg().canonicalBase)\
-        .replace("{{pyfhirsdc_version}}",__version__)
+    filedata = inject_variables(filedata)
     
 
     # Write the file out 

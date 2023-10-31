@@ -1,4 +1,0 @@
-- Fixed **Red eyes** to **Red Eyes** to solve typo
-- Fixed **Measles rash** to **Measles Rash** to solve typo
-- Fixed **Generalised or localised skin problem** to **Generalized or Localised Skin Problem** to fix typo
-- Fixed **Type of skin problem** to **Type of Skin Problem** to fixed typo

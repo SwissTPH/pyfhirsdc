@@ -1,6 +1,6 @@
 import logging
 from py_markdown_table.markdown_table import markdown_table
-from pyfhirsdc.serializers.utils import get_page_content_path, write_page_content
+from pyfhirsdc.serializers.utils import get_resource_path, write_page_content
 import json
 
 logger = logging.getLogger("default")
@@ -23,7 +23,7 @@ def generate_page_from_excel(data_dictionary_worksheets, data_dictionary_file, o
             
             new_line += markdown_woksheet_content.replace("```", "") + "\n\n"
             data_dictionary_file_content += new_line
-        data_dictionary_file_path = get_page_content_path("/", outputFile)
+        data_dictionary_file_path = get_resource_path("pagecontent", outputFile)
         write_page_content(data_dictionary_file_path, title, data_dictionary_file_content)
         data_dictionary_file.close()
         

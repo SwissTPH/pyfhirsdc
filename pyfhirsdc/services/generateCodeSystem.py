@@ -102,7 +102,7 @@ def generate_other_valueset_libs(question_concepts,list_name,add_to_valueset = F
         
         cql = get_code_cql_from_concepts(question_concepts, lib, add_to_valueset,low_case )
         
-        cql_path = get_defaut_path('CQL', 'cql')
+        cql_path = get_defaut_path('cql')
         lib_path =get_resource_path('Library', name_vs )
         write_library_CQL(cql_path, lib, cql)
         write_resource(lib_path, lib)

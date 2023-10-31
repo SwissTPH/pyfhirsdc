@@ -61,7 +61,8 @@ The config file is a json with two main section, the data within the JSON file w
         "scope":"EmCare",
         "encoding":"json",
         "generateElm" : false,
-        "environment": "dev"
+        "environment": "dev",
+        "layoutMode": "DIRECTORY"
     },
 
 ```
@@ -96,40 +97,6 @@ The config file is a json with two main section, the data within the JSON file w
             "CodeSystem": "http://terminology.hl7.org/CodeSystem/usage-context-type",
             "Code": "task",
             "Display": "Workflow Task"
-        },
-        "PlanDefinition":{
-            "outputPath":"resources/plandefinition",
-            "planDefinitionType":{
-                "CodeSystem": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
-                "Code": "eca-rule"
-            }
-        },
-        "Extensions":{
-            "outputPath":"resources/extensions"
-        },
-        "Profiles": {
-            "outputPath":"profiles"
-        },
-        "Questionnaire":{
-            "outputPath":"resources/questionnaire"
-        },
-        "ActivityDefinition":{
-            "outputPath":"resources/activitydefinition"
-        },
-        "Library":{
-            "outputPath":"resources/library/"
-        },
-        "Bundle":{
-            "outputPath" : "bundles"
-        },
-        "pagecontent":{
-            "outputPath":"/pagecontent/"
-        },"CodeSystem":
-        {
-            "outputPath":"vocabulary/codesystem/"
-        },"ValueSet":
-        {
-            "outputPath":"vocabulary/valueset/"
         }
     }
 ```

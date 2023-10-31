@@ -22,7 +22,7 @@ from pyfhirsdc.converters.questionnaireItemConverter import \
     get_question_fhir_data_type
 from pyfhirsdc.converters.utils import (adv_clean_name, clean_name,get_pyfhirsdc_lib_name,
                                         get_codableconcept_code, get_custom_codesystem_url,
-                                        get_resource_url, inject_config,METADATA_CODES)
+                                        get_resource_url, inject_variables,METADATA_CODES)
 from pyfhirsdc.serializers.docSerializer import get_doc_table, write_docs
 from pyfhirsdc.serializers.librarySerializer import (GETOBS_FORMAT,
                                                      GETOBSCODE_FORMAT,
@@ -32,7 +32,7 @@ from pyfhirsdc.serializers.librarySerializer import (GETOBS_FORMAT,
                                                      write_cql_alias,
                                                      write_library_CQL,
                                                      writeLibraryHeader)
-from pyfhirsdc.serializers.utils import reindent, write_resource
+from pyfhirsdc.serializers.utils import reindent, write_resource, get_resource_path
 
 logger = logging.getLogger("default")
 
@@ -120,16 +120,9 @@ def generate_library(name, df_actions, type = 'pd', description = None):
             "pfsdc.getPractitionerReference"
             '')        
     if len(cql)>1:
-        output_lib_path = os.path.join(
-                get_processor_cfg().outputPath,
-                get_fhir_cfg().Library.outputPath
-            )
-        output_lib_file = os.path.join(
-                output_lib_path,
-                "library-"+ id +  "." + get_processor_cfg().encoding
-            )
+        output_lib_file = get_resource_path('Library',id)
         write_resource(output_lib_file, library, get_processor_cfg().encoding)
-        cql_path = get_defaut_path('CQL', 'cql')
+        cql_path = get_defaut_path('cql')
         write_library_CQL(cql_path, library, cql)
         write_library_docs(library.title,list_inputs )
         return  library
@@ -452,66 +445,70 @@ def format_cql_df(library, df_actions,  type):
 #                'name':get_processor_cfg().scope.lower()+"base",
 #                'version':get_fhir_cfg().lib_version,
 #                'alias':"Base"
-#            },        
+#            }, 
+
+    #load library
+    df_lib = df_actions[df_actions['id']=='{{library}}']
+    for index, row in df_lib .iterrows():
+        desc = get_description(row)
+        if desc is not None:
+                details =  desc.split("::")
+                name = get_pyfhirsdc_lib_name(details[0])
+                version = details[2] if len(details)>2 else None
+                alias = details[1] if len(details)>1 else None
+                libs.append({
+                    'name':name,
+                    'version':version,
+                    'alias':alias
+                })
+        else:
+            logger.error(f"Libray reference for {library.id} not set properly, should be in label with the format lib_id::alias::lib_version")
+
     i = 0
     oi = i
     list_inputs = {}
-    df_main = df_actions.dropna(axis=0, subset='id')
-    if len(df_actions)>0:
+    df_main = df_actions.dropna(axis=0, subset='id').drop_duplicates(subset='id', keep='first')
         
-        for index, row in df_main.iterrows():
-            ref = row['id'] if 'id' in row else index 
-            
-            desc = get_description(row)
-            if index == "{{library}}" or "id" in row and pd.notna(row['id']) and row['id'] == "{{library}}":
-                if desc is not None:
-                    details =  desc.split("::")
-                    name = get_pyfhirsdc_lib_name(details[0])
-                    version = details[2] if len(details)>2 else None
-                    alias = details[1] if len(details)>1 else None
-                    libs.append({
-                        'name':name,
-                        'version':version,
-                        'alias':alias
-                    })
-                else:
-                    logger.error(f"Libray reference for {library.id} not set properly, should be in label with the format lib_id::alias::lib_version")
-            # PlanDefinition CQL
-            # applicability -> "id" : cql
-            # start -> "start::id" : cql
-            # end -> "end::id" : cql
-            # write_cql_action(name,desc, cql_exp, prefix,display=None
-            if 'stopExpressions' in row and pd.notna(row['stopExpressions']):
-                cql[i] = get_cql_define(ref, row,'stopExpressions', df_actions,list_inputs)
+    for index, row in df_main.iterrows():
+        ref = row['id'] if 'id' in row else index 
+        
+        desc = get_description(row)
+        # PlanDefinition CQL
+        # applicability -> "id" : cql
+        # start -> "start::id" : cql
+        # end -> "end::id" : cql
+        # write_cql_action(name,desc, cql_exp, prefix,display=None
+        if 'stopExpressions' in row and pd.notna(row['stopExpressions']):
+            cql[i] = get_cql_define(ref, row,'stopExpressions', df_actions,list_inputs)
+            i += 1
+        if 'startExpressions' in row and pd.notna(row['startExpressions']):
+            cql[i] = get_cql_define(ref, row,'startExpressions', df_actions,list_inputs)
+            i += 1
+        if 'applicabilityExpressions' in row and pd.notna(row['applicabilityExpressions']):
+            cql[i] = get_cql_define(ref, row,'applicabilityExpressions', df_actions,list_inputs)
+            i += 1
+            # add the wrapper name -> id
+            if pd.notna(desc):
+                cql[i] = write_cql_alias(ROW_EXPRESSIONS['applicabilityExpressions']['prefix'], desc,ref)
                 i += 1
-            if 'startExpressions' in row and pd.notna(row['startExpressions']):
-                cql[i] = get_cql_define(ref, row,'startExpressions', df_actions,list_inputs)
+        ## questionnaire initial expression in CQL, FIXMDe
+        if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()) and row['type'] != '{{cql}}' :
+            cql[i] = get_cql_define(ref, row,'initialExpression',df_actions,list_inputs)
+            i += 1
+            if pd.notna(row['label']):
+                cql[i] = write_cql_alias(ROW_EXPRESSIONS['initialExpression']['prefix'], row['label'],ref)
                 i += 1
-            if 'applicabilityExpressions' in row and pd.notna(row['applicabilityExpressions']):
-                cql[i] = get_cql_define(ref, row,'applicabilityExpressions', df_actions,list_inputs)
+        if type == 'c' and 'enableWhenExpression' in row and pd.notna(row['enableWhenExpression']):
+            cql[i] = get_cql_define(ref, row,'enableWhenExpression',df_actions,list_inputs)
+            i += 1
+            if pd.notna(row['label']):
+                cql[i] = write_cql_alias(ROW_EXPRESSIONS['enableWhenExpression']['prefix'], row['label'],ref)
                 i += 1
-                # add the wrapper name -> id
-                if pd.notna(desc):
-                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['applicabilityExpressions']['prefix'], desc,ref)
-                    i += 1
-            ## questionnaire initial expression in CQL, FIXMDe
-            if 'initialExpression' in row and pd.notna(row['initialExpression']) and not re.match("^(uuid)\(\)$",row['initialExpression'].strip()) and row['type'] != '{{cql}}' :
-                cql[i] = get_cql_define(ref, row,'initialExpression',df_actions,list_inputs)
-                i += 1
-                if pd.notna(row['label']):
-                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['initialExpression']['prefix'], row['label'],ref)
-                    i += 1
-            if type == 'c' and 'enableWhenExpression' in row and pd.notna(row['enableWhenExpression']):
-                cql[i] = get_cql_define(ref, row,'enableWhenExpression',df_actions,list_inputs)
-                i += 1
-                if pd.notna(row['label']):
-                    cql[i] = write_cql_alias(ROW_EXPRESSIONS['enableWhenExpression']['prefix'], row['label'],ref)
-                    i += 1
-                if     row['type'].strip().lower() == 'condition':
-                    cql,i = get_condition_cql(row, cql,i,df_actions,list_inputs)
-            while  i > oi :
-                cql[oi] = inject_config(cql[oi])
-                oi+=1
+            if     row['type'].strip().lower() == 'condition':
+                cql,i = get_condition_cql(row, cql,i,df_actions,list_inputs)
+        while  i > oi :
+            cql[oi] = inject_variables(cql[oi])
+            oi+=1
 
     if  any([l['type'] == "Observation" for l in list_inputs.values()]):
         libs.append(    {

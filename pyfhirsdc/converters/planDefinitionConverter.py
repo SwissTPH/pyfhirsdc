@@ -13,7 +13,7 @@ from fhir.resources.R4B.triggerdefinition import TriggerDefinition
 from pyfhirsdc.config import get_fhir_cfg
 from pyfhirsdc.converters.extensionsConverter import (
     get_cql_epression, get_initial_expression_identifier_ext)
-from pyfhirsdc.converters.utils import (clean_name, get_codableconcept_code,
+from pyfhirsdc.converters.utils import (clean_name, get_codableconcept_code, inject_variables,
                                         init_list, init_resource_meta, METADATA_CODES, QUESTION_TYPE_MAPPING)
 
 from pyfhirsdc.converters.libraryConverter import ROW_EXPRESSIONS
@@ -28,7 +28,7 @@ def process_action(row):
         action = PlanDefinitionAction(
             id = clean_name(row["id"]),
             description = value_not_na(row["label"] if 'label' in row else row["description"]),
-            definitionCanonical = Canonical(row["definitionCanonical"].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase)) if pd.notna(row["definitionCanonical"]) else None,
+            definitionCanonical = Canonical(inject_variables(row["definitionCanonical"])) if pd.notna(row["definitionCanonical"]) else None,
             title = value_not_na(row["title"]),
             trigger = get_triggers(row),
             condition = get_conditions(row),
@@ -115,7 +115,7 @@ def get_conditions(row):
         if name != 'id' and name in row and pd.notna(row[name]):
             condition.append( PlanDefinitionActionCondition(
                 kind = Code(exp['kind']),
-                expression = get_cql_epression(exp['prefix']+row['id'], desc = row[name].replace('{{canonical_base}}', get_fhir_cfg().canonicalBase) )
+                expression = get_cql_epression(exp['prefix']+row['id'], desc = inject_variables(row[name]))
             ))
     if len(condition)>0:
         return condition
@@ -124,10 +124,7 @@ def process_decisiontable(planDefinition, df):
      ## fetch configuration from the json file ##
     init_resource_meta(planDefinition)
     init_list(planDefinition.identifier) 
-    planDefinition.type = get_codableconcept_code( 
-        get_fhir_cfg().PlanDefinition.planDefinitionType.CodeSystem,
-        get_fhir_cfg().PlanDefinition.planDefinitionType.Code
-    )
+
     ## list all the actions with no parents
     action_df = df[df['type'].str.startswith('action')]
     #TODO remove the backward compatibility at some point

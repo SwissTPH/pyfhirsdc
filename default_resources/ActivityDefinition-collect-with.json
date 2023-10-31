@@ -61,7 +61,7 @@
     "path" : "input",
     "expression" : {
       "language" : "text/cql.identifier",
-      "expression" : "TaskInputReferencee"
+      "expression" : "TaskInputReference"
     }
   }]
 }

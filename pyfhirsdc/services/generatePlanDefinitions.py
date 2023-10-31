@@ -38,19 +38,11 @@ def generate_plandefinitions():
 def generate_plandefinition( name,df_actions):
     # try to load the existing questionnaire
         # path must end with /
-    filepath = get_resource_path("PlanDefinition", get_processor_cfg().scope.lower())
+    filepath = get_resource_path("PlanDefinition", name)
     df_actions=df_actions.dropna(axis=0, subset=['id'])
     logger.info('processing plandefinition {0}'.format(name))
     # read file content if it exists
     pd_df = init_pd(filepath)
-    skipcols=get_processor_cfg().skipcols
-    skiprows = get_processor_cfg().skiprows
-
-    if (skipcols == 1):
-        df_actions.drop(df_actions.columns[[0]], axis=1, inplace=True)
-    elif (skipcols > 1 ):
-        df_actions.drop(df_actions.columns[[0,skipcols-1]], axis=1, inplace = True)
-    
     dict_actions = df_actions.to_dict('index')
 
     ## generate libraries, plandefinitions and libraries

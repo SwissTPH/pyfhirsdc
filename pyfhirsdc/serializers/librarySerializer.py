@@ -6,7 +6,7 @@ import pandas as pd
 from fhir.resources.R4B.identifier import Identifier
 
 from pyfhirsdc.config import append_used_obs, get_fhir_cfg, get_processor_cfg
-from pyfhirsdc.converters.utils import get_custom_codesystem_url
+from pyfhirsdc.converters.utils import get_custom_codesystem_url,inject_variables
 from pyfhirsdc.converters.valueSetConverter import add_concept_in_valueset_df
 from pyfhirsdc.serializers.utils import reindent
 
@@ -53,7 +53,7 @@ def get_include_lib(libs, library = None):
         if 'name' in lib and lib['name'] is not None and len(lib['name'])>0:
             ret+="include {}".format(lib['name'])
             if 'version' in lib and lib['version'] is not None and len(lib['version'])>0:
-               ret+=" version '{}'".format(lib['version'].replace("{{LIB_VERSION}}",get_fhir_cfg().lib_version).replace("{{FHIR_VERSION}}",get_fhir_cfg().version))
+               ret+=" version '{}'".format(inject_variables(lib['version']))
             else:
                 logger.error(" version missing for {} but mandatory as dependency for library {}".format(lib['name'], library.name))
                 exit()

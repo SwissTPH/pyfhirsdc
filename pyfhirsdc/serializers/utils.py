@@ -33,7 +33,7 @@ def get_resource_path(resource_type, name, encoding = None, generateName = True 
     if encoding is None:
         encoding = get_processor_cfg().encoding
     if resource_type is not None and name is not None:
-        path = get_defaut_path(resource_type, "resources/"+ resource_type.lower())
+        path = get_defaut_path(resource_type)
         if not os.path.exists(path):
             os.makedirs(path) 
         if generateName:
@@ -43,16 +43,6 @@ def get_resource_path(resource_type, name, encoding = None, generateName = True 
         fullpath = os.path.join(path, filename)
         return fullpath
 
-#TODO: Change page_content_path to get_file_content_path
-def get_page_content_path(path, fileName, folder_name = None ,encoding = None):
-    if folder_name is None:
-        folder_name = "pagecontent/"
-    if encoding is None:
-        encoding = sys.getdefaultencoding()
-    if path is not None and fileName is not None:
-        path = get_defaut_path(fileName, folder_name + fileName.lower())
-    fullpath = os.path.join(path)
-    return fullpath
 
 def write_page_content(filePath, pagetitle, content, encoding=None):
     if encoding is None:
@@ -69,11 +59,12 @@ def write_page_content(filePath, pagetitle, content, encoding=None):
         raise ValueError("Error writing page content: " + filePath)
 
 def get_resources_files(resource_type):
-    path = get_defaut_path(resource_type, "resources/"+ resource_type.lower())
+    path = get_defaut_path(resource_type)
     resources = []
     for p in Path(path).glob('*.json'):
         json_obj = json.loads(p.read_text())
-        resources.append(json_obj)
+        if json_obj['resourceType'] == resource_type:
+            resources.append(json_obj)
     return resources
 
 def reindent(s, numSpaces):

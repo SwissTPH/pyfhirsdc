@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 
 from pyfhirsdc.config import get_dict_df
-from pyfhirsdc.serializers.utils import get_page_content_path, write_page_content
+from pyfhirsdc.serializers.utils import get_resource_path, write_page_content
 
 logger = logging.getLogger("default")
 
@@ -26,5 +26,5 @@ def generateChagnes():
 {row['change']}
                                """)
         
-        changes_file_path = get_page_content_path("/", "changes.md")
+        changes_file_path = get_resource_path("pagecontent", "changes",'.md')
         write_page_content(changes_file_path, "Changes", "\n".join(fileContent))

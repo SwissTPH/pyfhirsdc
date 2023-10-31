@@ -12,7 +12,7 @@ from fhirpathpy import compile, evaluate
 from pyfhirsdc.config import get_dict_df, get_fhir_cfg
 from pyfhirsdc.converters.utils import (clean_name, get_custom_codesystem_url,
                                         get_fpath, get_resource_url,
-                                        inject_config)
+                                        inject_variables)
 
 logger = logging.getLogger("default")
 
@@ -509,7 +509,7 @@ def convert_reference_to_fhirpath(expression, df_questions):
     # remove the new lines
     expression = expression.replace('\n','')
     # replace the {{}}
-    final = inject_config(expression)
+    final = inject_variables(expression)
     # validate fhirparse grammar
     node = compile([], final)
     if node is not None:

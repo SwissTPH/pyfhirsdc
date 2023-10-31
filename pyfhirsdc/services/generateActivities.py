@@ -14,7 +14,7 @@ from pyfhirsdc.serializers.utils import (get_resource_path,
 logger = logging.getLogger("default")
 
 def generate_activities():
-    questionnaires = get_resources_files('questionnaire')
+    questionnaires = get_resources_files('Questionnaire')
     for questionnaire in questionnaires:
         generate_activity(questionnaire)
 

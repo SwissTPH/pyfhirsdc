@@ -5,6 +5,7 @@ import requests
 from requests_toolbelt.multipart import decoder
 
 from pyfhirsdc.serializers.json import read_file
+from pyfhirsdc.config import  get_processor_cfg
 
 logger = logging.getLogger("default")
 
@@ -48,12 +49,15 @@ online = None
 def check_internet():
     global online
     if online is None:
-        url = "http://www.google.com"
-        timeout = 5
-        try:
-            request = requests.get(url, timeout=timeout)
-            online = True
-        except (requests.ConnectionError, requests.Timeout) as exception:
-            logger.warning("No internet connection.")
+        if getattr(get_processor_cfg(), 'offline', False):
             online = False
+        else:
+            url = "http://www.google.com"
+            timeout = 5
+            try:
+                request = requests.get(url, timeout=timeout)
+                online = True
+            except (requests.ConnectionError, requests.Timeout) as exception:
+                logger.warning("No internet connection.")
+                online = False
     return online

@@ -33,7 +33,7 @@ logger = logging.getLogger("default")
 # 
 def get_questionnaire_mapping(questionnaire_name, df_questions_item):
     sm_name = clean_name(questionnaire_name)  
-    map_filepath = os.path.join(get_defaut_path("Mapping","mapping") ,sm_name+".map")
+    map_filepath = os.path.join(get_defaut_path("maps") ,sm_name+".fml")
     profiles = get_questions_profiles(df_questions_item)
     filepath = get_resource_path(
         "StructureMap", 

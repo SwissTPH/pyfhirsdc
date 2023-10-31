@@ -623,3 +623,10 @@ define function generatePostcoordination(pc_list List<Tuple{id FHIR.Coding, valu
     )
 
 
+
+
+
+define getPatientDistrict:
+    if (First(Patient.address).district) is not null then
+      First([Location] L where L.id = id { value: First(Patient.address).district})
+    else null

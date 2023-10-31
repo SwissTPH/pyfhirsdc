@@ -64,6 +64,8 @@ def read_config_file(filepath):
     if not os.path.exists(obj_conf.processor.inputFile):
         logger.error("inputFile {0} not found".format(obj_conf.processor.inputFile))
         return None
+    if not hasattr(obj_conf.processor, 'layoutMode'):
+        obj_conf.processor.layoutMode = 'DIRECTORY'
     processor_cfg = obj_conf.processor
 
     fhir_cfg = add_tail_slashes(obj_conf.fhir)
@@ -81,10 +83,19 @@ def get_defaut_fhir(resource):
         json_str = read_file(default_file_path, "dict") 
         return json_str
 
-def get_defaut_path(resource, default):
-    if not resource in dict_cfg['fhir'] or dict_cfg['fhir'][resource]['outputPath'] is None:
-        return os.path.join(get_processor_cfg().outputPath, default)
-    return os.path.join(get_processor_cfg().outputPath, dict_cfg['fhir'][resource]['outputPath'])
+def get_defaut_path(resource):
+    path_parts = [get_processor_cfg().outputPath]
+    RESOURCES = ['PlanDefinition', 'Questionnaire','ActivityDefinition','Library', 'StructureMap']
+    VOCABULARY = ['CodeSystem', 'ConceptMap', 'ValueSet']
+    if resource in RESOURCES:
+        path_parts.append('resources')
+    elif resource in VOCABULARY:
+        path_parts.append('vocabulary')
+    
+    if get_processor_cfg().layoutMode == 'DIRECTORY':
+        path_parts.append(resource.lower())
+    
+    return os.path.join(*path_parts)
 
 def add_tail_slashes(fhir):
     if hasattr(fhir,  'canonicalBase'):

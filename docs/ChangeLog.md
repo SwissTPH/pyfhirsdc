@@ -1,7 +1,12 @@
+#### X
+
+- Duplicate ID are save once in the library and take the first definition, recommentation to use {{cql}} in other line to make it clear that the definition is elsewhere
+- Base not loaded / expected 
+
 #### 06-09-2023
 
 - version 0.1.2
-- METADATA should be put in label instead of decription for questionnaire, conditions, reauirement, library
+- METADATA should be put in label instead of decription for questionnaire, conditions, requirement, library
 - description column replace by label in pd
 - add support of condition worksheet type (c.)
 
