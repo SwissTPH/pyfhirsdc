@@ -40,7 +40,7 @@ def get_horizontal_ext():
 def get_regex_ext(regex):
     return Extension( 
         url = "http://hl7.org/fhir/StructureDefinition/regex",
-        valueCode= "regex"
+        valueCode= regex
         )
 
 def get_number_only_ext():
