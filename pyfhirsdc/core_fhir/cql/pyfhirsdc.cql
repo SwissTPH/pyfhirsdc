@@ -27,7 +27,7 @@ code "confirmed" : 'unconfirmed'from "VerificationStatus"
 code "Provisional": 'provisional' from "VerificationStatus"
 
 // the encouter id is use the retieve Observation and Condition of a given encounter
-parameter "encounterid" String
+parameter "encounter" String
 
 parameter "canonical_base" String
 
@@ -35,8 +35,11 @@ parameter "custom_code_system" String
 
 
 
-
 context Patient
+
+
+define encounterid:
+  Last(Split(encounter, '/'))
 
 define Age:
     if AgeInDays() is not null then 
@@ -74,7 +77,7 @@ define getEncounterReference:
   if encounterid is not null then
     Reference {
       type: uri {value: 'Encounter'},
-      reference: string {value:'Encounter/' + encounterid},
+      reference: string {value: encounter},
       id: encounterid
     }
   else null
@@ -178,8 +181,21 @@ define function assesObservation(O Observation):
       when O.value is null then  true
       else O.value
   end
+/* 
+  Get the lastest task of an encounter matching the id
+    @param  id System.Code: Task.code
+    @return Observation
+*/
 
+define function GetTaskDuringEncounter(act_id String):
+  First([Task: id ] T
+      where   IsInEncounter(T.encounter) 
+      and PositionOf('/'+act_id, T.instantiatesCanonical) >= 0
+      and T.status in { 'completed'} 
+      sort by issued.value desc) 
 
+define function getTask(act_id String):
+  GetTaskDuringEncounter(act_id)
 /* 
   Get the lastest observation of an encounter matching the id
     @param  id System.Code: Observation.code

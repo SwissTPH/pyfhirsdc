@@ -16,7 +16,7 @@ def generateChagnes():
     #dfs_changes.reset_index()
     #dfs_changes.iloc[1:]
 
-    if len(dfs_changes.index > 0):
+    if dfs_changes and len(dfs_changes.index > 0):
         fileContent = []
         for index, row in dfs_changes.iterrows():
             logger.info("Saving changes for %s", row[1])

@@ -46,26 +46,5 @@
         "language" : "text/cql.identifier",
         "expression" : "getPatientReference"
       }
-    },
-    {
-      "path" : "encounter",
-      "expression" : {
-        "language" : "text/cql.identifier",
-        "expression" : "getEncounterReference"
-      }
-    },
-    {
-      "path" : "authoredOn",
-      "expression" : {
-        "language" : "text/cql.identifier",
-        "expression" : "Now"
-      }
-    },
-    {
-      "path" : "owner",
-      "expression" : {
-        "language" : "text/cql.identifier",
-        "expression" : "getPractitionerReference"
-      }
     }]
   }

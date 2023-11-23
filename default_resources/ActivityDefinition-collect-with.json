@@ -42,26 +42,5 @@
       "language" : "text/cql.identifier",
       "expression" : "getEncounterReference"
     }
-  },
-  {
-    "path" : "authoredOn",
-    "expression" : {
-      "language" : "text/cql.identifier",
-      "expression" : "Now"
-    }
-  },
-  {
-    "path" : "owner",
-    "expression" : {
-      "language" : "text/cql.identifier",
-      "expression" : "getPractitionerReference"
-    }
-  },
-  {
-    "path" : "input",
-    "expression" : {
-      "language" : "text/cql.identifier",
-      "expression" : "TaskInputReference"
-    }
   }]
 }
